@@ -1,5 +1,16 @@
 import { sqliteClient } from './client'
-import type { DailySummaryRow, HrvRow, RestingHrRow, SleepRow, StressRow, WeightRow } from './types'
+import type {
+  ActivityLapRow,
+  ActivityRecordRow,
+  ActivityRow,
+  DailySummaryRow,
+  HrvRow,
+  RestingHrRow,
+  SleepEventRow,
+  SleepRow,
+  StressRow,
+  WeightRow,
+} from './types'
 
 /**
  * GarminDB data is static until the user re-syncs, so "today" means the most
@@ -89,4 +100,117 @@ export async function getLatestHeartRate(): Promise<{ timestamp: string; heart_r
     'SELECT * FROM monitoring_hr ORDER BY timestamp DESC LIMIT 1',
   )
   return rows[0] ?? null
+}
+
+export async function getMonitoringPulseOxForDay(day: string): Promise<{ timestamp: string; pulse_ox: number | null }[]> {
+  return sqliteClient.query(
+    'monitoring',
+    'SELECT * FROM monitoring_pulse_ox WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp ASC',
+    [`${day} 00:00:00`, `${day} 23:59:59`],
+  )
+}
+
+export async function getMonitoringRrForDay(day: string): Promise<{ timestamp: string; rr: number | null }[]> {
+  return sqliteClient.query(
+    'monitoring',
+    'SELECT * FROM monitoring_rr WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp ASC',
+    [`${day} 00:00:00`, `${day} 23:59:59`],
+  )
+}
+
+export async function getSleepEventsForDay(nightStart: string): Promise<SleepEventRow[]> {
+  // Sleep spans midnight, so widen the window a few hours either side of the given evening.
+  return sqliteClient.query<SleepEventRow>(
+    'garmin',
+    'SELECT * FROM sleep_events WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp ASC',
+    [`${nightStart} 18:00:00`, `${addOneDay(nightStart)} 14:00:00`],
+  )
+}
+
+function addOneDay(day: string): string {
+  const d = new Date(`${day}T00:00:00`)
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Sum of activities.training_load per calendar day (sparse — only days with activities). */
+export async function getDailyTrainingLoad(startDay: string, endDay: string): Promise<{ day: string; load: number }[]> {
+  return sqliteClient.query(
+    'activities',
+    `SELECT strftime('%Y-%m-%d', start_time) as day, SUM(training_load) as load
+     FROM activities WHERE start_time BETWEEN ? AND ? GROUP BY day ORDER BY day ASC`,
+    [`${startDay} 00:00:00`, `${endDay} 23:59:59`],
+  )
+}
+
+export async function getLatestActivityDay(): Promise<string | null> {
+  const rows = await sqliteClient.query<{ day: string | null }>(
+    'activities',
+    "SELECT strftime('%Y-%m-%d', MAX(start_time)) as day FROM activities",
+  )
+  return rows[0]?.day ?? null
+}
+
+export async function getActivitiesRange(startDay: string, endDay: string): Promise<ActivityRow[]> {
+  return sqliteClient.query<ActivityRow>(
+    'activities',
+    'SELECT * FROM activities WHERE start_time BETWEEN ? AND ? ORDER BY start_time DESC',
+    [`${startDay} 00:00:00`, `${endDay} 23:59:59`],
+  )
+}
+
+export async function getActivity(activityId: string): Promise<ActivityRow | null> {
+  const rows = await sqliteClient.query<ActivityRow>('activities', 'SELECT * FROM activities WHERE activity_id = ?', [
+    activityId,
+  ])
+  return rows[0] ?? null
+}
+
+export async function getActivityLaps(activityId: string): Promise<ActivityLapRow[]> {
+  return sqliteClient.query<ActivityLapRow>(
+    'activities',
+    'SELECT * FROM activity_laps WHERE activity_id = ? ORDER BY lap ASC',
+    [activityId],
+  )
+}
+
+export async function getActivityRecords(activityId: string): Promise<ActivityRecordRow[]> {
+  return sqliteClient.query<ActivityRecordRow>(
+    'activities',
+    'SELECT * FROM activity_records WHERE activity_id = ? ORDER BY record ASC',
+    [activityId],
+  )
+}
+
+export async function getStepsActivityVo2Max(activityId: string): Promise<number | null> {
+  const rows = await sqliteClient.query<{ vo2_max: number | null }>(
+    'activities',
+    'SELECT vo2_max FROM steps_activities WHERE activity_id = ?',
+    [activityId],
+  )
+  return rows[0]?.vo2_max ?? null
+}
+
+export interface Vo2MaxPoint {
+  day: string
+  vo2_max: number
+  sport: string
+}
+
+export async function getVo2MaxHistory(startDay: string, endDay: string): Promise<Vo2MaxPoint[]> {
+  const steps = await sqliteClient.query<Vo2MaxPoint>(
+    'activities',
+    `SELECT strftime('%Y-%m-%d', a.start_time) as day, s.vo2_max as vo2_max, a.sport as sport
+     FROM steps_activities s JOIN activities a ON a.activity_id = s.activity_id
+     WHERE s.vo2_max IS NOT NULL AND a.start_time BETWEEN ? AND ? ORDER BY a.start_time ASC`,
+    [`${startDay} 00:00:00`, `${endDay} 23:59:59`],
+  )
+  const cycle = await sqliteClient.query<Vo2MaxPoint>(
+    'activities',
+    `SELECT strftime('%Y-%m-%d', a.start_time) as day, c.vo2_max as vo2_max, a.sport as sport
+     FROM cycle_activities c JOIN activities a ON a.activity_id = c.activity_id
+     WHERE c.vo2_max IS NOT NULL AND a.start_time BETWEEN ? AND ? ORDER BY a.start_time ASC`,
+    [`${startDay} 00:00:00`, `${endDay} 23:59:59`],
+  )
+  return [...steps, ...cycle].sort((a, b) => a.day.localeCompare(b.day))
 }

@@ -1,0 +1,195 @@
+import { useMemo, useState } from 'react'
+import { Card } from '../../components/ui/Card'
+import { Chart } from '../../components/ui/Chart'
+import { Skeleton } from '../../components/ui/Skeleton'
+import { InfoButton } from '../../components/ui/InfoButton'
+import { useInsightsData, METRIC_OPTIONS, type DailyMetrics } from './useInsightsData'
+import { movingAverage, pearsonCorrelation } from '../../lib/stats'
+
+type MetricKey = (typeof METRIC_OPTIONS)[number]['key']
+
+function dayAxis() {
+  return {
+    type: 'time' as const,
+    splitNumber: 3,
+    axisLine: { lineStyle: { color: 'var(--border-panel)' } },
+    axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short' }) },
+  }
+}
+
+export function InsightsPage() {
+  const { data, loading } = useInsightsData(180)
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-2xl font-bold">Insights</h1>
+        <Card className="text-center text-[var(--text-secondary)]">No data loaded yet.</Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">Insights</h1>
+      <WeeklyRecap data={data} />
+      <TrendExplorer data={data} />
+      <CorrelationExplorer data={data} />
+    </div>
+  )
+}
+
+function WeeklyRecap({ data }: { data: DailyMetrics[] }) {
+  const lastWeek = data.slice(-7)
+  const avg = (key: MetricKey) => {
+    const vals = lastWeek.map((d) => d[key]).filter((v): v is number => v != null)
+    return vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null
+  }
+  const totalSteps = lastWeek.reduce((s, d) => s + (d.steps ?? 0), 0)
+
+  return (
+    <Card>
+      <p className="mb-3 font-semibold">This week</p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <RecapStat label="Total steps" value={totalSteps.toLocaleString()} />
+        <RecapStat label="Avg resting HR" value={avg('restingHr') != null ? `${Math.round(avg('restingHr')!)} bpm` : '—'} />
+        <RecapStat label="Avg sleep score" value={avg('sleepScore') != null ? Math.round(avg('sleepScore')!).toString() : '—'} />
+        <RecapStat label="Avg stress" value={avg('stressAvg') != null ? Math.round(avg('stressAvg')!).toString() : '—'} />
+      </div>
+    </Card>
+  )
+}
+
+function RecapStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-[var(--bg-panel)] p-3">
+      <p className="text-xs text-[var(--text-tertiary)]">{label}</p>
+      <p className="mt-1 text-lg font-bold">{value}</p>
+    </div>
+  )
+}
+
+function TrendExplorer({ data }: { data: DailyMetrics[] }) {
+  const [metric, setMetric] = useState<MetricKey>('steps')
+  const option = METRIC_OPTIONS.find((o) => o.key === metric)!
+
+  const raw = data.map((d) => d[metric])
+  const ma7 = movingAverage(raw, 7)
+  const ma30 = movingAverage(raw, 30)
+  const days = data.map((d) => `${d.day}T00:00:00`)
+
+  return (
+    <Card>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="font-semibold">Trends</p>
+        <select
+          value={metric}
+          onChange={(e) => setMetric(e.target.value as MetricKey)}
+          className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
+        >
+          {METRIC_OPTIONS.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <Chart
+        option={{
+          xAxis: dayAxis(),
+          yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
+          legend: { data: ['Daily', '7-day avg', '30-day avg'], textStyle: { color: 'var(--text-tertiary)' }, top: 0 },
+          series: [
+            { name: 'Daily', type: 'line', data: days.map((d, i) => [d, raw[i]]), symbol: 'none', lineStyle: { color: 'rgba(56,189,248,0.25)', width: 1 } },
+            { name: '7-day avg', type: 'line', data: days.map((d, i) => [d, ma7[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#38bdf8', width: 2 } },
+            { name: '30-day avg', type: 'line', data: days.map((d, i) => [d, ma30[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#8b7bf6', width: 2 } },
+          ],
+        }}
+      />
+      <p className="mt-1 text-xs text-[var(--text-tertiary)]">{option.label}{option.unit ? ` (${option.unit})` : ''}</p>
+    </Card>
+  )
+}
+
+function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
+  const [metricA, setMetricA] = useState<MetricKey>('sleepMinutes')
+  const [metricB, setMetricB] = useState<MetricKey>('restingHr')
+  const [lag, setLag] = useState(1)
+
+  const labelA = METRIC_OPTIONS.find((o) => o.key === metricA)!.label
+  const labelB = METRIC_OPTIONS.find((o) => o.key === metricB)!.label
+
+  const { points, correlation } = useMemo(() => {
+    const pts: [number, number][] = []
+    for (let i = 0; i < data.length - lag; i++) {
+      const x = data[i][metricA]
+      const y = data[i + lag][metricB]
+      if (x != null && y != null) pts.push([x, y])
+    }
+    return { points: pts, correlation: pearsonCorrelation(pts) }
+  }, [data, metricA, metricB, lag])
+
+  return (
+    <Card>
+      <div className="mb-1 flex items-center gap-1.5">
+        <p className="font-semibold">Correlation explorer</p>
+        <InfoButton title="Correlation">
+          Shows how two metrics move together across your history. A strong correlation doesn't prove one causes
+          the other — lots of things vary together without a direct cause-and-effect link.
+        </InfoButton>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <select value={metricA} onChange={(e) => setMetricA(e.target.value as MetricKey)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+          {METRIC_OPTIONS.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-[var(--text-tertiary)]">vs.</span>
+        <select value={metricB} onChange={(e) => setMetricB(e.target.value as MetricKey)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+          {METRIC_OPTIONS.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <select value={lag} onChange={(e) => setLag(Number(e.target.value))} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+          <option value={0}>same day</option>
+          <option value={1}>next day</option>
+          <option value={2}>2 days later</option>
+          <option value={3}>3 days later</option>
+        </select>
+      </div>
+
+      <Chart
+        option={{
+          xAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
+          yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
+          series: [{ type: 'scatter', data: points, symbolSize: 7, itemStyle: { color: 'rgba(56,189,248,0.7)' } }],
+        }}
+        height={220}
+      />
+
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        {correlation
+          ? `${labelA} and ${labelB} (${lag === 0 ? 'same day' : `${lag}d later`}) show ${
+              correlation.direction === 'none'
+                ? 'no meaningful correlation'
+                : `a ${correlation.strength} ${correlation.direction} correlation`
+            } (r = ${correlation.r.toFixed(2)}, n = ${correlation.n}). Correlation isn't causation.`
+          : 'Not enough overlapping data yet for these two metrics.'}
+      </p>
+    </Card>
+  )
+}

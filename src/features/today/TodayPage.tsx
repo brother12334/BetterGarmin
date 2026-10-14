@@ -12,6 +12,9 @@ import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
 import { LiveHeartRateCard } from './LiveHeartRateCard'
+import { useReadiness } from './useReadiness'
+import { useEnergyReserve } from './useEnergyReserve'
+import { EnergyReserveCard } from './EnergyReserveCard'
 
 interface TodayData {
   day: string
@@ -25,6 +28,8 @@ export function TodayPage() {
   const [loading, setLoading] = useState(true)
   const { loadedKinds, lastSynced } = useData()
   const hasGarmin = loadedKinds.includes('garmin')
+  const readiness = useReadiness(data?.day ?? null, data?.sleep?.score ?? null)
+  const energy = useEnergyReserve(data?.day ?? null, data?.summary?.bb_min ?? 55)
 
   useEffect(() => {
     let cancelled = false
@@ -110,17 +115,23 @@ export function TodayPage() {
             value={summary?.bb_charged ?? null}
             label="Energy"
             title="Energy Reserve (Garmin Body Battery)"
-            description="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. BetterGarmin's own live-curve estimate arrives in a later update."
+            description="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. See the curve below for BetterGarmin's own estimated intraday trace."
           />
           <HeroRing
             metric="readiness"
-            value={null}
+            value={readiness?.score ?? null}
             label="Readiness"
-            title="Readiness"
-            description="BetterGarmin's recovery/readiness score — combining sleep, resting heart rate, training load, and stress — is coming in a later update."
+            title="Readiness (BetterGarmin estimate)"
+            description={
+              readiness
+                ? `${readiness.recommendation} Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline.`
+                : "BetterGarmin's recovery/readiness score, combining sleep, resting heart rate, training load, and stress. Needs a bit more history to establish your personal baseline."
+            }
           />
         </div>
       </Card>
+
+      <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />

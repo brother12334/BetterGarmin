@@ -1,10 +1,31 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { useData } from './app/DataProvider'
 import { AppShell } from './app/AppShell'
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow'
-import { TodayPage } from './features/today/TodayPage'
-import { MorePage } from './features/more/MorePage'
-import { ComingSoon } from './components/ComingSoon'
+import { Skeleton } from './components/ui/Skeleton'
+
+const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
+const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ default: m.MorePage })))
+const HealthPage = lazy(() => import('./features/health/HealthPage').then((m) => ({ default: m.HealthPage })))
+const SleepPage = lazy(() => import('./features/sleep/SleepPage').then((m) => ({ default: m.SleepPage })))
+const TrainingFeedPage = lazy(() =>
+  import('./features/training/TrainingFeedPage').then((m) => ({ default: m.TrainingFeedPage })),
+)
+const ActivityDetailPage = lazy(() =>
+  import('./features/training/ActivityDetailPage').then((m) => ({ default: m.ActivityDetailPage })),
+)
+const InsightsPage = lazy(() => import('./features/insights/InsightsPage').then((m) => ({ default: m.InsightsPage })))
+
+function RouteFallback() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-8 w-40" />
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-40 w-full" />
+    </div>
+  )
+}
 
 export default function App() {
   const { status } = useData()
@@ -22,27 +43,18 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route element={<AppShell />}>
-        <Route index element={<TodayPage />} />
-        <Route
-          path="health"
-          element={<ComingSoon title="Health" blurb="Resting heart rate, all-day HR, stress timelines, weight, and baseline ranges are coming in the next update." />}
-        />
-        <Route
-          path="training"
-          element={<ComingSoon title="Training" blurb="Your activity feed, route maps, splits, heart-rate zones, and training load are coming in a later update." />}
-        />
-        <Route
-          path="sleep"
-          element={<ComingSoon title="Sleep" blurb="Nightly hypnograms, sleep score breakdowns, and sleep debt tracking are coming in the next update." />}
-        />
-        <Route
-          path="insights"
-          element={<ComingSoon title="Insights" blurb="Long-term trends, the correlation explorer, and shareable recap cards are coming in a later update." />}
-        />
-        <Route path="more" element={<MorePage />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route index element={<TodayPage />} />
+          <Route path="health" element={<HealthPage />} />
+          <Route path="training" element={<TrainingFeedPage />} />
+          <Route path="training/:activityId" element={<ActivityDetailPage />} />
+          <Route path="sleep" element={<SleepPage />} />
+          <Route path="insights" element={<InsightsPage />} />
+          <Route path="more" element={<MorePage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   )
 }
