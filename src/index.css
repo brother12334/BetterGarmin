@@ -7,7 +7,7 @@
   (ring color, chart gradient, badge, icon tint).
 */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* metric colors (used as bg-metric-heart, text-metric-sleep, etc via arbitrary utilities) */
   --color-metric-heart: #fb4a59;

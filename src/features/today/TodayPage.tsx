@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
 import { Ring } from '../../components/ui/Ring'
+import { RangeBar } from '../../components/ui/RangeBar'
+import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
 import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { InfoButton } from '../../components/ui/InfoButton'
+import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { getDailySummary, getHrv, getLatestDay, getSleep } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
@@ -17,6 +20,7 @@ import { LiveHeartRateCard } from './LiveHeartRateCard'
 import { useReadiness } from './useReadiness'
 import { useEnergyReserve } from './useEnergyReserve'
 import { EnergyReserveCard } from './EnergyReserveCard'
+import { STATUS_COLORS, STATUS_LABELS, statusForInverseScore, statusForScore } from '../../lib/statusWords'
 
 interface TodayData {
   day: string
@@ -90,48 +94,35 @@ export function TodayPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Today</h1>
-        <p className="text-sm text-[var(--text-secondary)]">{formattedDay}</p>
-      </div>
+      <ReadinessHero formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />
 
       <LiveHeartRateCard />
 
-      <Card>
-        <div className="grid grid-cols-2 gap-y-6 sm:grid-cols-4">
-          <HeroRing
-            metric="sleep"
-            value={sleep?.score ?? null}
-            label="Sleep"
-            title="Sleep score"
-            description="Garmin's 0-100 score for last night, based on duration, sleep stages, and overnight resting heart rate. 80+ is great, 60-79 is good, below 60 means your body may need more recovery."
-          />
-          <HeroRing
-            metric="stress"
-            value={summary?.stress_avg ?? null}
-            label="Stress"
-            title="Stress"
-            description="A 0-100 estimate of today's stress, from heart-rate variability relative to your resting heart rate. Below 25 is calm, 25-50 is typical daily stress, above 50 means your body is working harder than usual."
-          />
-          <HeroRing
-            metric="energy"
-            value={summary?.bb_charged ?? null}
-            label="Energy"
-            title="Energy Reserve (Garmin Body Battery)"
-            description="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. See the curve below for BetterGarmin's own estimated intraday trace."
-          />
-          <HeroRing
-            metric="readiness"
-            value={readiness?.score ?? null}
-            label="Readiness"
-            title="Readiness (BetterGarmin estimate)"
-            description={
-              readiness
-                ? `${readiness.recommendation} Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline.`
-                : "BetterGarmin's recovery/readiness score, combining sleep, resting heart rate, training load, and stress. Needs a bit more history to establish your personal baseline."
-            }
-          />
-        </div>
+      <Card className="divide-y divide-[var(--border-panel)] py-1">
+        <RangeBar
+          label="Sleep"
+          value={sleep?.score ?? null}
+          status={statusForScore(sleep?.score, [50, 70, 85])}
+          color={METRIC_COLORS.sleep.solid}
+          infoTitle="Sleep score"
+          infoDescription="Garmin's 0-100 score for last night, based on duration, sleep stages, and overnight resting heart rate. 80+ is great, 60-79 is good, below 60 means your body may need more recovery."
+        />
+        <RangeBar
+          label="Stress"
+          value={summary?.stress_avg ?? null}
+          status={statusForInverseScore(summary?.stress_avg)}
+          color={METRIC_COLORS.stress.solid}
+          infoTitle="Stress"
+          infoDescription="A 0-100 estimate of today's stress, from heart-rate variability relative to your resting heart rate. Below 25 is calm, 25-50 is typical daily stress, above 50 means your body is working harder than usual."
+        />
+        <RangeBar
+          label="Energy"
+          value={summary?.bb_charged ?? null}
+          status={statusForScore(summary?.bb_charged, [30, 50, 75])}
+          color={METRIC_COLORS.energy.solid}
+          infoTitle="Energy Reserve (Garmin Body Battery)"
+          infoDescription="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. See the curve below for BetterGarmin's own estimated intraday trace."
+        />
       </Card>
 
       <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />
@@ -194,25 +185,47 @@ export function TodayPage() {
   )
 }
 
-function HeroRing({
-  metric,
-  value,
-  label,
-  title,
-  description,
+function ReadinessHero({
+  formattedDay,
+  score,
+  recommendation,
 }: {
-  metric: 'sleep' | 'stress' | 'energy' | 'readiness'
-  value: number | null
-  label: string
-  title: string
-  description: string
+  formattedDay: string
+  score: number | null
+  recommendation: string | null
 }) {
+  const status = statusForScore(score)
+  const color = status ? STATUS_COLORS[status] : METRIC_COLORS.readiness.solid
+
   return (
-    <div className="flex flex-col items-center gap-1">
-      <Ring value={value} metric={metric} size={92} strokeWidth={8} />
-      <div className="flex items-center gap-1">
-        <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
-        <InfoButton title={title}>{description}</InfoButton>
+    <div className="relative -mx-4 -mt-6 overflow-hidden rounded-b-[2rem] md:-mx-8">
+      <div className="absolute inset-0">
+        <MountainBackdrop height={320} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/25 to-black/10" />
+      </div>
+      <div className="relative flex flex-col gap-5 px-4 pb-8 pt-6 md:px-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">Today</h1>
+          <p className="text-sm text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{formattedDay}</p>
+        </div>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="rounded-full" style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.45))' }}>
+            <Ring value={score} metric="readiness" size={176} strokeWidth={14} />
+          </div>
+          <div className="flex max-w-xs flex-col items-center gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color }}>
+                {status ? STATUS_LABELS[status] : 'Readiness'}
+              </span>
+              <InfoButton title="Readiness (BetterGarmin estimate)">
+                {recommendation
+                  ? `${recommendation} Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline.`
+                  : "BetterGarmin's recovery/readiness score, combining sleep, resting heart rate, training load, and stress. Needs a bit more history to establish your personal baseline."}
+              </InfoButton>
+            </div>
+            {recommendation && <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{recommendation}</p>}
+          </div>
+        </div>
       </div>
     </div>
   )
