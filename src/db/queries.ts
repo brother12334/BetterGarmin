@@ -81,3 +81,12 @@ export async function getMonitoringHrForDay(
     [`${day} 00:00:00`, `${day} 23:59:59`],
   )
 }
+
+/** The single most recent all-day heart-rate sample GarminDB has recorded. */
+export async function getLatestHeartRate(): Promise<{ timestamp: string; heart_rate: number } | null> {
+  const rows = await sqliteClient.query<{ timestamp: string; heart_rate: number }>(
+    'monitoring',
+    'SELECT * FROM monitoring_hr ORDER BY timestamp DESC LIMIT 1',
+  )
+  return rows[0] ?? null
+}
