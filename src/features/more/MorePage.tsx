@@ -2,13 +2,18 @@ import { useState } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
+import { useUnits } from '../../app/units'
 import { useData } from '../../app/DataProvider'
 import { SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
 import { formatRelativeTime } from '../../lib/relativeTime'
+import { GoalsCard } from './GoalsCard'
+import { QuickExport } from './QuickExport'
+import { SqlConsole } from './SqlConsole'
 
 export function MorePage() {
   const { theme, setTheme } = useTheme()
+  const { units, setUnits } = useUnits()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, syncNow } =
     useData()
   const [confirming, setConfirming] = useState(false)
@@ -35,6 +40,29 @@ export function MorePage() {
           ))}
         </div>
       </Card>
+
+      <Card>
+        <p className="mb-3 font-semibold">Units</p>
+        <div className="flex gap-2">
+          {(['metric', 'imperial'] as const).map((u) => (
+            <Button
+              key={u}
+              variant={units === u ? 'primary' : 'secondary'}
+              onClick={() => setUnits(u)}
+              className="flex-1 capitalize"
+            >
+              {u === 'metric' ? 'Metric (km, kg)' : 'Imperial (mi, lb)'}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      {loadedKinds.length > 0 && (
+        <Card>
+          <p className="mb-3 font-semibold">Goals</p>
+          <GoalsCard />
+        </Card>
+      )}
 
       <Card>
         <p className="mb-2 font-semibold">Your data</p>
@@ -112,6 +140,17 @@ export function MorePage() {
       </Card>
 
       <Card>
+        <p className="mb-2 font-semibold">Export data</p>
+        <p className="mb-3 text-xs text-[var(--text-tertiary)]">Download your history as CSV files you can open in a spreadsheet.</p>
+        <QuickExport />
+      </Card>
+
+      <Card>
+        <p className="mb-1 font-semibold">SQL console</p>
+        <SqlConsole />
+      </Card>
+
+      <Card>
         <p className="mb-2 font-semibold">About</p>
         <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
           BetterGarmin is an independent, open-source project and is not affiliated with Garmin. It is not medical
@@ -124,7 +163,7 @@ export function MorePage() {
       </Card>
 
       <p className="text-center text-xs text-[var(--text-tertiary)]">
-        Goals, custom dashboards, unit toggle, SQL console, and export tools are coming in a later update.
+        Custom, drag-and-drop dashboard layouts are coming in a later update.
       </p>
     </div>
   )

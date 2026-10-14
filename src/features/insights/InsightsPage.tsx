@@ -5,8 +5,23 @@ import { Skeleton } from '../../components/ui/Skeleton'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { useInsightsData, METRIC_OPTIONS, type DailyMetrics } from './useInsightsData'
 import { movingAverage, pearsonCorrelation } from '../../lib/stats'
+import { useUnits } from '../../app/units'
+import { convertDistance, convertWeight, distanceUnitLabel, weightUnitLabel, type UnitSystem } from '../../lib/units'
 
 type MetricKey = (typeof METRIC_OPTIONS)[number]['key']
+
+function convertMetric(key: MetricKey, value: number | null, units: UnitSystem): number | null {
+  if (value == null) return null
+  if (key === 'distance') return convertDistance(value, units)
+  if (key === 'weight') return convertWeight(value, units)
+  return value
+}
+
+function metricUnit(key: MetricKey, units: UnitSystem): string {
+  if (key === 'distance') return distanceUnitLabel(units)
+  if (key === 'weight') return weightUnitLabel(units)
+  return METRIC_OPTIONS.find((o) => o.key === key)!.unit
+}
 
 function dayAxis() {
   return {
@@ -80,10 +95,11 @@ function RecapStat({ label, value }: { label: string; value: string }) {
 }
 
 function TrendExplorer({ data }: { data: DailyMetrics[] }) {
+  const { units } = useUnits()
   const [metric, setMetric] = useState<MetricKey>('steps')
   const option = METRIC_OPTIONS.find((o) => o.key === metric)!
 
-  const raw = data.map((d) => d[metric])
+  const raw = data.map((d) => convertMetric(metric, d[metric], units))
   const ma7 = movingAverage(raw, 7)
   const ma30 = movingAverage(raw, 30)
   const days = data.map((d) => `${d.day}T00:00:00`)
@@ -116,12 +132,16 @@ function TrendExplorer({ data }: { data: DailyMetrics[] }) {
           ],
         }}
       />
-      <p className="mt-1 text-xs text-[var(--text-tertiary)]">{option.label}{option.unit ? ` (${option.unit})` : ''}</p>
+      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+        {option.label}
+        {metricUnit(metric, units) ? ` (${metricUnit(metric, units)})` : ''}
+      </p>
     </Card>
   )
 }
 
 function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
+  const { units } = useUnits()
   const [metricA, setMetricA] = useState<MetricKey>('sleepMinutes')
   const [metricB, setMetricB] = useState<MetricKey>('restingHr')
   const [lag, setLag] = useState(1)
@@ -132,12 +152,12 @@ function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
   const { points, correlation } = useMemo(() => {
     const pts: [number, number][] = []
     for (let i = 0; i < data.length - lag; i++) {
-      const x = data[i][metricA]
-      const y = data[i + lag][metricB]
+      const x = convertMetric(metricA, data[i][metricA], units)
+      const y = convertMetric(metricB, data[i + lag][metricB], units)
       if (x != null && y != null) pts.push([x, y])
     }
     return { points: pts, correlation: pearsonCorrelation(pts) }
-  }, [data, metricA, metricB, lag])
+  }, [data, metricA, metricB, lag, units])
 
   return (
     <Card>

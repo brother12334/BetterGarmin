@@ -4,6 +4,8 @@ import { Card } from '../../components/ui/Card'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { Button } from '../../components/ui/Button'
 import { useData } from '../../app/DataProvider'
+import { useUnits } from '../../app/units'
+import { formatDistance } from '../../lib/units'
 import { getActivitiesRange, getLatestActivityDay } from '../../db/queries'
 import type { ActivityRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
@@ -22,6 +24,7 @@ function formatDuration(hms: string | null): string {
 
 export function TrainingFeedPage() {
   const { loadedKinds, lastSynced } = useData()
+  const { units } = useUnits()
   const hasActivities = loadedKinds.includes('activities')
   const [activities, setActivities] = useState<ActivityRow[] | null>(null)
   const [windowDays, setWindowDays] = useState(PAGE_DAYS)
@@ -111,7 +114,7 @@ export function TrainingFeedPage() {
               <div key={r.sport} className="rounded-xl bg-[var(--bg-panel)] p-3">
                 <p className="text-xs capitalize text-[var(--text-tertiary)]">{r.sport.replace(/_/g, ' ')}</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {r.longestDistance?.distance != null ? `${r.longestDistance.distance.toFixed(1)} km longest` : `${r.count} activities`}
+                  {r.longestDistance?.distance != null ? `${formatDistance(r.longestDistance.distance, units)} longest` : `${r.count} activities`}
                 </p>
                 {r.longestDuration && (
                   <p className="text-xs text-[var(--text-tertiary)]">{formatDuration(r.longestDuration.elapsed_time)} longest</p>
@@ -135,7 +138,7 @@ export function TrainingFeedPage() {
                   {activity.start_time ? new Date(activity.start_time.replace(' ', 'T')).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
                   {' · '}
                   {formatDuration(activity.elapsed_time)}
-                  {activity.distance != null ? ` · ${activity.distance.toFixed(1)} km` : ''}
+                  {activity.distance != null ? ` · ${formatDistance(activity.distance, units)}` : ''}
                 </p>
               </div>
               <div className="shrink-0 text-right">

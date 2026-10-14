@@ -11,6 +11,8 @@ import { buildTodayInsights } from './insights'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
+import { useUnits } from '../../app/units'
+import { convertDistance, distanceUnitLabel } from '../../lib/units'
 import { LiveHeartRateCard } from './LiveHeartRateCard'
 import { useReadiness } from './useReadiness'
 import { useEnergyReserve } from './useEnergyReserve'
@@ -27,6 +29,7 @@ export function TodayPage() {
   const [data, setData] = useState<TodayData | null>(null)
   const [loading, setLoading] = useState(true)
   const { loadedKinds, lastSynced } = useData()
+  const { units } = useUnits()
   const hasGarmin = loadedKinds.includes('garmin')
   const readiness = useReadiness(data?.day ?? null, data?.sleep?.score ?? null)
   const energy = useEnergyReserve(data?.day ?? null, data?.summary?.bb_min ?? 55)
@@ -137,7 +140,12 @@ export function TodayPage() {
         <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />
         <StatCard label="Floors" value={summary?.floors_up ?? 0} suffix=" fl" />
         <StatCard label="Calories" value={summary?.calories_total ?? 0} />
-        <StatCard label="Distance" value={summary?.distance ?? 0} decimals={1} suffix=" km" />
+        <StatCard
+          label="Distance"
+          value={convertDistance(summary?.distance ?? 0, units)}
+          decimals={1}
+          suffix={` ${distanceUnitLabel(units)}`}
+        />
       </div>
 
       {sleep && (

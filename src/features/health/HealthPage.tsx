@@ -4,6 +4,8 @@ import { Chart } from '../../components/ui/Chart'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useData } from '../../app/DataProvider'
+import { useUnits } from '../../app/units'
+import { convertWeight, weightUnitLabel } from '../../lib/units'
 import {
   getLatestDay,
   getMonitoringHrForDay,
@@ -56,6 +58,7 @@ function dayAxisOption() {
 
 export function HealthPage() {
   const { loadedKinds, lastSynced } = useData()
+  const { units } = useUnits()
   const hasGarmin = loadedKinds.includes('garmin')
   const hasMonitoring = loadedKinds.includes('monitoring')
   const [data, setData] = useState<HealthData | null>(null)
@@ -218,7 +221,7 @@ export function HealthPage() {
 
       {hasWeight && (
         <Card>
-          <p className="mb-2 font-semibold">Weight</p>
+          <p className="mb-2 font-semibold">Weight ({weightUnitLabel(units)})</p>
           <Chart
             option={{
               xAxis: dayAxisOption(),
@@ -228,7 +231,7 @@ export function HealthPage() {
                   type: 'line',
                   data: data.weightSeries
                     .filter((w) => w.weight != null)
-                    .map((w) => [`${w.day}T00:00:00`, w.weight]),
+                    .map((w) => [`${w.day}T00:00:00`, convertWeight(w.weight as number, units)]),
                   smooth: true,
                   symbol: 'circle',
                   symbolSize: 5,

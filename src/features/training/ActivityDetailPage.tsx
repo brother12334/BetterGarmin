@@ -6,6 +6,8 @@ import { Card } from '../../components/ui/Card'
 import { Chart } from '../../components/ui/Chart'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useData } from '../../app/DataProvider'
+import { useUnits } from '../../app/units'
+import { formatDistance, formatElevation, formatSpeed } from '../../lib/units'
 import { getActivity, getActivityLaps, getActivityRecords, getStepsActivityVo2Max } from '../../db/queries'
 import type { ActivityLapRow, ActivityRecordRow, ActivityRow } from '../../db/types'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
@@ -24,6 +26,7 @@ const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyrigh
 export function ActivityDetailPage() {
   const { activityId } = useParams<{ activityId: string }>()
   const { loadedKinds } = useData()
+  const { units } = useUnits()
   const [data, setData] = useState<DetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
@@ -158,12 +161,12 @@ export function ActivityDetailPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Distance" value={activity.distance != null ? `${activity.distance.toFixed(2)} km` : '—'} />
+        <Stat label="Distance" value={formatDistance(activity.distance, units, 2)} />
         <Stat label="Duration" value={formatHoursMinutes(hmsToMinutes(activity.elapsed_time))} />
         <Stat label="Avg HR" value={activity.avg_hr != null ? `${activity.avg_hr} bpm` : '—'} />
         <Stat label="Max HR" value={activity.max_hr != null ? `${activity.max_hr} bpm` : '—'} />
         <Stat label="Calories" value={activity.calories != null ? `${activity.calories}` : '—'} />
-        <Stat label="Elevation gain" value={activity.ascent != null ? `${Math.round(activity.ascent)} m` : '—'} />
+        <Stat label="Elevation gain" value={formatElevation(activity.ascent, units)} />
         <Stat label="Training load" value={activity.training_load != null ? activity.training_load.toFixed(1) : '—'} />
         <Stat label="VO2max" value={vo2Max != null ? vo2Max.toFixed(1) : '—'} />
       </div>
@@ -223,10 +226,10 @@ export function ActivityDetailPage() {
               {laps.map((lap) => (
                 <tr key={lap.lap} className="border-t border-[var(--border-panel)]">
                   <td className="py-1.5 pr-3">{lap.lap}</td>
-                  <td className="py-1.5 pr-3">{lap.distance != null ? `${lap.distance.toFixed(2)} km` : '—'}</td>
+                  <td className="py-1.5 pr-3">{formatDistance(lap.distance, units, 2)}</td>
                   <td className="py-1.5 pr-3">{formatHoursMinutes(hmsToMinutes(lap.elapsed_time))}</td>
                   <td className="py-1.5 pr-3">{lap.avg_hr ?? '—'}</td>
-                  <td className="py-1.5">{lap.avg_speed != null ? `${lap.avg_speed.toFixed(1)} km/h` : '—'}</td>
+                  <td className="py-1.5">{formatSpeed(lap.avg_speed, units)}</td>
                 </tr>
               ))}
             </tbody>

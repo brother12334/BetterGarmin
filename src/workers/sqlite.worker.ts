@@ -44,7 +44,21 @@ interface ListKindsRequest {
   type: 'listKinds'
 }
 
-type Request = LoadFileRequest | LoadKnownRequest | QueryRequest | HasKindRequest | ClearRequest | ListKindsRequest
+interface RawQueryRequest {
+  id: number
+  type: 'rawQuery'
+  kind: DbKind
+  sql: string
+}
+
+type Request =
+  | LoadFileRequest
+  | LoadKnownRequest
+  | QueryRequest
+  | HasKindRequest
+  | ClearRequest
+  | ListKindsRequest
+  | RawQueryRequest
 
 type Row = Record<string, string | number | null>
 
@@ -123,6 +137,18 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       }
       case 'listKinds': {
         self.postMessage({ id: msg.id, ok: true, result: Array.from(databases.keys()) })
+        return
+      }
+      case 'rawQuery': {
+        const db = databases.get(msg.kind)
+        if (!db) {
+          self.postMessage({ id: msg.id, ok: false, error: `${msg.kind} is not loaded.` })
+          return
+        }
+        const results = db.exec(msg.sql)
+        const last = results[results.length - 1]
+        const result = last ? { columns: last.columns, rows: last.values } : { columns: [], rows: [] }
+        self.postMessage({ id: msg.id, ok: true, result })
         return
       }
       case 'clear': {

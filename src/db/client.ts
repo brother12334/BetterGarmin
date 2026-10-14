@@ -46,6 +46,11 @@ class SqliteClient {
     return this.call<T[]>({ type: 'query', kind, sql, params })
   }
 
+  /** Runs an arbitrary SQL string and returns the last statement's result as columns + raw row tuples. */
+  rawQuery(kind: DbKind, sql: string): Promise<{ columns: string[]; rows: unknown[][] }> {
+    return this.call({ type: 'rawQuery', kind, sql })
+  }
+
   hasKind(kind: DbKind): Promise<boolean> {
     return this.call({ type: 'hasKind', kind })
   }
