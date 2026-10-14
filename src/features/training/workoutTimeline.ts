@@ -158,6 +158,10 @@ export function buildWorkoutTimeline(input: BuildTimelineInput): WorkoutTimeline
     .filter((s) => s.atEpochMs != null)
     .sort((a, b) => (a.atEpochMs as number) - (b.atEpochMs as number))
 
+  // Without at least one set carrying its own timestamp, there's nothing to build segments from —
+  // the whole window would otherwise render as a single undifferentiated "cooldown" block.
+  if (timedSets.length === 0) return null
+
   function makeSegment(type: SegmentType, startMs: number, endMs: number, extra: Partial<TimelineSegment> = {}): TimelineSegment {
     const hr = statsForRange(hrSeries, startMs, endMs)
     return {

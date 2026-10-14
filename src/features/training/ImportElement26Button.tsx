@@ -11,10 +11,12 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
   const inputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
 
   async function handleFile(file: File) {
     setImporting(true)
     setError(null)
+    setWarnings([])
     try {
       const text = await file.text()
       const json = JSON.parse(text)
@@ -24,6 +26,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
         return
       }
       await onImported(result.workout, result.sets)
+      setWarnings(result.warnings)
     } catch {
       setError("Couldn't read that file — make sure it's a valid Element 26 export.")
     } finally {
@@ -48,6 +51,13 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
         {importing ? 'Importing…' : 'Import Element 26 workout'}
       </Button>
       {error && <p className="text-sm text-rose-400">{error}</p>}
+      {warnings.length > 0 && (
+        <ul className="flex flex-col gap-0.5 text-xs text-amber-400">
+          {warnings.map((w, i) => (
+            <li key={i}>{w}</li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

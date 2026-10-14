@@ -115,8 +115,16 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
     day: string
     split: string
     notes: null
-    linkedActivityId: string
+    linkedActivityId: string | null
     createdAt: number
+    startedAtEpochMs?: number
+    finishedAtEpochMs?: number
+    source?: 'element26'
+    title?: string
+    gym?: string
+    feelRating?: number
+    qualityGrade?: string
+    qualityPercent?: number
   }
   interface SeedSet {
     id: string
@@ -129,9 +137,12 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
     isWarmup: boolean
     order: number
     createdAt: number
+    atEpochMs?: number
+    restSecondsBefore?: number
   }
   const seedWorkouts: SeedWorkout[] = []
   const seedSets: SeedSet[] = []
+  const activityWindowById = new Map<string, { start: number; end: number }>()
 
   const runGarmin = garminDb.transaction((model: DayModel) => {
     if (model.weight != null) insWeight.run(model.day, model.weight)
@@ -277,7 +288,18 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
       if (detail.strengthSets && detail.strengthSets.length > 0) {
         const day = a.start_time.slice(0, 10)
         const createdAt = new Date(a.start_time.replace(' ', 'T')).getTime()
-        seedWorkouts.push({ id: a.activity_id, day, split: plan.split ?? 'full_body', notes: null, linkedActivityId: a.activity_id, createdAt })
+        // The activity's own window — kept aside, not stored on every seeded workout. Real manual
+        // log entries don't actually know precise start/end times (that's the whole gap Element 26
+        // import fills), so only the one workout promoted to an "import" below should carry these.
+        activityWindowById.set(a.activity_id, { start: createdAt, end: new Date(a.stop_time.replace(' ', 'T')).getTime() })
+        seedWorkouts.push({
+          id: a.activity_id,
+          day,
+          split: plan.split ?? 'full_body',
+          notes: null,
+          linkedActivityId: a.activity_id,
+          createdAt,
+        })
         detail.strengthSets.forEach((s, i) => {
           seedSets.push({
             id: `${a.activity_id}-${i}`,
@@ -316,6 +338,40 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
   const recentWorkouts = seedWorkouts.filter((w) => w.day >= cutoffDay)
   const recentWorkoutIds = new Set(recentWorkouts.map((w) => w.id))
   const recentSets = seedSets.filter((s) => recentWorkoutIds.has(s.workoutId))
+
+  // Promote the single most recent strength session into an "Element 26 import" so the demo
+  // showcases the full-workout timeline feature (per-set timing matched against Garmin HR data)
+  // without anyone having to import a real file first. Reuses the activity it's already linked
+  // to, so the HR records the timeline needs are already there.
+  const latestWorkout = recentWorkouts.reduce<SeedWorkout | null>(
+    (best, w) => (!best || w.day > best.day || (w.day === best.day && w.createdAt > best.createdAt) ? w : best),
+    null,
+  )
+  if (latestWorkout) {
+    const window = activityWindowById.get(latestWorkout.id)!
+    const latestSets = recentSets.filter((s) => s.workoutId === latestWorkout.id).sort((a, b) => a.order - b.order)
+    const start = window.start
+    const finish = window.end
+    const usableMs = Math.max(finish - start - 90_000, latestSets.length * 20_000)
+    const slotMs = usableMs / latestSets.length
+    let cursor = start + 45_000
+    for (const s of latestSets) {
+      cursor += slotMs
+      s.atEpochMs = Math.min(Math.round(cursor), finish - 30_000)
+      s.restSecondsBefore = Math.round(Math.min(Math.max(slotMs / 1000 - 15, 20), 240))
+    }
+    const SPLIT_TITLES: Record<string, string> = { push: 'Push Day', pull: 'Pull Day', legs: 'Leg Day', full_body: 'Full Body' }
+    latestWorkout.source = 'element26'
+    latestWorkout.linkedActivityId = null // real imports don't know the Garmin activity id — matched live instead
+    latestWorkout.startedAtEpochMs = start
+    latestWorkout.finishedAtEpochMs = finish
+    latestWorkout.title = SPLIT_TITLES[latestWorkout.split] ?? 'Workout'
+    latestWorkout.gym = 'Demo Fitness Club'
+    latestWorkout.feelRating = 4
+    latestWorkout.qualityGrade = 'A-'
+    latestWorkout.qualityPercent = 88
+  }
+
   fs.writeFileSync(
     path.join(outputDir, 'strength-log.json'),
     JSON.stringify({ workouts: recentWorkouts, sets: recentSets }),

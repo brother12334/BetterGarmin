@@ -11,6 +11,7 @@ import { EXERCISE_CATALOG, SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useStrengthLog } from './useStrengthLog'
 import { useStrengthSessions } from './useStrengthSessions'
 import { LogWorkoutForm } from './LogWorkoutForm'
+import { ImportElement26Button } from './ImportElement26Button'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import {
   computePRs,
@@ -71,14 +72,17 @@ export function StrengthPage() {
           <h1 className="text-2xl font-bold">Strength</h1>
         </div>
         {!formOpen && (
-          <Button
-            onClick={() => {
-              setEditing(null)
-              setFormOpen(true)
-            }}
-          >
-            Log workout
-          </Button>
+          <div className="flex items-center gap-2">
+            <ImportElement26Button onImported={save} />
+            <Button
+              onClick={() => {
+                setEditing(null)
+                setFormOpen(true)
+              }}
+            >
+              Log workout
+            </Button>
+          </div>
         )}
       </div>
 
@@ -272,9 +276,7 @@ export function StrengthPage() {
               <div>
                 <p className="font-semibold">
                   {s.workout
-                    ? s.workout.split === 'custom'
-                      ? 'Workout'
-                      : SPLIT_NAMES[s.workout.split]
+                    ? (s.workout.title ?? (s.workout.split === 'custom' ? 'Workout' : SPLIT_NAMES[s.workout.split]))
                     : (s.activity?.name ?? 'Strength session')}
                 </p>
                 <p className="text-xs text-[var(--text-tertiary)]">
@@ -284,6 +286,14 @@ export function StrengthPage() {
               </div>
               {s.workout && (
                 <div className="flex gap-2">
+                  {s.workout.startedAtEpochMs != null && (
+                    <Link
+                      to={`/training/strength/workout/${s.workout.id}`}
+                      className="text-xs text-sky-400 hover:text-sky-300"
+                    >
+                      Timeline
+                    </Link>
+                  )}
                   <button
                     type="button"
                     className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"

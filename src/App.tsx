@@ -16,6 +16,9 @@ const ActivityDetailPage = lazy(() =>
   import('./features/training/ActivityDetailPage').then((m) => ({ default: m.ActivityDetailPage })),
 )
 const StrengthPage = lazy(() => import('./features/training/StrengthPage').then((m) => ({ default: m.StrengthPage })))
+const WorkoutTimelinePage = lazy(() =>
+  import('./features/training/WorkoutTimelinePage').then((m) => ({ default: m.WorkoutTimelinePage })),
+)
 const InsightsPage = lazy(() => import('./features/insights/InsightsPage').then((m) => ({ default: m.InsightsPage })))
 
 function RouteFallback() {
@@ -51,6 +54,7 @@ export default function App() {
           <Route path="health" element={<HealthPage />} />
           <Route path="training" element={<TrainingFeedPage />} />
           <Route path="training/strength" element={<StrengthPage />} />
+          <Route path="training/strength/workout/:workoutId" element={<WorkoutTimelinePage />} />
           <Route path="training/:activityId" element={<ActivityDetailPage />} />
           <Route path="sleep" element={<SleepPage />} />
           <Route path="insights" element={<InsightsPage />} />

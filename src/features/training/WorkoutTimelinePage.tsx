@@ -32,6 +32,10 @@ function formatClock(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })
 }
 
+function formatClockShort(ms: number): string {
+  return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
 function formatDuration(ms: number): string {
   const totalSec = Math.round(ms / 1000)
   const h = Math.floor(totalSec / 3600)
@@ -79,7 +83,7 @@ export function WorkoutTimelinePage() {
       xAxis: {
         type: 'time' as const,
         axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-        axisLabel: { color: 'var(--text-tertiary)', formatter: (v: number) => formatClock(v) },
+        axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => formatClockShort(v) },
       },
       yAxis: { type: 'value' as const, name: 'bpm', splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
       series: [
@@ -89,7 +93,7 @@ export function WorkoutTimelinePage() {
           connectNulls: false,
           symbol: 'none' as const,
           lineStyle: { color: '#fb4a59', width: 1.75 },
-          markArea: { silent: false, data: markAreaData },
+          markArea: { silent: false, label: { show: false }, data: markAreaData },
         },
       ],
     }
@@ -153,6 +157,13 @@ export function WorkoutTimelinePage() {
         <Card className="text-sm text-[var(--text-secondary)]">
           No Garmin activity overlapping this workout's time window was found, so there's no heart-rate timeline to show —
           only what was logged. Make sure your Garmin data covers {new Date(`${workout.day}T00:00:00`).toLocaleDateString()} and re-import if needed.
+        </Card>
+      )}
+
+      {matchedActivity && !timeline && (
+        <Card className="text-sm text-[var(--text-secondary)]">
+          A matching Garmin activity was found, but none of this workout's sets carry their own timestamp, so a
+          timeline can't be built — only the per-set reps and weight you logged.
         </Card>
       )}
 
