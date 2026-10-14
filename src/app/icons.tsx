@@ -13,6 +13,27 @@ const base = {
   strokeLinejoin: 'round' as const,
 }
 
+/** The Dual Orbit brand mark (matches public/icons/icon.svg). */
+export function Logo({ size = 32, rounded = true, ...props }: IconProps & { size?: number; rounded?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" {...props}>
+      <defs>
+        <linearGradient id="orbitA" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+        <linearGradient id="orbitB" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#38bdf8" />
+        </linearGradient>
+      </defs>
+      {rounded && <rect width="64" height="64" rx="16" fill="#0a0b0f" />}
+      <circle cx="25" cy="32" r="16.5" fill="none" stroke="url(#orbitA)" strokeWidth="5.5" />
+      <circle cx="39" cy="32" r="16.5" fill="none" stroke="url(#orbitB)" strokeWidth="5.5" opacity={0.92} />
+    </svg>
+  )
+}
+
 export function TodayIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

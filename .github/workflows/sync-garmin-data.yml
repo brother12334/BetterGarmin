@@ -1,0 +1,124 @@
+name: Sync Garmin data
+
+# Optional, opt-in feature (see docs/cloud-sync.md). Disabled until the repo's
+# secrets below are configured — the "Check prerequisites" step exits cleanly
+# if they're missing instead of failing loudly on every scheduled run.
+#
+# Runs garmindb_cli.py on a schedule, restoring/saving its working database
+# files to a Cloudflare R2 bucket (S3-compatible, free tier) so state
+# persists across runs on GitHub's ephemeral runners. A Cloudflare Worker
+# (see worker/) serves those files to the BetterGarmin frontend behind an
+# access token — see docs/cloud-sync.md for full setup.
+
+on:
+  schedule:
+    # Every hour. Garmin Connect can flag accounts that log in too often —
+    # don't go much tighter than this. Public repos get unlimited free
+    # Actions minutes, so the cost here is Garmin's tolerance, not GitHub's.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-garmin-data
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+      DB_DIR: /home/runner/HealthData/DBs
+    steps:
+      - name: Check prerequisites
+        id: check
+        run: |
+          missing=()
+          [ -z "${{ secrets.GARMIN_USERNAME }}" ] && missing+=("GARMIN_USERNAME")
+          [ -z "${{ secrets.GARMIN_PASSWORD }}" ] && missing+=("GARMIN_PASSWORD")
+          [ -z "${{ secrets.R2_ACCOUNT_ID }}" ] && missing+=("R2_ACCOUNT_ID")
+          [ -z "${{ secrets.R2_ACCESS_KEY_ID }}" ] && missing+=("R2_ACCESS_KEY_ID")
+          [ -z "${{ secrets.R2_SECRET_ACCESS_KEY }}" ] && missing+=("R2_SECRET_ACCESS_KEY")
+          [ -z "${{ secrets.R2_BUCKET_NAME }}" ] && missing+=("R2_BUCKET_NAME")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::warning::Cloud sync is not configured yet — missing secrets: ${missing[*]}. See docs/cloud-sync.md. Skipping this run."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install garmindb
+        if: steps.check.outputs.ready == 'true'
+        run: pip install garmindb
+
+      - name: Restore previous database state from R2
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          mkdir -p "$DB_DIR"
+          aws --endpoint-url "$R2_ENDPOINT" s3 sync "s3://$R2_BUCKET/DBs" "$DB_DIR" || true
+          if [ -z "$(ls -A "$DB_DIR" 2>/dev/null)" ]; then
+            echo "No existing data in R2 — this will be a full first-time sync (can take a while)."
+            echo "first_run=true" >> "$GITHUB_ENV"
+          else
+            echo "first_run=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Write GarminDB config
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          mkdir -p ~/.GarminDb
+          cat > ~/.GarminDb/GarminConnectConfig.json <<CONFIG
+          {
+            "db": { "type": "sqlite" },
+            "garmin": { "domain": "garmin.com" },
+            "credentials": {
+              "user": "${{ secrets.GARMIN_USERNAME }}",
+              "secure_password": false,
+              "password": "${{ secrets.GARMIN_PASSWORD }}",
+              "password_file": null
+            },
+            "data": {
+              "weight_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "sleep_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "rhr_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "hrv_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "monitoring_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "download_latest_activities": 25,
+              "download_all_activities": 1000
+            },
+            "directories": { "relative_to_home": true, "base_dir": "HealthData", "mount_dir": "/Volumes/GARMIN" },
+            "enabled_stats": { "monitoring": true, "steps": true, "itime": true, "sleep": true, "rhr": true, "hrv": true, "weight": true, "activities": true },
+            "course_views": { "steps": [] },
+            "modes": {},
+            "activities": { "display": [] },
+            "settings": { "metric": true, "default_display_activities": ["walking", "running", "cycling"] },
+            "checkup": { "look_back_days": 90 }
+          }
+          CONFIG
+
+      - name: Run GarminDB (first-time full sync)
+        if: steps.check.outputs.ready == 'true' && env.first_run == 'true'
+        run: garmindb_cli.py --all --download --import --analyze
+
+      - name: Run GarminDB (incremental sync)
+        if: steps.check.outputs.ready == 'true' && env.first_run == 'false'
+        run: garmindb_cli.py --all --download --import --analyze --latest
+
+      - name: Upload updated database state to R2
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          aws --endpoint-url "$R2_ENDPOINT" s3 sync "$DB_DIR" "s3://$R2_BUCKET/DBs" --delete
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -rf ~/.GarminDb

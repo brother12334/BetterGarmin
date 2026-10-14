@@ -1,8 +1,10 @@
 # BetterGarmin
 
 A sleeker, deeper dashboard for your Garmin health data. Built on top of the
-open-source [GarminDB](https://github.com/tcgoetz/GarminDB) project, running
-entirely in your browser — nothing is ever uploaded anywhere.
+open-source [GarminDB](https://github.com/tcgoetz/GarminDB) project. By
+default it runs entirely in your browser — nothing is ever uploaded anywhere
+— with an optional, opt-in [cloud sync](docs/cloud-sync.md) if you want it
+updated automatically instead of dropping files in by hand.
 
 Not affiliated with Garmin. Not medical advice.
 
@@ -37,6 +39,12 @@ Don't have GarminDB data handy? Click **Try demo mode** on the welcome screen
 to explore BetterGarmin with a realistic, entirely fake dataset — the only
 data that's ever committed to this repository.
 
+Want it to update itself instead of dropping files in by hand? See
+[**Cloud sync**](docs/cloud-sync.md) — it's a separate, opt-in setup that
+runs a scheduled job on your own free Cloudflare/GitHub accounts. It's a
+genuine privacy tradeoff (your Garmin login ends up stored as a GitHub
+secret), so the doc explains exactly what changes before you turn it on.
+
 ## Getting your data
 
 1. Install GarminDB:
@@ -65,6 +73,8 @@ buttons.
 
 ## Privacy
 
+By default (manual file loading, demo mode):
+
 - No backend. No analytics. No tracking scripts.
 - Your `.db` files are read directly in your browser and never leave your
   device.
@@ -74,6 +84,12 @@ buttons.
   [`scripts/generate-demo-data.ts`](scripts/generate-demo-data.ts) — it is
   not real health data, and no real health data is ever stored in this
   repository.
+
+If you opt into **cloud sync**, that changes: your Garmin login is stored as
+a GitHub Actions secret, and your data passes through a Cloudflare Worker and
+R2 bucket you control. It's gated by a bearer token, not full multi-user
+auth. Full details in [docs/cloud-sync.md](docs/cloud-sync.md) — read it
+before enabling.
 
 ## Development
 
@@ -88,20 +104,24 @@ npm run generate:demo # regenerate the fake demo dataset in public/demo-data
 
 Vite + React + TypeScript, Tailwind CSS, sql.js (SQLite/WASM) in a Web
 Worker, Framer Motion, ECharts, IndexedDB via `idb`, and a GitHub Actions
-workflow that deploys `main` to GitHub Pages.
+workflow that builds and deploys to GitHub Pages. (Optional cloud sync adds a
+Cloudflare Worker and a second, separate GitHub Actions workflow — see
+[docs/cloud-sync.md](docs/cloud-sync.md).)
 
 ### Project structure
 
 ```
 src/
-  app/        theme, routing shell, data-loading context
+  app/        theme, routing shell, data-loading context (incl. cloud sync)
   components/ shared design-system primitives (Card, Ring, Button, …)
-  db/         sql.js client, typed queries, IndexedDB cache
+  db/         sql.js client, typed queries, IndexedDB cache, cloud-sync client
   workers/    the sql.js Web Worker
   features/   one folder per screen (today, health, sleep, training, …)
   scores/     BetterGarmin's own score calculations (see docs/scores)
 scripts/      the demo-data generator
+worker/       optional Cloudflare Worker for cloud sync (see docs/cloud-sync.md)
 docs/scores/  formulas and research sources behind every calculated score
+docs/cloud-sync.md  full cloud-sync setup walkthrough
 ```
 
 ## Calculated scores

@@ -10,6 +10,7 @@ import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
+import { useData } from '../../app/DataProvider'
 
 interface TodayData {
   day: string
@@ -21,10 +22,20 @@ interface TodayData {
 export function TodayPage() {
   const [data, setData] = useState<TodayData | null>(null)
   const [loading, setLoading] = useState(true)
+  const { loadedKinds, lastSynced } = useData()
+  const hasGarmin = loadedKinds.includes('garmin')
 
   useEffect(() => {
     let cancelled = false
     async function load() {
+      if (!hasGarmin) {
+        if (!cancelled) {
+          setData(null)
+          setLoading(false)
+        }
+        return
+      }
+      setLoading(true)
       const day = await getLatestDay()
       if (!day) {
         if (!cancelled) {
@@ -43,14 +54,16 @@ export function TodayPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hasGarmin, lastSynced])
 
   if (loading) return <TodaySkeleton />
 
   if (!data) {
     return (
       <Card className="mt-10 text-center text-[var(--text-secondary)]">
-        No daily data found yet. Make sure <code>garmin.db</code> was loaded.
+        {hasGarmin
+          ? 'No daily data found yet in your garmin.db.'
+          : "No data loaded yet — garmin.db hasn't arrived. If cloud sync just connected, the first sync can take a few minutes."}
       </Card>
     )
   }

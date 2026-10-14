@@ -1,0 +1,20 @@
+name = "bettergarmin-sync"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Bind the R2 bucket the GitHub Action syncs into. Create the bucket first
+# (wrangler r2 bucket create bettergarmin-data, or via the dashboard), then
+# fill in its name here — it must match R2_BUCKET_NAME in your GitHub Secrets.
+[[r2_buckets]]
+binding = "DB_BUCKET"
+bucket_name = "bettergarmin-data"
+
+# Optional: restrict browser calls to your deployed BetterGarmin origin.
+# Defaults to "*" (any origin) if left unset, which is fine since every
+# request still needs the bearer token — this just adds one more layer.
+[vars]
+ALLOWED_ORIGIN = "https://brother12334.github.io"
+
+# ACCESS_TOKEN is a secret, not a var — set it after first deploy with:
+#   wrangler secret put ACCESS_TOKEN
+# (generate one yourself, e.g. `openssl rand -hex 32`)

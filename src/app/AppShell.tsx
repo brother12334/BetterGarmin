@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { cn } from '../lib/cn'
-import { HealthIcon, InsightsIcon, MoreIcon, SleepIcon, TodayIcon, TrainingIcon } from './icons'
+import { HealthIcon, InsightsIcon, Logo, MoreIcon, SleepIcon, TodayIcon, TrainingIcon } from './icons'
 
 const TABS = [
   { to: '/', label: 'Today', icon: TodayIcon },
@@ -17,7 +17,7 @@ export function AppShell() {
     <div className="flex min-h-screen w-full">
       <aside className="sticky top-0 hidden h-screen w-56 flex-col gap-1 border-r border-[var(--border-panel)] p-4 md:flex">
         <div className="mb-6 flex items-center gap-2 px-2">
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500" />
+          <Logo size={32} className="rounded-xl" />
           <span className="text-lg font-bold">BetterGarmin</span>
         </div>
         {TABS.map((tab) => (

@@ -4,10 +4,11 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { CopyField } from './CopyField'
 import { DropZone } from './DropZone'
-import { SparkleIcon } from '../../app/icons'
+import { CloudConnectForm } from './CloudConnectForm'
+import { Logo } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
 
-type Step = 'welcome' | 'guide' | 'demo-loading'
+type Step = 'welcome' | 'guide' | 'cloud' | 'demo-loading'
 
 const STEPS = [
   {
@@ -61,20 +62,22 @@ export function OnboardingFlow() {
               exit={{ opacity: 0, y: -12 }}
               className="flex flex-col items-center gap-6 text-center"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-sky-400 to-indigo-500 shadow-lg shadow-indigo-500/30">
-                <SparkleIcon width={30} height={30} className="text-white" />
-              </div>
+              <Logo size={72} className="rounded-3xl shadow-lg shadow-indigo-500/30" />
+
               <div>
                 <h1 className="text-2xl font-bold">Welcome to BetterGarmin</h1>
                 <p className="mt-2 text-[var(--text-secondary)]">
-                  A sleeker, deeper look at your Garmin health data. Everything runs locally in your
-                  browser — your data is never uploaded anywhere.
+                  A sleeker, deeper look at your Garmin health data. Runs locally in your browser by
+                  default — your data stays on your device unless you opt into automatic cloud sync below.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-3">
                 <Button onClick={() => setStep('guide')}>I have GarminDB data</Button>
                 <Button variant="secondary" onClick={handleDemo}>
                   Try demo mode first
+                </Button>
+                <Button variant="ghost" onClick={() => setStep('cloud')}>
+                  Set up automatic sync (advanced)
                 </Button>
               </div>
               {demoError && <p className="text-sm text-rose-400">Couldn't load the demo data. Please try again.</p>}
@@ -131,6 +134,33 @@ export function OnboardingFlow() {
               >
                 Or just try demo mode instead
               </button>
+            </motion.div>
+          )}
+
+          {step === 'cloud' && (
+            <motion.div
+              key="cloud"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="flex flex-col gap-4"
+            >
+              <button
+                type="button"
+                onClick={() => setStep('welcome')}
+                className="self-start text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                ← Back
+              </button>
+              <div>
+                <h2 className="text-xl font-bold">Automatic sync</h2>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  Already deployed the sync Worker and GitHub Action from <code>docs/cloud-sync.md</code>? Connect
+                  to it here. Otherwise, set that up first — it's a one-time process on your own free Cloudflare
+                  and GitHub accounts.
+                </p>
+              </div>
+              <CloudConnectForm />
             </motion.div>
           )}
 
