@@ -14,7 +14,7 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'BetterGarmin',
         short_name: 'BetterGarmin',
@@ -23,8 +23,9 @@ export default defineConfig(({ command }) => ({
         background_color: '#0a0b0f',
         display: 'standalone',
         icons: [
-          { src: 'icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
-          { src: 'icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
