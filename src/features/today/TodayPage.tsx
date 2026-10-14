@@ -11,6 +11,7 @@ import { buildTodayInsights } from './insights'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
+import { LiveHeartRateCard } from './LiveHeartRateCard'
 
 interface TodayData {
   day: string
@@ -60,11 +61,14 @@ export function TodayPage() {
 
   if (!data) {
     return (
-      <Card className="mt-10 text-center text-[var(--text-secondary)]">
-        {hasGarmin
-          ? 'No daily data found yet in your garmin.db.'
-          : "No data loaded yet — garmin.db hasn't arrived. If cloud sync just connected, the first sync can take a few minutes."}
-      </Card>
+      <div className="flex flex-col gap-6">
+        <LiveHeartRateCard />
+        <Card className="text-center text-[var(--text-secondary)]">
+          {hasGarmin
+            ? 'No daily data found yet in your garmin.db.'
+            : "No data loaded yet — garmin.db hasn't arrived. If cloud sync just connected, the first sync can take a few minutes."}
+        </Card>
+      </div>
     )
   }
 
@@ -82,6 +86,8 @@ export function TodayPage() {
         <h1 className="text-2xl font-bold">Today</h1>
         <p className="text-sm text-[var(--text-secondary)]">{formattedDay}</p>
       </div>
+
+      <LiveHeartRateCard />
 
       <Card>
         <div className="grid grid-cols-2 gap-y-6 sm:grid-cols-4">

@@ -4,7 +4,11 @@ A sleeker, deeper dashboard for your Garmin health data. Built on top of the
 open-source [GarminDB](https://github.com/tcgoetz/GarminDB) project. By
 default it runs entirely in your browser — nothing is ever uploaded anywhere
 — with an optional, opt-in [cloud sync](docs/cloud-sync.md) if you want it
-updated automatically instead of dropping files in by hand.
+updated automatically instead of dropping files in by hand. The Today screen
+can also show truly live, second-by-second heart rate by connecting directly
+to your watch over Bluetooth — no sync, no cloud, just your browser talking
+to your wrist (Chrome/Edge only; turn on **Broadcast Heart Rate** on the
+watch first).
 
 Not affiliated with Garmin. Not medical advice.
 
