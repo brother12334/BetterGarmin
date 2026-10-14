@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore (private browsing, blocked storage, etc.)
     }
-    return 'system'
+    return 'dark'
   })
 
   useEffect(() => {

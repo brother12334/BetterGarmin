@@ -10,6 +10,17 @@
       content="BetterGarmin — a sleeker, deeper dashboard for your Garmin health data. 100% local, nothing ever uploaded."
     />
     <title>BetterGarmin</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('bettergarmin:theme');
+          var theme = stored === 'light' || stored === 'system' ? stored : 'dark';
+          if (theme !== 'system') document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
