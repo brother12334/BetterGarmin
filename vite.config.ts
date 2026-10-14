@@ -30,7 +30,8 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         // Demo DB files can be large; let them load on demand rather than precaching.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,wasm}'],
+        // jpg: the Today hero's daily backdrop photos — small enough to precache for offline use.
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2,wasm}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),
