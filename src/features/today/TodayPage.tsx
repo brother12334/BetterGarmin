@@ -201,7 +201,7 @@ function ReadinessHero({
     <div className="relative -mx-4 -mt-6 overflow-hidden rounded-b-[2rem] md:-mx-8">
       <div className="absolute inset-0">
         <MountainBackdrop height={320} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/25 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] from-25% via-[var(--bg-base)]/70 via-60% to-transparent" />
       </div>
       <div className="relative flex flex-col gap-5 px-4 pb-8 pt-6 md:px-8">
         <div>
