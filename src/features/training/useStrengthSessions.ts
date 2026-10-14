@@ -4,6 +4,7 @@ import { getActivitiesRange, getLatestActivityDay } from '../../db/queries'
 import type { ActivityRow } from '../../db/types'
 import type { WorkoutWithSets } from '../../db/strengthLog'
 import { addDays } from '../../lib/dateRange'
+import { matchGarminActivity } from './matchGarminActivity'
 
 const WINDOW_DAYS = 365
 
@@ -55,12 +56,26 @@ export function useStrengthSessions(workouts: WorkoutWithSets[]) {
     }
   }, [hasActivities, lastSynced])
 
-  const linkedActivityIds = new Set(workouts.map((w) => w.linkedActivityId).filter((id): id is string => id != null))
-  const unlinkedActivities = garminSessions.filter((a) => !linkedActivityIds.has(a.activity_id))
+  // Workouts with real timestamps (Element 26 imports) get matched live, not via a stored link,
+  // so matching stays correct as new Garmin data comes in. Manually logged ones still use the
+  // explicit linkedActivityId set via "Add sets for this session".
+  const matchedByWorkout = new Map(
+    workouts.filter((w) => w.startedAtEpochMs != null).map((w) => [w.id, matchGarminActivity(w, garminSessions)]),
+  )
+  const claimedActivityIds = new Set<string>()
+  for (const w of workouts) {
+    if (w.linkedActivityId) claimedActivityIds.add(w.linkedActivityId)
+    const matched = matchedByWorkout.get(w.id)
+    if (matched) claimedActivityIds.add(matched.activity_id)
+  }
+  const unlinkedActivities = garminSessions.filter((a) => !claimedActivityIds.has(a.activity_id))
 
   const activityById = new Map(garminSessions.map((a) => [a.activity_id, a]))
   const sessions: StrengthSession[] = [
-    ...workouts.map((w) => ({ day: w.day, workout: w, activity: w.linkedActivityId ? (activityById.get(w.linkedActivityId) ?? null) : null })),
+    ...workouts.map((w) => {
+      const activity = w.linkedActivityId ? (activityById.get(w.linkedActivityId) ?? null) : (matchedByWorkout.get(w.id) ?? null)
+      return { day: w.day, workout: w, activity }
+    }),
     ...unlinkedActivities.map((a) => ({ day: a.start_time?.slice(0, 10) ?? '', workout: null, activity: a })),
   ].sort((a, b) => (a.day < b.day ? 1 : -1))
 

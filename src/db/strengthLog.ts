@@ -15,6 +15,18 @@ export interface WorkoutRecord {
   /** Garmin activity_id for a strength session on the same day, if the watch logged one. */
   linkedActivityId: string | null
   createdAt: number
+  /** 'manual' = typed in via the logger form (no reliable timestamps). 'element26' = imported, carries real set timestamps. */
+  source?: 'manual' | 'element26'
+  /** Precise workout window, epoch ms. Only present for imports with real timing data — required to build a timeline. */
+  startedAtEpochMs?: number | null
+  finishedAtEpochMs?: number | null
+  gym?: string | null
+  /** Subjective session rating, 1-5, as logged in the source app. */
+  feelRating?: number | null
+  qualityGrade?: string | null
+  qualityPercent?: number | null
+  /** Display name from the source app (e.g. a routine label like "Upper A"), distinct from the split taxonomy. */
+  title?: string | null
 }
 
 export interface SetRecord {
@@ -28,6 +40,15 @@ export interface SetRecord {
   isWarmup: boolean
   order: number
   createdAt: number
+  /** When this set was logged (epoch ms) — the only timestamp Element 26 actually records per set. Null for manual entries. */
+  atEpochMs?: number | null
+  /** Rest taken immediately before this set, in seconds, as reported by the source app (an app-tracked value, not independently measured). */
+  restSecondsBefore?: number | null
+  rpe?: number | null
+  personalRecord?: boolean
+  side?: string | null
+  technique?: string | null
+  note?: string | null
 }
 
 export interface WorkoutWithSets extends WorkoutRecord {
@@ -90,6 +111,14 @@ export async function getAllWorkoutsWithSets(): Promise<WorkoutWithSets[]> {
   return workouts
     .map((w) => ({ ...w, sets: (setsByWorkout.get(w.id) ?? []).sort((a, b) => a.order - b.order) }))
     .sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : b.createdAt - a.createdAt))
+}
+
+export async function getWorkoutWithSets(workoutId: string): Promise<WorkoutWithSets | null> {
+  const db = await getDb()
+  const workout = (await db.get(WORKOUTS_STORE, workoutId)) as WorkoutRecord | undefined
+  if (!workout) return null
+  const sets = ((await db.getAllFromIndex(SETS_STORE, 'workoutId', workoutId)) as SetRecord[]).sort((a, b) => a.order - b.order)
+  return { ...workout, sets }
 }
 
 export async function hasAnyWorkouts(): Promise<boolean> {

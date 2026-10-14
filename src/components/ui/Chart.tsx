@@ -1,16 +1,26 @@
 import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
 
+interface ChartClickParams {
+  componentType: string
+  seriesType?: string
+  name?: string
+  dataIndex?: number
+  data?: unknown
+}
+
 interface ChartProps {
   option: EChartsOption
   height?: number
   className?: string
   /** Called with the hovered data index (x-axis position), or null when the pointer leaves — used to sync a map marker etc. */
   onHover?: (index: number | null) => void
+  /** Called on any click within the chart (a markArea segment, a point, etc.) — inspect componentType/data to tell them apart. */
+  onClick?: (params: ChartClickParams) => void
 }
 
 /** Thin ECharts wrapper with BetterGarmin's dark-friendly defaults baked in. */
-export function Chart({ option, height = 220, className, onHover }: ChartProps) {
+export function Chart({ option, height = 220, className, onHover, onClick }: ChartProps) {
   const merged: EChartsOption = {
     backgroundColor: 'transparent',
     textStyle: { fontFamily: 'inherit', color: 'var(--text-secondary)' },
@@ -24,15 +34,19 @@ export function Chart({ option, height = 220, className, onHover }: ChartProps) 
     ...option,
   }
 
-  const onEvents = onHover
-    ? {
-        updateAxisPointer: (params: { axesInfo?: { value?: number }[] }) => {
-          const value = params.axesInfo?.[0]?.value
-          onHover(typeof value === 'number' ? value : null)
-        },
-        globalout: () => onHover(null),
-      }
-    : undefined
+  const onEvents =
+    onHover || onClick
+      ? {
+          ...(onHover && {
+            updateAxisPointer: (params: { axesInfo?: { value?: number }[] }) => {
+              const value = params.axesInfo?.[0]?.value
+              onHover(typeof value === 'number' ? value : null)
+            },
+            globalout: () => onHover(null),
+          }),
+          ...(onClick && { click: onClick }),
+        }
+      : undefined
 
   return (
     <div className={className}>
