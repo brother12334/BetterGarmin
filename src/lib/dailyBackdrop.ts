@@ -10,6 +10,9 @@ const PHOTOS: PhotoBackdrop[] = [
   { src: 'backgrounds/foggy-valley.jpg', alt: 'Fog rolling through a mountain valley' },
   { src: 'backgrounds/matterhorn.jpg', alt: 'A snow-capped alpine peak' },
   { src: 'backgrounds/green-valley.jpg', alt: 'A green forested valley with a lake' },
+  { src: 'backgrounds/misty-hilltop.jpg', alt: 'Hikers on a misty hilltop at sunrise' },
+  { src: 'backgrounds/mountain-silhouette.jpg', alt: 'Silhouetted mountain ridges in fog' },
+  { src: 'backgrounds/dolomites-lake.jpg', alt: 'Jagged peaks reflected in an alpine lake' },
 ]
 
 /** Days since the Unix epoch, in the viewer's local calendar — stable all day, rolls over at local midnight. */
