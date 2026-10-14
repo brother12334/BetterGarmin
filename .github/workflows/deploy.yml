@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # The repo has no `main` yet — everything lives on the working branch below.
+    # `main` stays listed so this keeps working once that branch is merged/renamed.
+    branches: [main, claude/bettergarmin-web-app-vdfhxe]
   workflow_dispatch:
 
 permissions:

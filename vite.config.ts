@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Project is deployed to GitHub Pages at https://<user>.github.io/bettergarmin/
-const REPO_BASE = '/bettergarmin/'
+// Project is deployed to GitHub Pages at https://<user>.github.io/BetterGarmin/
+// GitHub Pages paths are case-sensitive, so this must match the repo name exactly.
+const REPO_BASE = '/BetterGarmin/'
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? REPO_BASE : '/',
