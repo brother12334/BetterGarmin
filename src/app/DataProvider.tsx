@@ -118,6 +118,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     async function restore() {
+      // A dedicated "?demo=1" link (e.g. a second home-screen icon) always jumps
+      // straight into demo mode, skipping onboarding and any other data source.
+      const forceDemo = new URLSearchParams(window.location.search).get('demo') === '1'
+      if (forceDemo) {
+        await loadDemoInternal()
+        if (!cancelled) setStatus('ready')
+        return
+      }
+
       const cloudConfig = readCloudConfig()
       const cached = await getCachedFiles()
 
