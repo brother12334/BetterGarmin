@@ -8,6 +8,7 @@ import { getLatestDay, getSleepEventsForDay, getSleepRange } from '../../db/quer
 import type { SleepEventRow, SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
+import { statusForScore, STATUS_COLORS } from '../../lib/statusWords'
 
 const HISTORY_DAYS = 21
 const SLEEP_TARGET_MIN = 480 // 8h
@@ -97,6 +98,7 @@ export function SleepPage() {
   }
 
   const { latest, events, history } = data
+  const sleepScoreStatus = statusForScore(latest.score, [50, 70, 85])
 
   return (
     <div className="flex flex-col gap-6">
@@ -109,7 +111,12 @@ export function SleepPage() {
             <p className="text-xs text-[var(--text-tertiary)]">{formatHoursMinutes(hmsToMinutes(latest.total_sleep))} total</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold tabular-nums text-[var(--text-primary)]">{latest.score ?? '—'}</p>
+            <p
+              className="text-3xl font-bold tabular-nums"
+              style={{ color: sleepScoreStatus ? STATUS_COLORS[sleepScoreStatus] : 'var(--text-primary)' }}
+            >
+              {latest.score ?? '—'}
+            </p>
             <p className="text-xs capitalize text-[var(--text-tertiary)]">{latest.qualifier ?? ''}</p>
           </div>
         </div>
