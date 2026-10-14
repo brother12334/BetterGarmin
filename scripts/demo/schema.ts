@@ -58,10 +58,11 @@ export function createActivitiesSchema(db: Database) {
     CREATE TABLE activities (
       activity_id TEXT PRIMARY KEY, name TEXT, description TEXT, type TEXT, sport TEXT, sub_sport TEXT,
       start_time TEXT, stop_time TEXT, elapsed_time TEXT, moving_time TEXT,
-      distance REAL, calories INTEGER, avg_hr INTEGER, max_hr INTEGER,
+      distance REAL, calories INTEGER, avg_hr INTEGER, max_hr INTEGER, avg_rr REAL, max_rr REAL,
       avg_cadence INTEGER, max_cadence INTEGER, avg_speed REAL, max_speed REAL,
       ascent REAL, descent REAL, start_lat REAL, start_long REAL, stop_lat REAL, stop_long REAL,
       training_load REAL, training_effect REAL, anaerobic_training_effect REAL,
+      self_eval_feel INTEGER, self_eval_effort INTEGER,
       laps INTEGER, course_id INTEGER, device_serial_number INTEGER
     );
     CREATE TABLE activity_laps (

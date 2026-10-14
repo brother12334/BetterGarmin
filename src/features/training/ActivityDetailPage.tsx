@@ -138,6 +138,7 @@ export function ActivityDetailPage() {
   }
 
   const { activity, laps, records, vo2Max } = data
+  const isStrength = activity.sub_sport === 'strength_training' || activity.sport === 'strength_training'
   const hrSeries = records.filter((r) => r.hr != null).map((r, i) => ({ i, hr: r.hr as number }))
   const elevationSeries = records.filter((r) => r.altitude != null).map((r, i) => ({ i, altitude: r.altitude as number }))
 
@@ -147,11 +148,18 @@ export function ActivityDetailPage() {
         ← Back to Training
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold">{activity.name || activity.sport || 'Activity'}</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          {activity.start_time && new Date(activity.start_time.replace(' ', 'T')).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">{activity.name || activity.sport || 'Activity'}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {activity.start_time && new Date(activity.start_time.replace(' ', 'T')).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
+          </p>
+        </div>
+        {isStrength && (
+          <Link to="/training/strength" className="shrink-0 text-sm text-violet-300 hover:text-violet-200">
+            View sets →
+          </Link>
+        )}
       </div>
 
       {routePoints.length > 0 && (
@@ -160,16 +168,29 @@ export function ActivityDetailPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Distance" value={formatDistance(activity.distance, units, 2)} />
-        <Stat label="Duration" value={formatHoursMinutes(hmsToMinutes(activity.elapsed_time))} />
-        <Stat label="Avg HR" value={activity.avg_hr != null ? `${activity.avg_hr} bpm` : '—'} />
-        <Stat label="Max HR" value={activity.max_hr != null ? `${activity.max_hr} bpm` : '—'} />
-        <Stat label="Calories" value={activity.calories != null ? `${activity.calories}` : '—'} />
-        <Stat label="Elevation gain" value={formatElevation(activity.ascent, units)} />
-        <Stat label="Training load" value={activity.training_load != null ? activity.training_load.toFixed(1) : '—'} />
-        <Stat label="VO2max" value={vo2Max != null ? vo2Max.toFixed(1) : '—'} />
-      </div>
+      {isStrength ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Duration" value={formatHoursMinutes(hmsToMinutes(activity.elapsed_time))} />
+          <Stat label="Avg HR" value={activity.avg_hr != null ? `${activity.avg_hr} bpm` : '—'} />
+          <Stat label="Max HR" value={activity.max_hr != null ? `${activity.max_hr} bpm` : '—'} />
+          <Stat label="Calories" value={activity.calories != null ? `${activity.calories}` : '—'} />
+          <Stat label="Training load" value={activity.training_load != null ? activity.training_load.toFixed(1) : '—'} />
+          <Stat label="Avg breaths/min" value={activity.avg_rr != null ? activity.avg_rr.toFixed(0) : '—'} />
+          <Stat label="Effort" value={activity.self_eval_effort != null ? `${activity.self_eval_effort}/5` : '—'} />
+          <Stat label="Feel" value={activity.self_eval_feel != null ? `${activity.self_eval_feel}/5` : '—'} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Distance" value={formatDistance(activity.distance, units, 2)} />
+          <Stat label="Duration" value={formatHoursMinutes(hmsToMinutes(activity.elapsed_time))} />
+          <Stat label="Avg HR" value={activity.avg_hr != null ? `${activity.avg_hr} bpm` : '—'} />
+          <Stat label="Max HR" value={activity.max_hr != null ? `${activity.max_hr} bpm` : '—'} />
+          <Stat label="Calories" value={activity.calories != null ? `${activity.calories}` : '—'} />
+          <Stat label="Elevation gain" value={formatElevation(activity.ascent, units)} />
+          <Stat label="Training load" value={activity.training_load != null ? activity.training_load.toFixed(1) : '—'} />
+          <Stat label="VO2max" value={vo2Max != null ? vo2Max.toFixed(1) : '—'} />
+        </div>
+      )}
 
       {hrSeries.length > 1 && (
         <Card>

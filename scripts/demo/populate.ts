@@ -86,10 +86,11 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
   const insActivity = activitiesDb.prepare(`
     INSERT INTO activities (
       activity_id, name, description, type, sport, sub_sport, start_time, stop_time, elapsed_time, moving_time,
-      distance, calories, avg_hr, max_hr, avg_cadence, max_cadence, avg_speed, max_speed,
+      distance, calories, avg_hr, max_hr, avg_rr, max_rr, avg_cadence, max_cadence, avg_speed, max_speed,
       ascent, descent, start_lat, start_long, stop_lat, stop_long,
-      training_load, training_effect, anaerobic_training_effect, laps, course_id, device_serial_number
-    ) VALUES (${Array(30).fill('?').join(',')})
+      training_load, training_effect, anaerobic_training_effect, self_eval_feel, self_eval_effort,
+      laps, course_id, device_serial_number
+    ) VALUES (${Array(34).fill('?').join(',')})
   `)
   const insLap = activitiesDb.prepare(`
     INSERT INTO activity_laps (activity_id, lap, start_time, stop_time, elapsed_time, moving_time, distance, avg_hr, max_hr, avg_speed, max_speed, ascent, descent, calories)
@@ -108,6 +109,29 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
 
   // --- day-by-day population -------------------------------------------------
   let activityCounter = 0
+
+  interface SeedWorkout {
+    id: string
+    day: string
+    split: string
+    notes: null
+    linkedActivityId: string
+    createdAt: number
+  }
+  interface SeedSet {
+    id: string
+    workoutId: string
+    day: string
+    exercise: string
+    category: string
+    reps: number
+    weight: number | null
+    isWarmup: boolean
+    order: number
+    createdAt: number
+  }
+  const seedWorkouts: SeedWorkout[] = []
+  const seedSets: SeedSet[] = []
 
   const runGarmin = garminDb.transaction((model: DayModel) => {
     if (model.weight != null) insWeight.run(model.day, model.weight)
@@ -227,9 +251,10 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
       const a = detail.activity
       insActivity.run(
         a.activity_id, a.name, a.description, a.type, a.sport, a.sub_sport, a.start_time, a.stop_time, a.elapsed_time, a.moving_time,
-        a.distance, a.calories, a.avg_hr, a.max_hr, a.avg_cadence, a.max_cadence, a.avg_speed, a.max_speed,
+        a.distance, a.calories, a.avg_hr, a.max_hr, a.avg_rr, a.max_rr, a.avg_cadence, a.max_cadence, a.avg_speed, a.max_speed,
         a.ascent, a.descent, a.start_lat, a.start_long, a.stop_lat, a.stop_long,
-        a.training_load, a.training_effect, a.anaerobic_training_effect, a.laps, a.course_id, a.device_serial_number,
+        a.training_load, a.training_effect, a.anaerobic_training_effect, a.self_eval_feel, a.self_eval_effort,
+        a.laps, a.course_id, a.device_serial_number,
       )
       for (const lap of detail.laps) {
         insLap.run(
@@ -249,6 +274,25 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
       if (detail.cycleActivity) insCycleActivity.run(a.activity_id, detail.cycleActivity.strokes, detail.cycleActivity.vo2_max)
       if (detail.paddleActivity) insPaddleActivity.run(a.activity_id, detail.paddleActivity.strokes, detail.paddleActivity.avg_stroke_distance)
       if (detail.climbingActivity) insClimbingActivity.run(a.activity_id, detail.climbingActivity.total_routes)
+      if (detail.strengthSets && detail.strengthSets.length > 0) {
+        const day = a.start_time.slice(0, 10)
+        const createdAt = new Date(a.start_time.replace(' ', 'T')).getTime()
+        seedWorkouts.push({ id: a.activity_id, day, split: plan.split ?? 'full_body', notes: null, linkedActivityId: a.activity_id, createdAt })
+        detail.strengthSets.forEach((s, i) => {
+          seedSets.push({
+            id: `${a.activity_id}-${i}`,
+            workoutId: a.activity_id,
+            day,
+            exercise: s.exercise,
+            category: s.category,
+            reps: s.reps,
+            weight: s.weightKg,
+            isWarmup: s.isWarmup,
+            order: s.setOrder,
+            createdAt,
+          })
+        })
+      }
     }
   })
 
@@ -264,6 +308,18 @@ export function populate(outputDir: string, days: DayModel[], rng: Rng) {
   monitoringDb.close()
   activitiesDb.close()
   summaryDb.close()
+
+  // Manual strength-log seed: only the most recent ~12 weeks, as if the user started using the
+  // in-app logger partway through — not the whole multi-year dataset.
+  const cutoff = addDays(new Date(`${days[days.length - 1].day}T00:00:00`), -84)
+  const cutoffDay = toDay(cutoff)
+  const recentWorkouts = seedWorkouts.filter((w) => w.day >= cutoffDay)
+  const recentWorkoutIds = new Set(recentWorkouts.map((w) => w.id))
+  const recentSets = seedSets.filter((s) => recentWorkoutIds.has(s.workoutId))
+  fs.writeFileSync(
+    path.join(outputDir, 'strength-log.json'),
+    JSON.stringify({ workouts: recentWorkouts, sets: recentSets }),
+  )
 }
 
 interface Bucket {

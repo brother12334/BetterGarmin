@@ -3,6 +3,7 @@ import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig } from '../db/cloudSync'
+import { seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
 type DataStatus = 'restoring' | 'empty' | 'ready'
 type DataSource = 'user' | 'demo' | 'cloud' | null
@@ -207,6 +208,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(SOURCE_KEY, 'demo')
     } catch {
       // non-critical convenience flag
+    }
+
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}demo-data/strength-log.json`)
+      if (res.ok) {
+        const data: { workouts: WorkoutRecord[]; sets: SetRecord[] } = await res.json()
+        await seedDemoWorkouts(data.workouts, data.sets)
+      }
+    } catch {
+      // the Strength page just renders empty if this fails — not worth blocking demo mode over
     }
   }
 

@@ -140,3 +140,13 @@ export function CheckIcon(props: IconProps) {
     </svg>
   )
 }
+
+export function TrophyIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M8 4h8v5a4 4 0 0 1-8 0V4z" />
+      <path d="M8 5H5a3 3 0 0 0 3 5M16 5h3a3 3 0 0 1-3 5" />
+      <path d="M12 13v4M9 21h6M9 21c0-1.5.5-3 3-3s3 1.5 3 3" />
+    </svg>
+  )
+}

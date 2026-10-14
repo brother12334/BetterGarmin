@@ -63,11 +63,16 @@ export function TrainingFeedPage() {
     }
   }, [hasActivities, windowDays, lastSynced])
 
+  const strengthCount = useMemo(
+    () => activities?.filter((a) => a.sub_sport === 'strength_training' || a.sport === 'strength_training').length ?? 0,
+    [activities],
+  )
+
   const records = useMemo(() => {
     if (!activities) return null
     const bySport = new Map<string, ActivityRow[]>()
     for (const a of activities) {
-      if (!a.sport) continue
+      if (!a.sport || a.sub_sport === 'strength_training' || a.sport === 'strength_training') continue
       const list = bySport.get(a.sport) ?? []
       list.push(a)
       bySport.set(a.sport, list)
@@ -106,6 +111,21 @@ export function TrainingFeedPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Training</h1>
 
+      <Link to="/training/strength">
+        <Card className="flex items-center gap-4 border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-sky-500/5 transition-colors hover:from-violet-500/15">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+            <TrainingIcon width={22} height={22} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Strength Training</p>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              {strengthCount > 0 ? `${strengthCount} session${strengthCount === 1 ? '' : 's'} · PRs, volume, 1RM trends` : 'Log sets, track PRs and volume'}
+            </p>
+          </div>
+          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
+        </Card>
+      </Link>
+
       {records && records.length > 0 && (
         <Card>
           <p className="mb-3 font-semibold">Personal records</p>
@@ -114,7 +134,7 @@ export function TrainingFeedPage() {
               <div key={r.sport} className="rounded-xl bg-[var(--bg-panel)] p-3">
                 <p className="text-xs capitalize text-[var(--text-tertiary)]">{r.sport.replace(/_/g, ' ')}</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {r.longestDistance?.distance != null ? `${formatDistance(r.longestDistance.distance, units)} longest` : `${r.count} activities`}
+                  {r.longestDistance?.distance != null ? `${formatDistance(r.longestDistance.distance, units)} longest` : `${r.count} ${r.count === 1 ? 'activity' : 'activities'}`}
                 </p>
                 {r.longestDuration && (
                   <p className="text-xs text-[var(--text-tertiary)]">{formatDuration(r.longestDuration.elapsed_time)} longest</p>
@@ -143,7 +163,11 @@ export function TrainingFeedPage() {
               </div>
               <div className="shrink-0 text-right">
                 {activity.avg_hr != null && <p className="text-sm font-semibold">{activity.avg_hr} bpm</p>}
-                {activity.calories != null && <p className="text-xs text-[var(--text-tertiary)]">{activity.calories} cal</p>}
+                {activity.sub_sport === 'strength_training' && activity.self_eval_effort != null ? (
+                  <p className="text-xs text-[var(--text-tertiary)]">Effort {activity.self_eval_effort}/5</p>
+                ) : (
+                  activity.calories != null && <p className="text-xs text-[var(--text-tertiary)]">{activity.calories} cal</p>
+                )}
               </div>
             </Card>
           </Link>

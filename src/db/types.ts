@@ -163,6 +163,8 @@ export interface ActivityRow {
   calories: number | null
   avg_hr: number | null
   max_hr: number | null
+  avg_rr: number | null
+  max_rr: number | null
   avg_cadence: number | null
   max_cadence: number | null
   avg_speed: number | null
@@ -176,6 +178,9 @@ export interface ActivityRow {
   training_load: number | null
   training_effect: number | null
   anaerobic_training_effect: number | null
+  /** Garmin's own post-workout self-rating, 1-5. Only present for some activities (notably strength training, where set/rep/weight detail isn't stored at all). */
+  self_eval_feel: number | null
+  self_eval_effort: number | null
 }
 
 export interface ActivityRecordRow {

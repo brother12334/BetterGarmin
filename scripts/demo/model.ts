@@ -1,7 +1,8 @@
 import { addDays, dayOfWeek, toDay } from './format'
 import type { Rng } from './rng'
+import { pickSplit, type StrengthSplit } from '../../src/lib/strengthPlans'
 
-export type Sport = 'running' | 'walking' | 'hiking' | 'cycling' | 'paddling' | 'climbing'
+export type Sport = 'running' | 'walking' | 'hiking' | 'cycling' | 'paddling' | 'climbing' | 'strength_training'
 
 export interface ActivityPlan {
   sport: Sport
@@ -10,6 +11,8 @@ export interface ActivityPlan {
   /** 0 = easy, 1 = max effort. Drives HR, pace, training load. */
   intensity: number
   distanceKm: number | null
+  /** Only set for strength_training plans. */
+  split?: StrengthSplit
 }
 
 export interface DayModel {
@@ -72,6 +75,7 @@ export function generateDayModels(rng: Rng, startDate: Date, numDays: number): D
   let ctl = 18 // chronic training load (28-day exp. avg)
   let weight = rng.range(74, 82)
   const weightTarget = weight - rng.range(2, 5) // slow fat-loss arc over the dataset
+  let lastSplit: StrengthSplit | null = null
 
   for (let i = 0; i < numDays; i++) {
     const date = addDays(startDate, i)
@@ -91,15 +95,16 @@ export function generateDayModels(rng: Rng, startDate: Date, numDays: number): D
     let todaysLoad = 0
     if (!isRestDay) {
       const sport = rng.weightedChoice<Sport>([
-        { value: 'running', weight: 42 },
-        { value: 'cycling', weight: 28 },
-        { value: 'walking', weight: 18 },
-        { value: 'hiking', weight: isWeekend ? 10 : 2 },
-        { value: 'paddling', weight: 4 },
+        { value: 'strength_training', weight: 46 },
+        { value: 'running', weight: 20 },
+        { value: 'cycling', weight: 14 },
+        { value: 'walking', weight: 10 },
+        { value: 'hiking', weight: isWeekend ? 8 : 2 },
+        { value: 'paddling', weight: 3 },
         { value: 'climbing', weight: 2 },
       ])
       const longWorkout = isWeekend && rng.chance(0.45)
-      const intensity = sport === 'walking' ? rng.range(0.1, 0.35) : rng.range(0.35, 0.95)
+      const intensity = sport === 'walking' ? rng.range(0.1, 0.35) : sport === 'strength_training' ? rng.range(0.45, 0.85) : rng.range(0.35, 0.95)
       const baseDuration =
         sport === 'walking'
           ? rng.range(20, 45)
@@ -107,9 +112,18 @@ export function generateDayModels(rng: Rng, startDate: Date, numDays: number): D
             ? rng.range(70, 180)
             : sport === 'climbing'
               ? rng.range(45, 100)
-              : rng.range(28, 55)
-      const durationMin = longWorkout ? baseDuration * rng.range(1.4, 2.1) : baseDuration
-      const startMinuteOfDay = isWeekend ? rng.int(8 * 60, 10 * 60) : rng.int(6 * 60, 7 * 60 + 30)
+              : sport === 'strength_training'
+                ? rng.range(40, 75)
+                : rng.range(28, 55)
+      const durationMin = longWorkout && sport !== 'strength_training' ? baseDuration * rng.range(1.4, 2.1) : baseDuration
+      const startMinuteOfDay =
+        sport === 'strength_training'
+          ? isWeekend
+            ? rng.int(10 * 60, 13 * 60)
+            : rng.int(17 * 60 + 30, 20 * 60)
+          : isWeekend
+            ? rng.int(8 * 60, 10 * 60)
+            : rng.int(6 * 60, 7 * 60 + 30)
 
       const paceFactor = sport === 'running' || sport === 'walking' || sport === 'hiking' ? 0.6 + fitness * 0.6 : 1
       const speedKmh =
@@ -124,9 +138,16 @@ export function generateDayModels(rng: Rng, startDate: Date, numDays: number): D
                 : sport === 'paddling'
                   ? 6
                   : 0
-      const distanceKm = sport === 'climbing' ? null : (speedKmh * durationMin) / 60 * (0.85 + paceFactor * 0.15)
+      const distanceKm =
+        sport === 'climbing' || sport === 'strength_training' ? null : (speedKmh * durationMin) / 60 * (0.85 + paceFactor * 0.15)
 
-      activities.push({ sport, startMinuteOfDay, durationMin, intensity, distanceKm })
+      let split: StrengthSplit | undefined
+      if (sport === 'strength_training') {
+        split = pickSplit(rng, lastSplit)
+        lastSplit = split
+      }
+
+      activities.push({ sport, startMinuteOfDay, durationMin, intensity, distanceKm, split })
       // simplified TRIMP-like load: duration * intensity^1.5 * 10
       todaysLoad = durationMin * Math.pow(intensity, 1.5) * (sport === 'cycling' ? 0.8 : 1)
 
@@ -176,8 +197,9 @@ export function generateDayModels(rng: Rng, startDate: Date, numDays: number): D
 
     // --- daily activity / energy ---
     const activityMinutes = activities.reduce((s, a) => s + a.durationMin, 0)
+    const cardioMinutes = activities.filter((a) => a.sport !== 'strength_training').reduce((s, a) => s + a.durationMin, 0)
     const steps = Math.round(
-      (isRestDay ? rng.range(3500, 7000) : rng.range(6500, 10500)) + activityMinutes * rng.range(90, 130),
+      (isRestDay ? rng.range(3500, 7000) : rng.range(6500, 10500)) + cardioMinutes * rng.range(90, 130),
     )
     const floorsUp = Math.round(Math.max(0, rng.gaussian(isRestDay ? 4 : 9, 4)))
     const distanceKm = Math.round(((steps * 0.00075) + activities.reduce((s, a) => s + (a.distanceKm ?? 0), 0)) * 100) / 100
