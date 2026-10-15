@@ -77,15 +77,25 @@ HR is presented as cardiovascular response only. It is never used as a proxy for
 
 | Phase | Status |
 | --- | --- |
-| 1. Audit and data foundation | ✅ Original import is preserved, a corrections layer is added, import data-quality warnings are shown, and re-import is idempotent. |
-| 2. Synchronization and set analysis | ✅ Alignment engine with provenance, coverage and confidence; clock offset; set-level response and recovery metrics; manual boundary correction; previous-session comparison; tests. |
-| 3. Interactive workout experience | 🟡 Done: zoomable timeline, set selection with highlighting, set panel, tap-to-select table. To do: drag-to-edit boundaries, replay, multi-chart sync (load and reps). |
-| 4. Historical analytics | ⏳ Baselines currently use mean and SD (`src/scores/baselines.ts`). They need to move to robust rolling medians/MAD with minimum-n gates, plus comparable-set history and a unified history view. |
-| 5. Intelligent insights | ⏳ |
-| 6. Research and AI assistant | ⏳ Decided: **bring-your-own Gemini API key**, off by default. The key stays in this browser only. Only computed results are sent, never raw GarminDB files. Every number comes from deterministic calculations; Gemini only phrases the findings and links to the evidence. Built after phases 4–5, because those produce the findings it answers from. |
+| 1. Audit and data foundation | ✅ |
+| 2. Synchronization and set analysis | ✅ |
+| 3. Interactive workout experience | ✅ Zoomable timeline with a load/reps panel sharing its zoom and crosshair, set selection, set panel, boundary editing (±5 s nudges and sliders), replay (play/pause, 10–60×, scrub, jump to exercise; shows the last real HR sample and its age, never interpolated) and workout comparison. |
+| 4. Historical analytics | ✅ Robust baselines (median/MAD, minimum n = 14) and a history view (7 d / 28 d / 90 d / 1 y / custom, one panel per metric with its own usual-range band). Per-exercise progression compares each exercise only with itself. HR-response trends per exercise use watch activities only. |
+| 5. Intelligent insights | ✅ Recovery indicators (no composite score). Findings feed with evidence levels, methods, alternative explanations, links, and useful/dismiss buttons; a dismissed finding resurfaces when what it says changes. Also covers sleep vs. performance, time of day, rest vs. reps, volume vs. resting HR, and routine changes. |
+| 6. Research and AI assistant | ✅ Personal experiments (5 templates; exploratory or prospective from a start date). Gemini assistant with your own key: off by default, the key stays in this browser, only computed results are sent (viewable via "Show exactly what is sent"), and citations to non-existent findings are dropped. |
+
+### How the analyses avoid false confidence
+
+- **Comparing like with like.** Session performance is each exercise's top-set e1RM divided by its own median over the previous 8 sessions. A squat session is never compared with a curl session.
+- **Groups and effect sizes.** Groups are split at your own median, ties handled. Effects use Cliff's delta, with Spearman for weekly relationships.
+- **Minimum sample sizes:** 5 per group, 10 sessions for the sleep analysis, 8 weeks for volume vs. resting HR, and 6 sessions for progression. Below these, a finding says what data is still needed instead of drawing a conclusion.
+- **Evidence levels** are a conservative rule of thumb combining sample size and effect size. The UI states that they are not significance tests.
+- **Shared source.** Every analysis reads one dataset (`src/features/analytics/`) and recomputes whenever the strength log, corrections or Garmin data change.
 
 ## 7. Known limitations
 
 - Set boundaries are estimates unless corrected. Their accuracy depends on how promptly sets were logged and how honestly rest was reported.
 - In demo mode, choosing "Try the demo" again resets the strength log to the demo seed. Simply reloading the app keeps imports and corrections.
-- The Strength session list matches workouts to activities without applying a workout's clock offset. The workout page itself does apply it.
+- The Strength session list matches workouts to activities without applying a workout's clock offset. The workout page, comparisons and findings all apply it.
+- HR-response findings use only watch-recorded activities. All-day monitoring HR is too coarse for per-set statistics.
+- Gemini is called directly from the browser with your key, so requests and quota are between you and Google.

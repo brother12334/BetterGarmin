@@ -1,33 +1,23 @@
-import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getAllWorkoutsWithSets, type WorkoutWithSets } from '../../db/strengthLog'
 import { Card } from '../../components/ui/Card'
-import { Chart } from '../../components/ui/Chart'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useUnits } from '../../app/units'
 import { formatWeight } from '../../lib/units'
 import { SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useWorkoutTimeline, type HrSource, type PreviousExerciseSession } from './useWorkoutTimeline'
+import { TimelineCard } from './TimelineCard'
+import { bpm, clock, duration } from './timelineUi'
 import {
   PRE_SET_WINDOW_MS,
   RETURN_MARGIN_BPM,
   type BoundarySource,
   type Confidence,
-  type SegmentType,
   type SetAnalysis,
   type WorkoutTimeline,
 } from './workoutTimeline'
-
-const SEGMENT_COLORS: Record<SegmentType, string> = {
-  warmup: 'rgba(245, 166, 35, 0.18)',
-  set: 'rgba(251, 74, 89, 0.24)',
-  rest: 'rgba(56, 189, 248, 0.12)',
-  transition: 'rgba(167, 139, 250, 0.18)',
-  cooldown: 'rgba(52, 211, 153, 0.14)',
-}
-const SELECTED_COLOR = 'rgba(251, 74, 89, 0.55)'
-const GAP_COLOR = 'rgba(148, 163, 184, 0.28)'
-const SEGMENT_LABELS: Record<SegmentType, string> = { warmup: 'Warm-up', set: 'Set', rest: 'Rest', transition: 'Transition', cooldown: 'Cool-down' }
 
 const SOURCE_LABELS: Record<BoundarySource, string> = {
   logged: 'logged',
@@ -42,21 +32,6 @@ const CONFIDENCE_STYLE: Record<Confidence, { label: string; className: string }>
   low: { label: 'Low confidence', className: 'bg-amber-500/15 text-amber-400' },
   none: { label: 'No HR data', className: 'bg-slate-500/20 text-slate-400' },
 }
-
-const clock = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })
-const clockShort = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-
-function duration(ms: number): string {
-  const total = Math.round(ms / 1000)
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m ${s}s`
-  return `${s}s`
-}
-
-const bpm = (v: number | null | undefined) => (v != null ? `${v} bpm` : '—')
 
 export function WorkoutTimelinePage() {
   const { workoutId } = useParams<{ workoutId: string }>()
@@ -99,6 +74,7 @@ export function WorkoutTimelinePage() {
           {new Date(`${workout.day}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })}
           {workout.gym ? ` · ${workout.gym}` : ''}
         </p>
+        <CompareControl workout={workout} />
       </div>
 
       <Card>
@@ -181,6 +157,40 @@ export function WorkoutTimelinePage() {
   )
 }
 
+function CompareControl({ workout }: { workout: WorkoutWithSets }) {
+  const navigate = useNavigate()
+  const [options, setOptions] = useState<{ w: WorkoutWithSets; shared: number }[]>([])
+  useEffect(() => {
+    const mine = new Set(workout.sets.map((s) => s.exercise))
+    getAllWorkoutsWithSets().then((all) =>
+      setOptions(
+        all
+          .filter((w) => w.id !== workout.id)
+          .map((w) => ({ w, shared: new Set(w.sets.filter((s) => mine.has(s.exercise)).map((s) => s.exercise)).size }))
+          .filter((o) => o.shared > 0)
+          .sort((a, b) => b.shared - a.shared || (a.w.day < b.w.day ? 1 : -1))
+          .slice(0, 20),
+      ),
+    )
+  }, [workout])
+  if (options.length === 0) return null
+  return (
+    <select
+      aria-label="Compare with another workout"
+      value=""
+      onChange={(e) => e.target.value && navigate(`/training/strength/compare/${workout.id}/${e.target.value}`)}
+      className="mt-2 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-xs text-[var(--text-secondary)]"
+    >
+      <option value="">Compare with…</option>
+      {options.map(({ w, shared }) => (
+        <option key={w.id} value={w.id}>
+          {new Date(`${w.day}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {w.title || (w.split !== 'custom' ? SPLIT_NAMES[w.split] : 'Workout')} ({shared} shared)
+        </option>
+      ))}
+    </select>
+  )
+}
+
 function BackLink() {
   return (
     <Link to="/training/strength" className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
@@ -206,125 +216,6 @@ function Pair({ label, value }: { label: string; value: string }) {
       <p className="font-semibold">{value}</p>
     </div>
   )
-}
-
-function TimelineCard({
-  timeline,
-  hrSource,
-  selectedIndex,
-  onSelect,
-}: {
-  timeline: WorkoutTimeline
-  hrSource: HrSource
-  selectedIndex: number | null
-  onSelect: (i: number | null) => void
-}) {
-  const option = useMemo(() => {
-    // Insert explicit nulls inside gaps so the line breaks instead of drawing across missing data.
-    const line: (number | null)[][] = []
-    const gapStarts = new Set(timeline.gapRanges.map((g) => g.startMs))
-    for (const p of timeline.hrSeries) {
-      line.push([p.t, p.v])
-      if (gapStarts.has(p.t)) line.push([p.t + 1, null])
-    }
-
-    type Area = [{ name: string; xAxis: number; itemStyle: { color: string } }, { xAxis: number }]
-    const areas: Area[] = timeline.segments.map((seg, i): Area => {
-      const isSelected = seg.type === 'set' && seg.setIndex === selectedIndex
-      return [{ name: `seg-${i}`, xAxis: seg.startMs, itemStyle: { color: isSelected ? SELECTED_COLOR : SEGMENT_COLORS[seg.type] } }, { xAxis: seg.endMs }]
-    })
-    for (const g of timeline.gapRanges) areas.push([{ name: 'gap', xAxis: g.startMs, itemStyle: { color: GAP_COLOR } }, { xAxis: g.endMs }])
-
-    const sel = selectedIndex != null ? timeline.sets[selectedIndex] : null
-    const pad = sel ? Math.max(60_000, (sel.endMs - sel.startMs) * 2) : 0
-    const span = timeline.windowEnd - timeline.windowStart
-    const zoom = sel
-      ? {
-          start: Math.max(0, ((sel.startMs - pad - timeline.windowStart) / span) * 100),
-          end: Math.min(100, ((sel.endMs + pad - timeline.windowStart) / span) * 100),
-        }
-      : { start: 0, end: 100 }
-
-    return {
-      grid: { left: 8, right: 12, top: 16, bottom: 56, containLabel: true },
-      tooltip: {
-        trigger: 'axis' as const,
-        formatter: (raw: unknown) => {
-          const p = (raw as { value: [number, number | null] }[])[0]
-          if (!p || p.value[1] == null) return ''
-          const t = p.value[0]
-          const seg = timeline.segments.find((s) => t >= s.startMs && t < s.endMs)
-          const label = seg ? (seg.type === 'set' && seg.setIndex != null ? `${timeline.sets[seg.setIndex].set.exercise} · set ${timeline.sets[seg.setIndex].setNumberInExercise}` : SEGMENT_LABELS[seg.type]) : ''
-          return `${clock(t)}<br/><b>${p.value[1]} bpm</b>${label ? `<br/>${label}` : ''}`
-        },
-      },
-      dataZoom: [
-        { type: 'inside' as const, start: zoom.start, end: zoom.end, minValueSpan: 30_000 },
-        { type: 'slider' as const, start: zoom.start, end: zoom.end, height: 18, bottom: 8, borderColor: 'transparent', textStyle: { color: 'transparent' } },
-      ],
-      xAxis: {
-        type: 'time' as const,
-        min: timeline.windowStart,
-        max: timeline.windowEnd,
-        splitNumber: 3,
-        axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-        axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => clockShort(v) },
-      },
-      yAxis: { type: 'value' as const, scale: true, name: 'bpm', nameTextStyle: { color: 'var(--text-tertiary)' }, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-      series: [
-        {
-          type: 'line' as const,
-          data: line,
-          connectNulls: false,
-          showSymbol: false,
-          sampling: 'lttb' as const,
-          lineStyle: { color: '#fb4a59', width: 1.5 },
-          markArea: { silent: false, label: { show: false }, data: areas },
-        },
-      ],
-    }
-  }, [timeline, selectedIndex])
-
-  return (
-    <Card>
-      <div className="mb-2 flex items-center gap-1.5">
-        <p className="font-semibold">Workout timeline</p>
-        <InfoButton title="How this timeline is built">{timelineExplainer(hrSource)}</InfoButton>
-        {hrSource === 'monitoring' && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-400">coarse HR</span>}
-      </div>
-      <Chart
-        option={option}
-        height={280}
-        onClick={(params) => {
-          if (params.componentType !== 'markArea' || !params.name?.startsWith('seg-')) return
-          const seg = timeline.segments[Number(params.name.slice(4))]
-          if (seg?.setIndex != null) onSelect(seg.setIndex)
-        }}
-      />
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--text-tertiary)]">
-        {(Object.keys(SEGMENT_LABELS) as SegmentType[]).map((t) => (
-          <span key={t} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: SEGMENT_COLORS[t] }} />
-            {SEGMENT_LABELS[t]}
-          </span>
-        ))}
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: GAP_COLOR }} />
-          No HR data
-        </span>
-      </div>
-    </Card>
-  )
-}
-
-function timelineExplainer(hrSource: HrSource): string {
-  const source =
-    hrSource === 'activity'
-      ? 'the matched Garmin strength activity'
-      : hrSource === 'monitoring'
-        ? "Garmin's all-day monitoring (no watch activity was recorded, so samples are 1-2 minutes apart)"
-        : 'Garmin — but none was found for this window'
-  return `Heart rate from ${source}. Each set ends when it was logged; its start is estimated from the rest you reported unless you've corrected it. Grey bands are stretches with no heart-rate samples — nothing is filled in. Tap a band to inspect it; pinch or drag the slider to zoom.`
 }
 
 function SetPanel({
@@ -457,6 +348,20 @@ function SetPanel({
             </button>
           )}
         </div>
+        <BoundaryEditor
+          key={`${set.id}-${analysis.startMs}-${analysis.endMs}`}
+          analysis={analysis}
+          lower={index > 0 ? timeline.sets[index - 1].endMs : timeline.windowStart}
+          upper={index < timeline.sets.length - 1 ? timeline.sets[index + 1].startMs : timeline.windowEnd}
+          windowStart={timeline.windowStart}
+          windowEnd={timeline.windowEnd}
+          onSave={(start, end) => {
+            // Only a boundary that moved (or was already corrected) becomes a correction.
+            const keepStart = start !== analysis.startMs || analysis.startSource === 'corrected'
+            const keepEnd = end !== analysis.endMs || analysis.endSource === 'corrected'
+            onCorrect(set.id, keepStart ? start - clockOffsetMs : null, keepEnd ? end - clockOffsetMs : null)
+          }}
+        />
         <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">Corrections are stored separately — the imported file is never changed.</p>
       </div>
 
@@ -473,6 +378,65 @@ function SetPanel({
 }
 
 /** Zero-based position of this set among earlier sets of the same exercise and kind (warm-up vs working). */
+/** Slider editor for a set's boundaries. Times shown in watch time; saved in the logger's clock by the caller. */
+function BoundaryEditor({
+  analysis,
+  lower,
+  upper,
+  windowStart,
+  windowEnd,
+  onSave,
+}: {
+  analysis: SetAnalysis
+  lower: number
+  upper: number
+  windowStart: number
+  windowEnd: number
+  onSave: (start: number, end: number) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [start, setStart] = useState(analysis.startMs)
+  const [end, setEnd] = useState(analysis.endMs)
+  // A little room past the neighbours, so an obviously wrong estimate can be pulled into place.
+  const min = Math.max(windowStart, Math.min(lower, analysis.startMs) - 60_000)
+  const max = Math.min(windowEnd, Math.max(upper, analysis.endMs) + 60_000)
+  const changed = start !== analysis.startMs || end !== analysis.endMs
+  if (!open) {
+    return (
+      <button type="button" className="mt-2 text-sky-400 hover:text-sky-300" onClick={() => setOpen(true)}>
+        Edit boundaries with sliders
+      </button>
+    )
+  }
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <label className="flex items-center gap-2">
+        <span className="w-10 text-[var(--text-tertiary)]">Start</span>
+        <input type="range" min={min} max={end - 1000} step={1000} value={start} onChange={(e) => setStart(Number(e.target.value))} className="flex-1 accent-rose-400" aria-label="Set start" />
+        <span className="w-20 text-right tabular-nums">{clock(start)}</span>
+      </label>
+      <label className="flex items-center gap-2">
+        <span className="w-10 text-[var(--text-tertiary)]">End</span>
+        <input type="range" min={start + 1000} max={max} step={1000} value={end} onChange={(e) => setEnd(Number(e.target.value))} className="flex-1 accent-rose-400" aria-label="Set end" />
+        <span className="w-20 text-right tabular-nums">{clock(end)}</span>
+      </label>
+      <p className="text-[var(--text-tertiary)]">
+        {duration(end - start)}
+        {start < lower ? ' · overlaps the previous set' : ''}
+        {end > upper ? ' · overlaps the next set' : ''}
+      </p>
+      <div className="flex gap-3">
+        <button type="button" disabled={!changed} className="text-sky-400 disabled:opacity-40" onClick={() => onSave(start, end)}>
+          Save
+        </button>
+        <button type="button" className="text-[var(--text-tertiary)]" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function positionAmongSameKind(timeline: WorkoutTimeline, index: number): number {
   const { exercise, isWarmup } = timeline.sets[index].set
   return timeline.sets.slice(0, index).filter((s) => s.set.exercise === exercise && s.set.isWarmup === isWarmup).length

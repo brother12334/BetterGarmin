@@ -86,6 +86,17 @@ export interface WorkoutWithSets extends WorkoutRecord {
 
 const ALL_STORES = [WORKOUTS_STORE, SETS_STORE, IMPORTS_STORE, CORRECTIONS_STORE]
 
+/** Fires after any write, so derived analyses can recompute instead of going stale. */
+export const strengthLogEvents = new EventTarget()
+let changeCounter = 0
+export function strengthLogVersion(): number {
+  return changeCounter
+}
+function notifyChanged() {
+  changeCounter++
+  strengthLogEvents.dispatchEvent(new Event('change'))
+}
+
 let dbPromise: Promise<IDBPDatabase> | null = null
 
 function getDb() {
@@ -121,6 +132,7 @@ export async function saveWorkout(workout: WorkoutRecord, sets: SetRecord[]): Pr
   const setsStore = tx.objectStore(SETS_STORE)
   for (const s of sets) await setsStore.put(s)
   await tx.done
+  notifyChanged()
 }
 
 export async function deleteWorkout(workoutId: string): Promise<void> {
@@ -136,6 +148,7 @@ export async function deleteWorkout(workoutId: string): Promise<void> {
     }
   }
   await tx.done
+  notifyChanged()
 }
 
 export async function getAllWorkoutsWithSets(): Promise<WorkoutWithSets[]> {
@@ -176,6 +189,7 @@ export async function seedDemoWorkouts(workouts: WorkoutRecord[], sets: SetRecor
   for (const w of workouts) await workoutsStore.put(w)
   for (const s of sets) await setsStore.put(s)
   await tx.done
+  notifyChanged()
 }
 
 /** Wipes every manually logged workout and set. Independent of "Forget my data" (that only clears imported GarminDB files). */
@@ -184,6 +198,7 @@ export async function clearAllWorkouts(): Promise<void> {
   const tx = db.transaction(ALL_STORES, 'readwrite')
   for (const name of ALL_STORES) await tx.objectStore(name).clear()
   await tx.done
+  notifyChanged()
 }
 
 /**
@@ -206,6 +221,7 @@ export async function saveImportedWorkout(workout: WorkoutRecord, sets: SetRecor
   for (const s of sets) await setsStore.put(s)
   await tx.objectStore(IMPORTS_STORE).put(source)
   await tx.done
+  notifyChanged()
   return { replaced }
 }
 
@@ -224,10 +240,12 @@ export async function saveSetCorrection(workoutId: string, setId: string, startM
   const id = `set:${setId}`
   if (startMs == null && endMs == null) {
     await db.delete(CORRECTIONS_STORE, id)
+    notifyChanged()
     return
   }
   const record: CorrectionRecord = { id, workoutId, setId, startMs, endMs, editedAt: Date.now() }
   await db.put(CORRECTIONS_STORE, record)
+  notifyChanged()
 }
 
 export async function saveClockOffset(workoutId: string, clockOffsetMs: number): Promise<void> {
@@ -235,8 +253,10 @@ export async function saveClockOffset(workoutId: string, clockOffsetMs: number):
   const id = `workout:${workoutId}`
   if (clockOffsetMs === 0) {
     await db.delete(CORRECTIONS_STORE, id)
+    notifyChanged()
     return
   }
   const record: CorrectionRecord = { id, workoutId, clockOffsetMs, editedAt: Date.now() }
   await db.put(CORRECTIONS_STORE, record)
+  notifyChanged()
 }

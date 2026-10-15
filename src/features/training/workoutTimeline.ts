@@ -197,6 +197,14 @@ export function sampleNear(series: HrSample[], t: number, toleranceMs = POINT_TO
   return best ? best.v : null
 }
 
+/** Most recent sample at or before t, if it is within the gap threshold — a real reading and its age, never interpolated. */
+export function latestSample(series: HrSample[], t: number): { v: number; ageMs: number } | null {
+  const i = lowerBound(series, t + 1) - 1
+  if (i < 0) return null
+  const ageMs = t - series[i].t
+  return ageMs <= GAP_THRESHOLD_MS ? { v: series[i].v, ageMs } : null
+}
+
 export function coverageOf(series: HrSample[], start: number, end: number): number {
   const span = end - start
   if (span <= 0) return 0

@@ -47,6 +47,9 @@ export interface FindingOptions {
   from?: string
 }
 
+/** Identifies what a finding currently says; used to resurface dismissed findings when that changes. */
+export const fingerprintOf = (f: Finding) => `${f.title}|${f.evidence}`
+
 const EVIDENCE_WEIGHT: Record<Evidence, number> = { insufficient: 0, weak: 1, moderate: 2, strong: 3 }
 const pct = (x: number) => `${x >= 0 ? '+' : '−'}${Math.abs(Math.round(x * 1000) / 10)}%`
 const workoutLink = (s: { workoutId: string; day: string }, timed: boolean): FindingLink => ({

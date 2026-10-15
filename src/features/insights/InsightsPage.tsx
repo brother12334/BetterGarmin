@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
 import { Chart } from '../../components/ui/Chart'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -7,6 +8,19 @@ import { useInsightsData, METRIC_OPTIONS, type DailyMetrics } from './useInsight
 import { movingAverage, pearsonCorrelation } from '../../lib/stats'
 import { useUnits } from '../../app/units'
 import { convertDistance, convertWeight, distanceUnitLabel, weightUnitLabel, type UnitSystem } from '../../lib/units'
+import { useAnalytics } from '../analytics/useAnalytics'
+import { FindingsTab } from './FindingsTab'
+import { HistoryTab } from './HistoryTab'
+import { ExperimentsCard } from './ExperimentsCard'
+import { AskTab } from './AskTab'
+
+const TABS = [
+  { key: 'findings', label: 'Findings' },
+  { key: 'history', label: 'History' },
+  { key: 'explore', label: 'Explore' },
+  { key: 'ask', label: 'Ask' },
+] as const
+type TabKey = (typeof TABS)[number]['key']
 
 type MetricKey = (typeof METRIC_OPTIONS)[number]['key']
 
@@ -34,32 +48,52 @@ function dayAxis() {
 
 export function InsightsPage() {
   const { data, loading } = useInsightsData(180)
-
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold">Insights</h1>
-        <Card className="text-center text-[var(--text-secondary)]">No data loaded yet.</Card>
-      </div>
-    )
-  }
+  const analytics = useAnalytics()
+  const [params, setParams] = useSearchParams()
+  const tab = (TABS.find((t) => t.key === params.get('tab'))?.key ?? 'findings') as TabKey
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Insights</h1>
-      <WeeklyRecap data={data} />
-      <TrendExplorer data={data} />
-      <CorrelationExplorer data={data} />
+      <div className="sticky top-0 z-10 -mx-1 flex gap-1 rounded-2xl bg-[var(--bg-base)]/80 p-1 backdrop-blur" role="tablist">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setParams({ tab: t.key }, { replace: true })}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${tab === t.key ? 'bg-[var(--bg-panel)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {analytics.error && <Card className="text-sm text-rose-400">Analysis failed: {analytics.error}</Card>}
+
+      {(loading || analytics.loading) && (
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      )}
+
+      {analytics.result && tab === 'findings' && (
+        <>
+          {data.length > 0 && <WeeklyRecap data={data} />}
+          <FindingsTab findings={analytics.result.findings} recovery={analytics.result.recovery} />
+        </>
+      )}
+      {analytics.result && tab === 'history' && <HistoryTab dataset={analytics.result.dataset} />}
+      {analytics.result && tab === 'explore' && (
+        <>
+          <ExperimentsCard dataset={analytics.result.dataset} />
+          {data.length > 0 && <TrendExplorer data={data} />}
+          {data.length > 0 && <CorrelationExplorer data={data} />}
+        </>
+      )}
+      {analytics.result && tab === 'ask' && <AskTab result={analytics.result} />}
     </div>
   )
 }

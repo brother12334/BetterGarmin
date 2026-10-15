@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SetRecord } from '../../db/strengthLog'
-import { buildWorkoutTimeline, cleanSamples, coverageOf, detectGaps, sampleNear, type HrSample } from './workoutTimeline'
+import { buildWorkoutTimeline, cleanSamples, coverageOf, detectGaps, latestSample, sampleNear, type HrSample } from './workoutTimeline'
 
 const T0 = Date.UTC(2026, 9, 8, 17, 50, 0)
 const s = (sec: number) => T0 + sec * 1000
@@ -58,6 +58,18 @@ describe('sampleNear', () => {
     ]
     expect(sampleNear(series, 3_000)).toBe(100)
     expect(sampleNear(series, 10_000)).toBeNull()
+  })
+})
+
+describe('latestSample', () => {
+  it('returns the last real reading and its age, but nothing across a gap', () => {
+    const series = [
+      { t: 0, v: 100 },
+      { t: 10_000, v: 120 },
+    ]
+    expect(latestSample(series, 14_000)).toEqual({ v: 120, ageMs: 4_000 })
+    expect(latestSample(series, 10_000 + 61_000)).toBeNull()
+    expect(latestSample(series, -1)).toBeNull()
   })
 })
 
