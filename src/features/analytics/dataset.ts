@@ -8,7 +8,7 @@ import {
   getSleepRange,
 } from '../../db/queries'
 import type { DbKind } from '../../db/types'
-import { addDays, enumerateDays } from '../../lib/dateRange'
+import { addDays, enumerateDays, normalizeDay } from '../../lib/dateRange'
 import { hmsToMinutes } from '../../lib/duration'
 import { parseGarminTimestamp } from '../training/matchGarminActivity'
 import { loadWorkoutAnalysis, type WorkoutAnalysis } from '../training/loadWorkoutAnalysis'
@@ -36,8 +36,11 @@ function bedtimeHours(start: string | null): number | null {
 export async function loadAnalyticsDataset(loadedKinds: DbKind[]): Promise<AnalyticsDataset> {
   const hasGarmin = loadedKinds.includes('garmin')
   const workouts = await getAllWorkoutsWithSets()
-  const latestGarmin = hasGarmin ? await getLatestDay() : null
-  const latestWorkout = workouts.reduce<string | null>((m, w) => (m == null || w.day > m ? w.day : m), null)
+  const latestGarmin = hasGarmin ? normalizeDay(await getLatestDay()) : null
+  const latestWorkout = workouts.reduce<string | null>((m, w) => {
+    const d = normalizeDay(w.day)
+    return d != null && (m == null || d > m) ? d : m
+  }, null)
   const lastDay = [latestGarmin, latestWorkout].filter((d): d is string => d != null).sort().pop() ?? today()
   const firstDay = addDays(lastDay, -ANALYSIS_WINDOW_DAYS)
 
@@ -49,10 +52,10 @@ export async function loadAnalyticsDataset(loadedKinds: DbKind[]): Promise<Analy
     loadedKinds.includes('activities') ? getActivitiesRange(firstDay, lastDay) : Promise.resolve([]),
   ])
 
-  const summaryByDay = new Map(summary.map((s) => [s.day, s]))
-  const restingByDay = new Map(resting.map((r) => [r.day, r.resting_heart_rate]))
-  const sleepByDay = new Map(sleep.map((s) => [s.day, s]))
-  const hrvByDay = new Map(hrv.map((h) => [h.day, h.last_night_avg]))
+  const summaryByDay = new Map(summary.map((s) => [normalizeDay(s.day), s]))
+  const restingByDay = new Map(resting.map((r) => [normalizeDay(r.day), r.resting_heart_rate]))
+  const sleepByDay = new Map(sleep.map((s) => [normalizeDay(s.day), s]))
+  const hrvByDay = new Map(hrv.map((h) => [normalizeDay(h.day), h.last_night_avg]))
 
   const days: DayRecord[] = enumerateDays(firstDay, lastDay).map((day) => {
     const s = summaryByDay.get(day)
