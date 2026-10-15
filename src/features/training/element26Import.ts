@@ -1,6 +1,6 @@
 import type { MuscleGroup } from '../../lib/strength'
 import { EXERCISE_CATALOG } from '../../lib/strengthPlans'
-import type { SetRecord, WorkoutRecord } from '../../db/strengthLog'
+import type { SetRecord, SetType, WorkoutRecord } from '../../db/strengthLog'
 
 const LB_TO_KG = 0.45359237
 
@@ -10,6 +10,7 @@ interface Element26Set {
   weight?: number | null
   reps?: number | null
   rpe?: number | null
+  rir?: number | null
   warmup?: boolean
   side?: string | null
   technique?: string | null
@@ -66,6 +67,15 @@ function guessCategory(name: string): MuscleGroup {
   if (/curl|tricep|skull ?crusher|pushdown|kickback/.test(n)) return 'arms'
   if (/crunch|sit-?up|plank|leg raise|ab |core|russian twist/.test(n)) return 'core'
   return 'core'
+}
+
+function setTypeFor(s: Element26Set): SetType {
+  if (s.warmup === true) return 'warmup'
+  const t = (s.technique ?? '').toLowerCase()
+  if (/drop/.test(t)) return 'drop'
+  if (/super/.test(t)) return 'superset'
+  if (/fail/.test(t)) return 'failure'
+  return 'working'
 }
 
 function parseTimestamp(set: Element26Set): number | null {
@@ -137,6 +147,8 @@ export function parseElement26Export(raw: unknown): ParsedElement26Workout | { e
         atEpochMs,
         restSecondsBefore: s.restSeconds ?? null,
         rpe: s.rpe ?? null,
+        rir: s.rir ?? null,
+        setType: setTypeFor(s),
         personalRecord: s.personalRecord === true,
         side: s.side ?? null,
         technique: s.technique ?? null,
@@ -146,6 +158,28 @@ export function parseElement26Export(raw: unknown): ParsedElement26Workout | { e
   }
 
   if (sets.length === 0) return { error: 'No completed sets were found in this file.' }
+
+  if (!['kg', 'lb', 'lbs'].includes(unitsLower)) {
+    warnings.push(`Unrecognized weight unit "${data.units}" — weights were kept as-is and treated as kg. Check them.`)
+  }
+  const timedSets = sets.filter((s) => s.atEpochMs != null)
+  const outside = timedSets.filter((s) => (s.atEpochMs as number) < startedAtEpochMs || (s.atEpochMs as number) > finishedAtEpochMs)
+  if (outside.length > 0) {
+    warnings.push(`${outside.length} set(s) were logged outside the workout's start/end time — they'll be clamped on the timeline.`)
+  }
+  for (let i = 1; i < timedSets.length; i++) {
+    if ((timedSets[i].atEpochMs as number) < (timedSets[i - 1].atEpochMs as number)) {
+      warnings.push('Set timestamps are not in the same order as the exercises/sets — the timeline orders sets by time.')
+      break
+    }
+  }
+  const seen = new Set<number>()
+  let dupes = 0
+  for (const s of timedSets) {
+    if (seen.has(s.atEpochMs as number)) dupes++
+    seen.add(s.atEpochMs as number)
+  }
+  if (dupes > 0) warnings.push(`${dupes} set(s) share an identical timestamp with another set.`)
 
   const workout: WorkoutRecord = {
     id: workoutId,

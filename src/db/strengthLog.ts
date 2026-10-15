@@ -3,9 +3,32 @@ import type { MuscleGroup } from '../lib/strength'
 import type { StrengthSplit } from '../lib/strengthPlans'
 
 const DB_NAME = 'bettergarmin-strength-log'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const WORKOUTS_STORE = 'workouts'
 const SETS_STORE = 'sets'
+/** The untouched source file for each import, so corrections never destroy the original. */
+const IMPORTS_STORE = 'imports'
+/** User corrections layered on top of imported data (set boundaries, workout clock offset). */
+const CORRECTIONS_STORE = 'corrections'
+
+export interface ImportRecord {
+  workoutId: string
+  source: 'element26'
+  importedAt: number
+  fileName: string | null
+  raw: unknown
+}
+
+export interface CorrectionRecord {
+  /** `set:<setId>` or `workout:<workoutId>` */
+  id: string
+  workoutId: string
+  setId?: string
+  startMs?: number | null
+  endMs?: number | null
+  clockOffsetMs?: number
+  editedAt: number
+}
 
 export interface WorkoutRecord {
   id: string
@@ -29,6 +52,8 @@ export interface WorkoutRecord {
   title?: string | null
 }
 
+export type SetType = 'warmup' | 'working' | 'drop' | 'superset' | 'failure'
+
 export interface SetRecord {
   id: string
   workoutId: string
@@ -45,6 +70,10 @@ export interface SetRecord {
   /** Rest taken immediately before this set, in seconds, as reported by the source app (an app-tracked value, not independently measured). */
   restSecondsBefore?: number | null
   rpe?: number | null
+  /** Reps in reserve, only when the source app recorded it. */
+  rir?: number | null
+  /** Derived from the source's warm-up flag and technique label; 'working' when nothing more specific is known. */
+  setType?: SetType
   personalRecord?: boolean
   side?: string | null
   technique?: string | null
@@ -54,6 +83,8 @@ export interface SetRecord {
 export interface WorkoutWithSets extends WorkoutRecord {
   sets: SetRecord[]
 }
+
+const ALL_STORES = [WORKOUTS_STORE, SETS_STORE, IMPORTS_STORE, CORRECTIONS_STORE]
 
 let dbPromise: Promise<IDBPDatabase> | null = null
 
@@ -69,6 +100,13 @@ function getDb() {
           const store = db.createObjectStore(SETS_STORE, { keyPath: 'id' })
           store.createIndex('workoutId', 'workoutId')
           store.createIndex('day', 'day')
+        }
+        if (!db.objectStoreNames.contains(IMPORTS_STORE)) {
+          db.createObjectStore(IMPORTS_STORE, { keyPath: 'workoutId' })
+        }
+        if (!db.objectStoreNames.contains(CORRECTIONS_STORE)) {
+          const store = db.createObjectStore(CORRECTIONS_STORE, { keyPath: 'id' })
+          store.createIndex('workoutId', 'workoutId')
         }
       },
     })
@@ -87,14 +125,15 @@ export async function saveWorkout(workout: WorkoutRecord, sets: SetRecord[]): Pr
 
 export async function deleteWorkout(workoutId: string): Promise<void> {
   const db = await getDb()
-  const tx = db.transaction([WORKOUTS_STORE, SETS_STORE], 'readwrite')
+  const tx = db.transaction([WORKOUTS_STORE, SETS_STORE, IMPORTS_STORE, CORRECTIONS_STORE], 'readwrite')
   await tx.objectStore(WORKOUTS_STORE).delete(workoutId)
-  const setsStore = tx.objectStore(SETS_STORE)
-  const index = setsStore.index('workoutId')
-  let cursor = await index.openCursor(IDBKeyRange.only(workoutId))
-  while (cursor) {
-    await cursor.delete()
-    cursor = await cursor.continue()
+  await tx.objectStore(IMPORTS_STORE).delete(workoutId)
+  for (const storeName of [SETS_STORE, CORRECTIONS_STORE] as const) {
+    let cursor = await tx.objectStore(storeName).index('workoutId').openCursor(IDBKeyRange.only(workoutId))
+    while (cursor) {
+      await cursor.delete()
+      cursor = await cursor.continue()
+    }
   }
   await tx.done
 }
@@ -130,9 +169,8 @@ export async function hasAnyWorkouts(): Promise<boolean> {
 /** Bulk-loads demo workouts/sets, replacing whatever is currently stored. Used only for demo mode. */
 export async function seedDemoWorkouts(workouts: WorkoutRecord[], sets: SetRecord[]): Promise<void> {
   const db = await getDb()
-  const tx = db.transaction([WORKOUTS_STORE, SETS_STORE], 'readwrite')
-  await tx.objectStore(WORKOUTS_STORE).clear()
-  await tx.objectStore(SETS_STORE).clear()
+  const tx = db.transaction(ALL_STORES, 'readwrite')
+  for (const name of ALL_STORES) await tx.objectStore(name).clear()
   const workoutsStore = tx.objectStore(WORKOUTS_STORE)
   const setsStore = tx.objectStore(SETS_STORE)
   for (const w of workouts) await workoutsStore.put(w)
@@ -143,8 +181,62 @@ export async function seedDemoWorkouts(workouts: WorkoutRecord[], sets: SetRecor
 /** Wipes every manually logged workout and set. Independent of "Forget my data" (that only clears imported GarminDB files). */
 export async function clearAllWorkouts(): Promise<void> {
   const db = await getDb()
-  const tx = db.transaction([WORKOUTS_STORE, SETS_STORE], 'readwrite')
-  await tx.objectStore(WORKOUTS_STORE).clear()
-  await tx.objectStore(SETS_STORE).clear()
+  const tx = db.transaction(ALL_STORES, 'readwrite')
+  for (const name of ALL_STORES) await tx.objectStore(name).clear()
   await tx.done
+}
+
+/**
+ * Saves an import: the normalized workout + sets, and the original file alongside them. Re-importing the same
+ * workout replaces its sets (stale ones from the previous import are removed) but keeps the user's corrections
+ * for sets whose ids still exist.
+ */
+export async function saveImportedWorkout(workout: WorkoutRecord, sets: SetRecord[], source: ImportRecord): Promise<{ replaced: boolean }> {
+  const db = await getDb()
+  const tx = db.transaction([WORKOUTS_STORE, SETS_STORE, IMPORTS_STORE], 'readwrite')
+  const replaced = (await tx.objectStore(WORKOUTS_STORE).get(workout.id)) != null
+  const setsStore = tx.objectStore(SETS_STORE)
+  const keep = new Set(sets.map((s) => s.id))
+  let cursor = await setsStore.index('workoutId').openCursor(IDBKeyRange.only(workout.id))
+  while (cursor) {
+    if (!keep.has((cursor.value as SetRecord).id)) await cursor.delete()
+    cursor = await cursor.continue()
+  }
+  await tx.objectStore(WORKOUTS_STORE).put(workout)
+  for (const s of sets) await setsStore.put(s)
+  await tx.objectStore(IMPORTS_STORE).put(source)
+  await tx.done
+  return { replaced }
+}
+
+export async function getImportRecord(workoutId: string): Promise<ImportRecord | null> {
+  const db = await getDb()
+  return ((await db.get(IMPORTS_STORE, workoutId)) as ImportRecord | undefined) ?? null
+}
+
+export async function getCorrections(workoutId: string): Promise<CorrectionRecord[]> {
+  const db = await getDb()
+  return (await db.getAllFromIndex(CORRECTIONS_STORE, 'workoutId', workoutId)) as CorrectionRecord[]
+}
+
+export async function saveSetCorrection(workoutId: string, setId: string, startMs: number | null, endMs: number | null): Promise<void> {
+  const db = await getDb()
+  const id = `set:${setId}`
+  if (startMs == null && endMs == null) {
+    await db.delete(CORRECTIONS_STORE, id)
+    return
+  }
+  const record: CorrectionRecord = { id, workoutId, setId, startMs, endMs, editedAt: Date.now() }
+  await db.put(CORRECTIONS_STORE, record)
+}
+
+export async function saveClockOffset(workoutId: string, clockOffsetMs: number): Promise<void> {
+  const db = await getDb()
+  const id = `workout:${workoutId}`
+  if (clockOffsetMs === 0) {
+    await db.delete(CORRECTIONS_STORE, id)
+    return
+  }
+  const record: CorrectionRecord = { id, workoutId, clockOffsetMs, editedAt: Date.now() }
+  await db.put(CORRECTIONS_STORE, record)
 }

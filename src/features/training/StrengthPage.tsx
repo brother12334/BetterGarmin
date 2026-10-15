@@ -27,7 +27,7 @@ const BALANCE_WINDOW_DAYS = 28
 const SESSIONS_PAGE_SIZE = 15
 
 export function StrengthPage() {
-  const { workouts, loading, save, remove, clearAll } = useStrengthLog()
+  const { workouts, loading, refresh, save, remove, clearAll } = useStrengthLog()
   const { sessions, loading: sessionsLoading } = useStrengthSessions(workouts)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<WorkoutWithSets | null>(null)
@@ -73,7 +73,7 @@ export function StrengthPage() {
         </div>
         {!formOpen && (
           <div className="flex items-center gap-2">
-            <ImportElement26Button onImported={save} />
+            <ImportElement26Button onImported={refresh} />
             <Button
               onClick={() => {
                 setEditing(null)

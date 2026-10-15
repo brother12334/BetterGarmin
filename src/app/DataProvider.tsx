@@ -3,7 +3,7 @@ import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig } from '../db/cloudSync'
-import { seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
+import { hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
 type DataStatus = 'restoring' | 'empty' | 'ready'
 type DataSource = 'user' | 'demo' | 'cloud' | null
@@ -193,7 +193,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [source, syncFromCloud])
 
-  async function loadDemoInternal() {
+  /** `reseed`: replace the strength log with the demo seed. Restoring an existing demo session keeps what's there (imports, corrections). */
+  async function loadDemoInternal(reseed = false) {
     const kinds: DbKind[] = []
     for (const demo of DEMO_FILES) {
       const res = await fetch(`${import.meta.env.BASE_URL}demo-data/${demo.fileName}`)
@@ -211,6 +212,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      if (!reseed && (await hasAnyWorkouts())) return
       const res = await fetch(`${import.meta.env.BASE_URL}demo-data/strength-log.json`)
       if (res.ok) {
         const data: { workouts: WorkoutRecord[]; sets: SetRecord[] } = await res.json()
@@ -248,7 +250,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const loadDemo = useCallback(async () => {
-    await loadDemoInternal()
+    await loadDemoInternal(true)
     setStatus('ready')
   }, [])
 
