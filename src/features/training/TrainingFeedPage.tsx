@@ -68,6 +68,24 @@ export function TrainingFeedPage() {
     [activities],
   )
 
+  // Strength (and Element 26 import) works without any Garmin activities, so it is always reachable.
+  const strengthLink = (
+      <Link to="/training/strength">
+        <Card className="flex items-center gap-4 border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-sky-500/5 transition-colors hover:from-violet-500/15">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+            <TrainingIcon width={22} height={22} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Strength Training</p>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              {strengthCount > 0 ? `${strengthCount} session${strengthCount === 1 ? '' : 's'} · PRs, volume, 1RM trends` : 'Log sets, track PRs and volume'}
+            </p>
+          </div>
+          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
+        </Card>
+      </Link>
+  )
+
   const records = useMemo(() => {
     if (!activities) return null
     const bySport = new Map<string, ActivityRow[]>()
@@ -102,6 +120,7 @@ export function TrainingFeedPage() {
     return (
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-bold">Training</h1>
+        {strengthLink}
         <Card className="text-center text-[var(--text-secondary)]">No activities loaded yet.</Card>
       </div>
     )
@@ -111,20 +130,7 @@ export function TrainingFeedPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Training</h1>
 
-      <Link to="/training/strength">
-        <Card className="flex items-center gap-4 border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-sky-500/5 transition-colors hover:from-violet-500/15">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
-            <TrainingIcon width={22} height={22} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">Strength Training</p>
-            <p className="text-xs text-[var(--text-tertiary)]">
-              {strengthCount > 0 ? `${strengthCount} session${strengthCount === 1 ? '' : 's'} · PRs, volume, 1RM trends` : 'Log sets, track PRs and volume'}
-            </p>
-          </div>
-          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
-        </Card>
-      </Link>
+      {strengthLink}
 
       {records && records.length > 0 && (
         <Card>
