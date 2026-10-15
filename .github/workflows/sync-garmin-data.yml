@@ -110,6 +110,9 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: |
           mkdir -p ~/.GarminDb
+          # Without SYNC_START_DATE, backfill only the last 60 days (a long history takes hours).
+          START="${{ vars.SYNC_START_DATE }}"
+          [ -z "$START" ] && START=$(date -u -d '60 days ago' +%m/%d/%Y)
           cat > ~/.GarminDb/GarminConnectConfig.json <<CONFIG
           {
             "db": { "type": "sqlite" },
@@ -121,11 +124,11 @@ jobs:
               "password_file": null
             },
             "data": {
-              "weight_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
-              "sleep_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
-              "rhr_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
-              "hrv_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
-              "monitoring_start_date": "${{ vars.SYNC_START_DATE || '01/01/2023' }}",
+              "weight_start_date": "$START",
+              "sleep_start_date": "$START",
+              "rhr_start_date": "$START",
+              "hrv_start_date": "$START",
+              "monitoring_start_date": "$START",
               "download_latest_activities": 25,
               "download_all_activities": 1000
             },
