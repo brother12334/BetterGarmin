@@ -25,7 +25,8 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The first full backfill can take a long time; hourly incremental runs take a few minutes.
+    timeout-minutes: 120
     env:
       AWS_DEFAULT_REGION: auto
       DB_DIR: /home/runner/HealthData/DBs
