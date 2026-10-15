@@ -110,9 +110,9 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: |
           mkdir -p ~/.GarminDb
-          # Without SYNC_START_DATE, backfill only the last 60 days (a long history takes hours).
+          # Without SYNC_START_DATE, backfill only the last 7 days (a long history takes hours).
           START="${{ vars.SYNC_START_DATE }}"
-          [ -z "$START" ] && START=$(date -u -d '60 days ago' +%m/%d/%Y)
+          [ -z "$START" ] && START=$(date -u -d '7 days ago' +%m/%d/%Y)
           cat > ~/.GarminDb/GarminConnectConfig.json <<CONFIG
           {
             "db": { "type": "sqlite" },

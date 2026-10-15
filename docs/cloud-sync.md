@@ -138,7 +138,7 @@ Optional **repository variable** (same screen, "Variables" tab):
 
 | Variable | Value |
 |---|---|
-| `SYNC_START_DATE` | How far back to backfill on the very first sync, `MM/DD/YYYY`. Defaults to the last 60 days if unset. |
+| `SYNC_START_DATE` | How far back to backfill on the very first sync, `MM/DD/YYYY`. Defaults to the last 7 days if unset. |
 
 ### 5. Run the first sync
 
