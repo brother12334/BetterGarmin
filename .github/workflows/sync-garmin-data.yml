@@ -61,11 +61,21 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: pip install garmindb
 
+      # Checked before logging in to Garmin, so a bad key doesn't spend a Garmin login attempt.
+      - name: Verify R2 access
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          if ! aws --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/" > /tmp/r2.log 2>&1; then
+            cat /tmp/r2.log
+            echo "::error::Cloudflare R2 rejected the credentials. Check R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME, and that the R2 API token has Object Read & Write on this bucket."
+            exit 1
+          fi
+
       - name: Restore previous database state from R2
         if: steps.check.outputs.ready == 'true'
         run: |
           mkdir -p "$DB_DIR"
-          aws --endpoint-url "$R2_ENDPOINT" s3 sync "s3://$R2_BUCKET/DBs" "$DB_DIR" || true
+          aws --endpoint-url "$R2_ENDPOINT" s3 sync "s3://$R2_BUCKET/DBs" "$DB_DIR"
           if [ -z "$(ls -A "$DB_DIR" 2>/dev/null)" ]; then
             echo "No existing data in R2 — this will be a full first-time sync (can take a while)."
             echo "first_run=true" >> "$GITHUB_ENV"
@@ -108,15 +118,34 @@ jobs:
 
       - name: Run GarminDB (first-time full sync)
         if: steps.check.outputs.ready == 'true' && env.first_run == 'true'
-        run: garmindb_cli.py --all --download --import --analyze
+        run: |
+          set -o pipefail
+          garmindb_cli.py --all --download --import --analyze 2>&1 | tee /tmp/garmindb.log
+          # GarminDB exits 0 even when it can't log in — never let that pass as a successful sync.
+          if grep -q "Failed to login" /tmp/garmindb.log; then
+            echo "::error::Garmin Connect login failed. Check GARMIN_USERNAME / GARMIN_PASSWORD. Accounts with two-step verification can't be used by this automated login."
+            exit 1
+          fi
 
       - name: Run GarminDB (incremental sync)
         if: steps.check.outputs.ready == 'true' && env.first_run == 'false'
-        run: garmindb_cli.py --all --download --import --analyze --latest
+        run: |
+          set -o pipefail
+          garmindb_cli.py --all --download --import --analyze --latest 2>&1 | tee /tmp/garmindb.log
+          # GarminDB exits 0 even when it can't log in — never let that pass as a successful sync.
+          if grep -q "Failed to login" /tmp/garmindb.log; then
+            echo "::error::Garmin Connect login failed. Check GARMIN_USERNAME / GARMIN_PASSWORD. Accounts with two-step verification can't be used by this automated login."
+            exit 1
+          fi
 
       - name: Upload updated database state to R2
         if: steps.check.outputs.ready == 'true'
         run: |
+          # Never mirror an empty folder up: with --delete that would wipe the stored history.
+          if [ -z "$(ls -A "$DB_DIR" 2>/dev/null)" ]; then
+            echo "::error::GarminDB produced no database files — not uploading."
+            exit 1
+          fi
           aws --endpoint-url "$R2_ENDPOINT" s3 sync "$DB_DIR" "s3://$R2_BUCKET/DBs" --delete
 
       - name: Clean up credentials
