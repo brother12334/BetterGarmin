@@ -165,6 +165,11 @@ export function MorePage() {
       <p className="text-center text-xs text-[var(--text-tertiary)]">
         Custom, drag-and-drop dashboard layouts are coming in a later update.
       </p>
+
+      <p className="text-center text-xs tabular-nums text-[var(--text-tertiary)]">
+        BetterGarmin v{__APP_VERSION__} · build {__APP_COMMIT__} ·{' '}
+        {new Date(__APP_BUILD_DATE__).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+      </p>
     </div>
   )
 }

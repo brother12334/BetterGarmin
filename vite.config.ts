@@ -2,6 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+
+function gitCommit(): string {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return process.env.GITHUB_SHA?.slice(0, 7) ?? 'dev'
+  }
+}
 
 // Project is deployed to GitHub Pages at https://<user>.github.io/BetterGarmin/
 // GitHub Pages paths are case-sensitive, so this must match the repo name exactly.
@@ -9,6 +21,11 @@ const REPO_BASE = '/BetterGarmin/'
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? REPO_BASE : '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_COMMIT__: JSON.stringify(gitCommit()),
+    __APP_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),
