@@ -217,6 +217,25 @@ describe('buildWorkoutTimeline', () => {
     expect(tl.quality.issues.join(' ')).toMatch(/implausibly long/)
   })
 
+  it('groups consecutive superset sets and treats moves between partners as rest', () => {
+    const ss = (id: string, ex: string, at: number, order: number) => ({ ...set(id, ex, at, 20, order), setType: 'superset' as const })
+    const tl = buildWorkoutTimeline({
+      startedAtEpochMs: s(0),
+      finishedAtEpochMs: s(600),
+      sets: [ss('a', 'Curl', 100, 0), ss('b', 'Pushdown', 160, 1), ss('c', 'Curl', 220, 2), set('d', 'Row', 400, 90, 3)],
+      hrSamples: hr,
+    })!
+    expect(tl.sets.map((x) => x.supersetGroup)).toEqual([1, 1, 1, null])
+    const between = tl.segments.filter((x) => x.type !== 'set').map((x) => x.type)
+    expect(between).toEqual(['warmup', 'rest', 'rest', 'transition', 'cooldown'])
+  })
+
+  it('does not call a single-exercise run a superset', () => {
+    const ss = (id: string, at: number, order: number) => ({ ...set(id, 'Curl', at, 20, order), setType: 'superset' as const })
+    const tl = buildWorkoutTimeline({ startedAtEpochMs: s(0), finishedAtEpochMs: s(600), sets: [ss('a', 100, 0), ss('b', 160, 1)], hrSamples: hr })!
+    expect(tl.sets.every((x) => x.supersetGroup === null)).toBe(true)
+  })
+
   it('returns null when nothing is timed', () => {
     expect(buildWorkoutTimeline({ startedAtEpochMs: s(0), finishedAtEpochMs: s(600), sets: [set('x', 'Bench', null, null, 0)], hrSamples: hr })).toBeNull()
   })

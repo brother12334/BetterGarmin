@@ -2,7 +2,7 @@ import { getCorrections, type WorkoutWithSets } from '../../db/strengthLog'
 import { getActivitiesRange, getActivityRecords, getMonitoringHrForDay } from '../../db/queries'
 import type { ActivityRow, DbKind } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
-import { matchGarminActivity, parseGarminTimestamp } from './matchGarminActivity'
+import { matchGarminActivity, parseGarminTimestamp, suggestClockOffset, type OffsetSuggestion } from './matchGarminActivity'
 import { buildWorkoutTimeline, type HrSample, type SetCorrection, type WorkoutTimeline } from './workoutTimeline'
 
 /** Where the HR trace came from. 'activity' = the watch's recorded activity (dense); 'monitoring' = all-day HR (coarse, ~1-2 min). */
@@ -14,6 +14,8 @@ export interface WorkoutAnalysis {
   timeline: WorkoutTimeline | null
   corrections: SetCorrection[]
   clockOffsetMs: number
+  /** Set when the logged times overlap no strength activity but a time-zone-sized shift would line them up. */
+  offsetSuggestion: OffsetSuggestion | null
 }
 
 function toSamples(rows: { timestamp: string | null; v: number | null }[]): HrSample[] {
@@ -39,7 +41,7 @@ export async function loadWorkoutAnalysis(workout: WorkoutWithSets, loadedKinds:
     .map((c) => ({ setId: c.setId as string, startMs: c.startMs ?? null, endMs: c.endMs ?? null }))
 
   if (workout.startedAtEpochMs == null || workout.finishedAtEpochMs == null) {
-    return { matchedActivity: null, hrSource: 'none', timeline: null, corrections, clockOffsetMs }
+    return { matchedActivity: null, hrSource: 'none', timeline: null, corrections, clockOffsetMs, offsetSuggestion: null }
   }
   const start = workout.startedAtEpochMs
   const end = workout.finishedAtEpochMs
@@ -47,10 +49,13 @@ export async function loadWorkoutAnalysis(workout: WorkoutWithSets, loadedKinds:
   let matchedActivity: ActivityRow | null = null
   let hrSamples: HrSample[] = []
   let hrSource: HrSource = 'none'
+  let offsetSuggestion: OffsetSuggestion | null = null
 
   if (loadedKinds.includes('activities')) {
     const nearby = await getActivitiesRange(addDays(workout.day, -1), addDays(workout.day, 1))
-    matchedActivity = matchGarminActivity({ startedAtEpochMs: start + clockOffsetMs, finishedAtEpochMs: end + clockOffsetMs }, nearby)
+    const shifted = { startedAtEpochMs: start + clockOffsetMs, finishedAtEpochMs: end + clockOffsetMs }
+    offsetSuggestion = suggestClockOffset(shifted, nearby)
+    matchedActivity = matchGarminActivity(shifted, nearby)
     if (matchedActivity) {
       const records = await getActivityRecords(matchedActivity.activity_id)
       hrSamples = toSamples(records.map((r) => ({ timestamp: r.timestamp, v: r.hr })))
@@ -64,5 +69,5 @@ export async function loadWorkoutAnalysis(workout: WorkoutWithSets, loadedKinds:
   }
 
   const timeline = buildWorkoutTimeline({ startedAtEpochMs: start, finishedAtEpochMs: end, sets: workout.sets, hrSamples, corrections, clockOffsetMs })
-  return { matchedActivity, hrSource, timeline, corrections, clockOffsetMs }
+  return { matchedActivity, hrSource, timeline, corrections, clockOffsetMs, offsetSuggestion }
 }

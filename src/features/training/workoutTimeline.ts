@@ -1,4 +1,4 @@
-import type { SetRecord } from '../../db/strengthLog'
+import type { EffectiveSet } from '../../db/applyCorrections'
 
 /**
  * Workout ↔ heart-rate alignment engine.
@@ -70,7 +70,7 @@ export interface RestAnalysis {
 }
 
 export interface SetAnalysis {
-  set: SetRecord
+  set: EffectiveSet
   setNumberInExercise: number
   startMs: number
   endMs: number
@@ -84,6 +84,8 @@ export interface SetAnalysis {
   confidence: Confidence
   /** The rest that followed this set (before the next set), if any. */
   restAfter: RestAnalysis | null
+  /** Consecutive sets marked as a superset share a group number (1, 2, …); null otherwise. */
+  supersetGroup: number | null
   issues: string[]
 }
 
@@ -139,7 +141,7 @@ export interface WorkoutTimeline {
 export interface BuildTimelineInput {
   startedAtEpochMs: number
   finishedAtEpochMs: number
-  sets: SetRecord[]
+  sets: EffectiveSet[]
   hrSamples: HrSample[]
   corrections?: SetCorrection[]
   /** Added to every workout-side timestamp (logger clock → watch clock). */
@@ -389,9 +391,23 @@ export function buildWorkoutTimeline(input: BuildTimelineInput): WorkoutTimeline
       hrChange: stats.first != null && stats.last != null ? stats.last - stats.first : null,
       confidence: implausible && stats.n > 0 ? 'low' : confidenceFor(startSource, endSource, stats.coverage, stats.n),
       restAfter: null,
+      supersetGroup: null,
       issues: setIssues,
     })
     cursor = Math.max(cursor, end)
+  }
+
+  // Superset groups: runs of consecutive superset-marked sets spanning more than one exercise.
+  let group = 0
+  for (let i = 0; i < sets.length; i++) {
+    if (sets[i].set.setType !== 'superset') continue
+    const prev = sets[i - 1]
+    if (prev?.set.setType === 'superset' && prev.supersetGroup != null) sets[i].supersetGroup = prev.supersetGroup
+    else sets[i].supersetGroup = ++group
+  }
+  for (const g of new Set(sets.map((x) => x.supersetGroup).filter((x) => x != null))) {
+    const members = sets.filter((x) => x.supersetGroup === g)
+    if (new Set(members.map((x) => x.set.exercise)).size < 2) members.forEach((x) => (x.supersetGroup = null))
   }
 
   const segments: TimelineSegment[] = []
@@ -401,7 +417,9 @@ export function buildWorkoutTimeline(input: BuildTimelineInput): WorkoutTimeline
     segments.push({ type: 'set', startMs: s.startMs, endMs: s.endMs, setIndex: i, exercise: s.set.exercise, stats: s.stats })
     const next = sets[i + 1]
     if (next && next.startMs - s.endMs >= 1000) {
-      const type: SegmentType = next.set.exercise !== s.set.exercise ? 'transition' : 'rest'
+      // Moving between superset partners is the rest of that superset, not a change of exercise.
+      const sameSuperset = s.supersetGroup != null && s.supersetGroup === next.supersetGroup
+      const type: SegmentType = next.set.exercise !== s.set.exercise && !sameSuperset ? 'transition' : 'rest'
       s.restAfter = analyseRest(series, s.endMs, next.startMs, s.preSetHr)
       segments.push({ type, startMs: s.endMs, endMs: next.startMs, setIndex: i, stats: s.restAfter.stats })
     }

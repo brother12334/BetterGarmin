@@ -74,7 +74,14 @@ export function WorkoutTimelinePage() {
           {new Date(`${workout.day}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })}
           {workout.gym ? ` · ${workout.gym}` : ''}
         </p>
-        <CompareControl workout={workout} />
+        <div className="flex flex-wrap items-center gap-3">
+          <CompareControl workout={workout} />
+          {workout.source === 'element26' && (
+            <Link to={`/training/strength/workout/${workout.id}/review`} className="mt-2 text-xs text-sky-400 hover:text-sky-300">
+              Review import{workout.sets.some((s) => s.editedFields?.length) ? ' (edited)' : ''} →
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -101,6 +108,24 @@ export function WorkoutTimelinePage() {
         </div>
       </Card>
 
+      {data.offsetSuggestion && (
+        <Card className="border-amber-400/30 text-sm">
+          <p className="font-semibold">Times look shifted — probably a time-zone difference</p>
+          <p className="mt-1 text-[var(--text-secondary)]">
+            Your logged times don't overlap any Garmin strength activity, but they line up with one recorded at{' '}
+            {data.offsetSuggestion.activity.start_time?.slice(11, 16)} if shifted by{' '}
+            <b>{data.offsetSuggestion.offsetMs > 0 ? '+' : '−'}{Math.abs(data.offsetSuggestion.offsetMs) / 3_600_000}h</b> (
+            {Math.round(data.offsetSuggestion.overlap * 100)}% overlap).
+          </p>
+          <div className="mt-2 flex gap-3 text-xs">
+            <button type="button" className="text-sky-400 hover:text-sky-300" onClick={() => data.setClockOffset(data.clockOffsetMs + data.offsetSuggestion!.offsetMs)}>
+              Apply shift
+            </button>
+            <span className="text-[var(--text-tertiary)]">You can undo it in Data quality below.</span>
+          </div>
+        </Card>
+      )}
+
       {!timeline && (
         <Card className="text-sm text-[var(--text-secondary)]">
           {workout.startedAtEpochMs == null
@@ -111,7 +136,20 @@ export function WorkoutTimelinePage() {
 
       {timeline && (
         <>
-          <TimelineCard timeline={timeline} hrSource={hrSource} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
+          <TimelineCard
+            timeline={timeline}
+            hrSource={hrSource}
+            selectedIndex={selectedIndex}
+            onSelect={setSelectedIndex}
+            onBoundaryDrag={(i, which, ms) => {
+              // Same rule as the nudges and sliders: only the dragged boundary becomes a correction.
+              const a = timeline.sets[i]
+              const start = which === 'start' ? ms : a.startSource === 'corrected' ? a.startMs : null
+              const end = which === 'end' ? ms : a.endSource === 'corrected' ? a.endMs : null
+              if ((start ?? a.startMs) >= (end ?? a.endMs) - 1000) return
+              data.correctSet(a.set.id, start != null ? start - data.clockOffsetMs : null, end != null ? end - data.clockOffsetMs : null)
+            }}
+          />
 
           {selected && selectedIndex != null && (
             <SetPanel
@@ -525,6 +563,9 @@ function ExerciseBreakdown({
                       <td className="py-1.5 pr-2">
                         {s.setNumberInExercise}
                         {s.set.isWarmup ? ' WU' : ''}
+                        {s.set.setType === 'drop' && <span className="ml-1 rounded bg-orange-500/15 px-1 text-[10px] text-orange-400">drop</span>}
+                        {s.supersetGroup != null && <span className="ml-1 rounded bg-violet-500/15 px-1 text-[10px] text-violet-400">SS{s.supersetGroup}</span>}
+                        {s.set.editedFields?.length ? <span className="ml-1 text-[10px] text-sky-400" title="Edited in review">✎</span> : null}
                         {s.confidence === 'low' || s.confidence === 'none' ? <span className="ml-1 text-amber-400">•</span> : null}
                       </td>
                       <td className="py-1.5 pr-2">

@@ -40,7 +40,7 @@ describe('assistant', () => {
         dayIndex: new Map(),
         sessions,
         exerciseHistory: indexExercises(sessions),
-        aligned: new Map([['w1', { matchedActivity: null, hrSource: 'activity', timeline, corrections: [], clockOffsetMs: 0 }]]),
+        aligned: new Map([['w1', { matchedActivity: null, hrSource: 'activity', timeline, corrections: [], clockOffsetMs: 0, offsetSuggestion: null }]]),
         workouts: [w],
       },
       recovery: { asOf: '2026-01-01', indicators: [], available: 0, differingLessRecovered: 0, sustainedLessRecovered: 0, missing: [], statement: 'x' },

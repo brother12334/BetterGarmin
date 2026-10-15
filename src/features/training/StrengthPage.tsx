@@ -294,16 +294,22 @@ export function StrengthPage() {
                       Timeline
                     </Link>
                   )}
-                  <button
-                    type="button"
-                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                    onClick={() => {
-                      setEditing(s.workout)
-                      setFormOpen(true)
-                    }}
-                  >
-                    Edit
-                  </button>
+                  {s.workout.source === 'element26' ? (
+                    <Link to={`/training/strength/workout/${s.workout.id}/review`} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+                      Review
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                      onClick={() => {
+                        setEditing(s.workout)
+                        setFormOpen(true)
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="text-xs text-rose-400 hover:text-rose-300"

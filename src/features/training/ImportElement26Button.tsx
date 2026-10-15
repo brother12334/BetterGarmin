@@ -69,8 +69,11 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
         <div className="flex flex-col gap-1 text-xs">
           <p className="text-[var(--text-secondary)]">
             {summary.replaced ? 'Re-imported' : 'Imported'} {summary.setCount} sets.{' '}
+            <Link to={`/training/strength/workout/${summary.workoutId}/review`} className="text-sky-400 hover:text-sky-300">
+              Review import →
+            </Link>{' '}
             <Link to={`/training/strength/workout/${summary.workoutId}`} className="text-sky-400 hover:text-sky-300">
-              Review timeline →
+              Timeline →
             </Link>
           </p>
           {summary.warnings.length > 0 && (

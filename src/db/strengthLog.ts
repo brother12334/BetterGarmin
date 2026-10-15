@@ -1,6 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import type { MuscleGroup } from '../lib/strength'
 import type { StrengthSplit } from '../lib/strengthPlans'
+import { applyCorrections, type EffectiveSet, type SetFieldEdits } from './applyCorrections'
 
 const DB_NAME = 'bettergarmin-strength-log'
 const DB_VERSION = 2
@@ -27,6 +28,10 @@ export interface CorrectionRecord {
   startMs?: number | null
   endMs?: number | null
   clockOffsetMs?: number
+  /** Workout-level unit fix: every imported weight is multiplied by this. */
+  weightScale?: number
+  /** Set-level field edits (exercise, load, reps, warm-up, excluded). */
+  fields?: SetFieldEdits
   editedAt: number
 }
 
@@ -81,7 +86,9 @@ export interface SetRecord {
 }
 
 export interface WorkoutWithSets extends WorkoutRecord {
-  sets: SetRecord[]
+  /** Sets with the user's corrections applied (excluded sets removed). */
+  sets: EffectiveSet[]
+  clockOffsetMs?: number
 }
 
 const ALL_STORES = [WORKOUTS_STORE, SETS_STORE, IMPORTS_STORE, CORRECTIONS_STORE]
@@ -153,15 +160,21 @@ export async function deleteWorkout(workoutId: string): Promise<void> {
 
 export async function getAllWorkoutsWithSets(): Promise<WorkoutWithSets[]> {
   const db = await getDb()
-  const [workouts, sets] = await Promise.all([db.getAll(WORKOUTS_STORE) as Promise<WorkoutRecord[]>, db.getAll(SETS_STORE) as Promise<SetRecord[]>])
+  const [workouts, sets, corrections] = await Promise.all([
+    db.getAll(WORKOUTS_STORE) as Promise<WorkoutRecord[]>,
+    db.getAll(SETS_STORE) as Promise<SetRecord[]>,
+    db.getAll(CORRECTIONS_STORE) as Promise<CorrectionRecord[]>,
+  ])
   const setsByWorkout = new Map<string, SetRecord[]>()
   for (const s of sets) {
     const list = setsByWorkout.get(s.workoutId) ?? []
     list.push(s)
     setsByWorkout.set(s.workoutId, list)
   }
+  const corrByWorkout = new Map<string, CorrectionRecord[]>()
+  for (const c of corrections) corrByWorkout.set(c.workoutId, [...(corrByWorkout.get(c.workoutId) ?? []), c])
   return workouts
-    .map((w) => ({ ...w, sets: (setsByWorkout.get(w.id) ?? []).sort((a, b) => a.order - b.order) }))
+    .map((w) => effective(w, setsByWorkout.get(w.id) ?? [], corrByWorkout.get(w.id) ?? []))
     .sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : b.createdAt - a.createdAt))
 }
 
@@ -169,8 +182,29 @@ export async function getWorkoutWithSets(workoutId: string): Promise<WorkoutWith
   const db = await getDb()
   const workout = (await db.get(WORKOUTS_STORE, workoutId)) as WorkoutRecord | undefined
   if (!workout) return null
-  const sets = ((await db.getAllFromIndex(SETS_STORE, 'workoutId', workoutId)) as SetRecord[]).sort((a, b) => a.order - b.order)
-  return { ...workout, sets }
+  const [sets, corrections] = await Promise.all([
+    db.getAllFromIndex(SETS_STORE, 'workoutId', workoutId) as Promise<SetRecord[]>,
+    db.getAllFromIndex(CORRECTIONS_STORE, 'workoutId', workoutId) as Promise<CorrectionRecord[]>,
+  ])
+  return effective(workout, sets, corrections)
+}
+
+function effective(workout: WorkoutRecord, sets: SetRecord[], corrections: CorrectionRecord[]): WorkoutWithSets {
+  const sorted = [...sets].sort((a, b) => a.order - b.order)
+  const applied = applyCorrections(workout, sorted, corrections)
+  return { ...workout, sets: applied.sets, clockOffsetMs: applied.settings.clockOffsetMs }
+}
+
+/** The imported sets exactly as stored, plus every correction — for the review screen. */
+export async function getWorkoutForReview(workoutId: string): Promise<{ workout: WorkoutRecord; sets: SetRecord[]; corrections: CorrectionRecord[] } | null> {
+  const db = await getDb()
+  const workout = (await db.get(WORKOUTS_STORE, workoutId)) as WorkoutRecord | undefined
+  if (!workout) return null
+  const [sets, corrections] = await Promise.all([
+    db.getAllFromIndex(SETS_STORE, 'workoutId', workoutId) as Promise<SetRecord[]>,
+    db.getAllFromIndex(CORRECTIONS_STORE, 'workoutId', workoutId) as Promise<CorrectionRecord[]>,
+  ])
+  return { workout, sets: sets.sort((a, b) => a.order - b.order), corrections }
 }
 
 export async function hasAnyWorkouts(): Promise<boolean> {
@@ -235,28 +269,47 @@ export async function getCorrections(workoutId: string): Promise<CorrectionRecor
   return (await db.getAllFromIndex(CORRECTIONS_STORE, 'workoutId', workoutId)) as CorrectionRecord[]
 }
 
-export async function saveSetCorrection(workoutId: string, setId: string, startMs: number | null, endMs: number | null): Promise<void> {
+/** Read-modify-write of one correction record; deleted when nothing meaningful is left in it. */
+async function updateCorrection(id: string, workoutId: string, patch: (c: CorrectionRecord) => CorrectionRecord): Promise<void> {
   const db = await getDb()
-  const id = `set:${setId}`
-  if (startMs == null && endMs == null) {
-    await db.delete(CORRECTIONS_STORE, id)
-    notifyChanged()
-    return
-  }
-  const record: CorrectionRecord = { id, workoutId, setId, startMs, endMs, editedAt: Date.now() }
-  await db.put(CORRECTIONS_STORE, record)
+  const existing = ((await db.get(CORRECTIONS_STORE, id)) as CorrectionRecord | undefined) ?? { id, workoutId, editedAt: 0 }
+  const next = { ...patch(existing), editedAt: Date.now() }
+  const fieldsEmpty = !next.fields || Object.values(next.fields).every((v) => v === undefined)
+  const empty =
+    next.startMs == null && next.endMs == null && fieldsEmpty && (next.clockOffsetMs ?? 0) === 0 && (next.weightScale ?? 1) === 1
+  if (empty) await db.delete(CORRECTIONS_STORE, id)
+  else await db.put(CORRECTIONS_STORE, next)
   notifyChanged()
 }
 
+export async function saveSetCorrection(workoutId: string, setId: string, startMs: number | null, endMs: number | null): Promise<void> {
+  await updateCorrection(`set:${setId}`, workoutId, (c) => ({ ...c, setId, startMs, endMs }))
+}
+
+/** Pass `undefined` for a field to clear that edit; `null` clears all field edits for the set. */
+export async function saveSetFields(workoutId: string, setId: string, fields: SetFieldEdits | null): Promise<void> {
+  await updateCorrection(`set:${setId}`, workoutId, (c) => {
+    if (fields == null) return { ...c, setId, fields: undefined }
+    const merged = { ...c.fields, ...fields }
+    for (const k of Object.keys(merged) as (keyof SetFieldEdits)[]) if (merged[k] === undefined) delete merged[k]
+    return { ...c, setId, fields: Object.keys(merged).length ? merged : undefined }
+  })
+}
+
 export async function saveClockOffset(workoutId: string, clockOffsetMs: number): Promise<void> {
+  await updateCorrection(`workout:${workoutId}`, workoutId, (c) => ({ ...c, clockOffsetMs }))
+}
+
+export async function saveWeightScale(workoutId: string, weightScale: number): Promise<void> {
+  await updateCorrection(`workout:${workoutId}`, workoutId, (c) => ({ ...c, weightScale }))
+}
+
+/** Drops every field edit and the unit fix for a workout (timing corrections and clock offset are kept). */
+export async function resetWorkoutEdits(workoutId: string): Promise<void> {
   const db = await getDb()
-  const id = `workout:${workoutId}`
-  if (clockOffsetMs === 0) {
-    await db.delete(CORRECTIONS_STORE, id)
-    notifyChanged()
-    return
+  const all = (await db.getAllFromIndex(CORRECTIONS_STORE, 'workoutId', workoutId)) as CorrectionRecord[]
+  for (const c of all) {
+    if (c.setId && c.fields) await updateCorrection(c.id, workoutId, (x) => ({ ...x, fields: undefined }))
+    if (c.id === `workout:${workoutId}` && (c.weightScale ?? 1) !== 1) await updateCorrection(c.id, workoutId, (x) => ({ ...x, weightScale: 1 }))
   }
-  const record: CorrectionRecord = { id, workoutId, clockOffsetMs, editedAt: Date.now() }
-  await db.put(CORRECTIONS_STORE, record)
-  notifyChanged()
 }

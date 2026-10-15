@@ -12,6 +12,7 @@ import { getDailySummary, getHrv, getRestingHrRange, getSleep } from '../../db/q
 import type { ActivityRow } from '../../db/types'
 import { hmsToMinutes } from '../../lib/duration'
 import { loadWorkoutAnalysis, type HrSource } from './loadWorkoutAnalysis'
+import type { OffsetSuggestion } from './matchGarminActivity'
 import type { SetCorrection, WorkoutTimeline } from './workoutTimeline'
 
 export interface ReadinessContext {
@@ -41,6 +42,7 @@ interface State {
   readiness: ReadinessContext | null
   corrections: SetCorrection[]
   clockOffsetMs: number
+  offsetSuggestion: OffsetSuggestion | null
   previousByExercise: Map<string, PreviousExerciseSession>
 }
 
@@ -53,6 +55,7 @@ const EMPTY: State = {
   readiness: null,
   corrections: [],
   clockOffsetMs: 0,
+  offsetSuggestion: null,
   previousByExercise: new Map(),
 }
 
@@ -74,7 +77,7 @@ export function useWorkoutTimeline(workoutId: string | undefined) {
         return
       }
 
-      const { matchedActivity, hrSource, timeline, corrections, clockOffsetMs } = await loadWorkoutAnalysis(workout, loadedKinds)
+      const { matchedActivity, hrSource, timeline, corrections, clockOffsetMs, offsetSuggestion } = await loadWorkoutAnalysis(workout, loadedKinds)
 
       let readiness: ReadinessContext | null = null
       if (loadedKinds.includes('garmin')) {
@@ -109,7 +112,7 @@ export function useWorkoutTimeline(workoutId: string | undefined) {
       }
 
       if (!cancelled) {
-        setState({ loading: false, workout, matchedActivity, hrSource, timeline, readiness, corrections, clockOffsetMs, previousByExercise })
+        setState({ loading: false, workout, matchedActivity, hrSource, timeline, readiness, corrections, clockOffsetMs, offsetSuggestion, previousByExercise })
       }
     }
     load()

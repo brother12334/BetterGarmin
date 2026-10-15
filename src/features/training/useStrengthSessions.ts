@@ -60,7 +60,12 @@ export function useStrengthSessions(workouts: WorkoutWithSets[]) {
   // so matching stays correct as new Garmin data comes in. Manually logged ones still use the
   // explicit linkedActivityId set via "Add sets for this session".
   const matchedByWorkout = new Map(
-    workouts.filter((w) => w.startedAtEpochMs != null).map((w) => [w.id, matchGarminActivity(w, garminSessions)]),
+    workouts
+      .filter((w) => w.startedAtEpochMs != null && w.finishedAtEpochMs != null)
+      .map((w) => {
+        const offset = w.clockOffsetMs ?? 0
+        return [w.id, matchGarminActivity({ startedAtEpochMs: w.startedAtEpochMs! + offset, finishedAtEpochMs: w.finishedAtEpochMs! + offset }, garminSessions)]
+      }),
   )
   const claimedActivityIds = new Set<string>()
   for (const w of workouts) {

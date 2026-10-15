@@ -1,5 +1,5 @@
 import ReactECharts from 'echarts-for-react'
-import type { EChartsOption } from 'echarts'
+import type { ECharts, EChartsOption } from 'echarts'
 
 interface ChartClickParams {
   componentType: string
@@ -17,10 +17,12 @@ interface ChartProps {
   onHover?: (index: number | null) => void
   /** Called on any click within the chart (a markArea segment, a point, etc.) — inspect componentType/data to tell them apart. */
   onClick?: (params: ChartClickParams) => void
+  /** Receives the ECharts instance once mounted, for pixel ↔ value conversion (e.g. draggable handles). */
+  onReady?: (chart: ECharts) => void
 }
 
 /** Thin ECharts wrapper with BetterGarmin's dark-friendly defaults baked in. */
-export function Chart({ option, height = 220, className, onHover, onClick }: ChartProps) {
+export function Chart({ option, height = 220, className, onHover, onClick, onReady }: ChartProps) {
   const merged: EChartsOption = {
     backgroundColor: 'transparent',
     textStyle: { fontFamily: 'inherit', color: 'var(--text-secondary)' },
@@ -50,7 +52,7 @@ export function Chart({ option, height = 220, className, onHover, onClick }: Cha
 
   return (
     <div className={className}>
-      <ReactECharts option={merged} style={{ height }} opts={{ renderer: 'svg' }} notMerge onEvents={onEvents} />
+      <ReactECharts option={merged} style={{ height }} opts={{ renderer: 'svg' }} notMerge onEvents={onEvents} onChartReady={onReady} />
     </div>
   )
 }

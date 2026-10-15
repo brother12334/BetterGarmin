@@ -46,3 +46,46 @@ export function matchGarminActivity(workout: TimedWorkout, activities: ActivityR
   }
   return best?.activity ?? null
 }
+
+export interface OffsetSuggestion {
+  offsetMs: number
+  activity: ActivityRow
+  /** Fraction of the workout window covered by the activity after shifting. */
+  overlap: number
+}
+
+const isStrength = (a: ActivityRow) => a.sub_sport === 'strength_training' || a.sport === 'strength_training'
+const STEP_MS = 30 * 60 * 1000
+const MAX_SHIFT_STEPS = 28 // ±14 h covers every real time zone
+
+function overlapFraction(start: number, end: number, a: ActivityRow): number {
+  const aStart = parseGarminTimestamp(a.start_time)
+  if (aStart == null) return 0
+  const aEnd = parseGarminTimestamp(a.stop_time) ?? aStart
+  return Math.max(0, Math.min(aEnd, end) - Math.max(aStart, start)) / Math.max(1, end - start)
+}
+
+/**
+ * When a workout's logged times don't overlap any watch-recorded strength activity, tries whole and half-hour
+ * shifts (time-zone mistakes) and returns one only if it clearly lines up: ≥ 60% overlap, and no other shift does
+ * nearly as well. Returns null when the current times already overlap a strength activity.
+ */
+export function suggestClockOffset(workout: { startedAtEpochMs: number; finishedAtEpochMs: number }, activities: ActivityRow[]): OffsetSuggestion | null {
+  const strength = activities.filter(isStrength)
+  const { startedAtEpochMs: s, finishedAtEpochMs: e } = workout
+  if (strength.some((a) => overlapFraction(s, e, a) > 0)) return null
+  const scored: OffsetSuggestion[] = []
+  for (let k = -MAX_SHIFT_STEPS; k <= MAX_SHIFT_STEPS; k++) {
+    if (k === 0) continue
+    const off = k * STEP_MS
+    for (const a of strength) {
+      const f = overlapFraction(s + off, e + off, a)
+      if (f > 0) scored.push({ offsetMs: off, activity: a, overlap: f })
+    }
+  }
+  scored.sort((x, y) => y.overlap - x.overlap || Math.abs(x.offsetMs) - Math.abs(y.offsetMs))
+  const best = scored[0]
+  if (!best || best.overlap < 0.6) return null
+  const rival = scored.find((x) => x.activity.activity_id !== best.activity.activity_id && x.overlap >= best.overlap - 0.1)
+  return rival ? null : best
+}

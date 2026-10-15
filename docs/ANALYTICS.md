@@ -92,10 +92,22 @@ HR is presented as cardiovascular response only. It is never used as a proxy for
 - **Evidence levels** are a conservative rule of thumb combining sample size and effect size. The UI states that they are not significance tests.
 - **Shared source.** Every analysis reads one dataset (`src/features/analytics/`) and recomputes whenever the strength log, corrections or Garmin data change.
 
-## 7. Known limitations
+## 7. Correcting imports
+
+- **Review screen** (`/training/strength/workout/:id/review`). Here you can:
+  - rename an exercise or change its muscle group (with a "Did you mean…?" suggestion when the name matches one already in your history);
+  - edit load, reps or the warm-up flag;
+  - exclude likely duplicates (same exercise, load and reps logged within 10 s);
+  - apply a units fix ("weights were really lb/kg").
+- **Corrections are a layer, never a rewrite.** Every edit is stored as a correction; the imported sets and the original file are never modified. "Reset all edits" or re-importing restores the import exactly. Every screen reads the corrected view through one function (`src/db/applyCorrections.ts`).
+- **Time-zone detection.** If the logged times overlap no strength activity, the app tries half-hour shifts up to ±14 h. It offers one only when a single shift gives at least 60% overlap with a watch-recorded strength activity and no other shift comes close.
+- **Supersets and drop sets.** Both come from Element 26's technique label. Consecutive superset sets across two or more exercises form a group, and moving between partners counts as rest. Drop sets and supersets have their own colours, a bracket on the load panel, and badges in the set table.
+- **Set boundaries** can be corrected three ways: drag handles on the chart, sliders, or ±5 s nudges. Only the moved boundary becomes a correction.
+
+## 8. Known limitations
 
 - Set boundaries are estimates unless corrected. Their accuracy depends on how promptly sets were logged and how honestly rest was reported.
 - In demo mode, choosing "Try the demo" again resets the strength log to the demo seed. Simply reloading the app keeps imports and corrections.
-- The Strength session list matches workouts to activities without applying a workout's clock offset. The workout page, comparisons and findings all apply it.
+- Manually logged workouts are still edited directly with the log form. The review/corrections layer is for imports, where an original exists to preserve.
 - HR-response findings use only watch-recorded activities. All-day monitoring HR is too coarse for per-set statistics.
 - Gemini is called directly from the browser with your key, so requests and quota are between you and Google.

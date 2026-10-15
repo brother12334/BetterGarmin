@@ -19,6 +19,7 @@ const StrengthPage = lazy(() => import('./features/training/StrengthPage').then(
 const WorkoutTimelinePage = lazy(() =>
   import('./features/training/WorkoutTimelinePage').then((m) => ({ default: m.WorkoutTimelinePage })),
 )
+const ImportReviewPage = lazy(() => import('./features/training/ImportReviewPage').then((m) => ({ default: m.ImportReviewPage })))
 const CompareWorkoutsPage = lazy(() =>
   import('./features/training/CompareWorkoutsPage').then((m) => ({ default: m.CompareWorkoutsPage })),
 )
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="training/strength" element={<StrengthPage />} />
           <Route path="training/strength/workout/:workoutId" element={<WorkoutTimelinePage />} />
           <Route path="training/strength/compare/:a/:b" element={<CompareWorkoutsPage />} />
+          <Route path="training/strength/workout/:workoutId/review" element={<ImportReviewPage />} />
           <Route path="training/:activityId" element={<ActivityDetailPage />} />
           <Route path="sleep" element={<SleepPage />} />
           <Route path="insights" element={<InsightsPage />} />
