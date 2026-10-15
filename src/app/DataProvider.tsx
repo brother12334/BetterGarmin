@@ -3,7 +3,7 @@ import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig } from '../db/cloudSync'
-import { hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
+import { deleteWorkout, getAllWorkoutsWithSets, hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
 type DataStatus = 'restoring' | 'empty' | 'ready'
 type DataSource = 'user' | 'demo' | 'cloud' | null
@@ -175,6 +175,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The demo seeds sample strength workouts. Once real data is in use, remove any of them still in the log
+  // (matched by the seed's workout ids) so they never mix into the user's own analysis.
+  useEffect(() => {
+    if (source == null || source === 'demo') return
+    ;(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}demo-data/strength-log.json`)
+        if (!res.ok) return
+        const data = (await res.json()) as { workouts: WorkoutRecord[] }
+        const demoIds = new Set(data.workouts.map((w) => w.id))
+        for (const workout of await getAllWorkoutsWithSets()) {
+          if (demoIds.has(workout.id)) await deleteWorkout(workout.id)
+        }
+      } catch {
+        // best effort; retried on the next launch
+      }
+    })()
+  }, [source])
 
   // Poll for fresh cloud data while connected: every few minutes, and whenever the tab regains focus.
   useEffect(() => {
