@@ -25,8 +25,9 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    # The first full backfill can take a long time; hourly incremental runs take a few minutes.
-    timeout-minutes: 120
+    # The first full backfill (each data type ~1 s per day of history) can take hours; hourly
+    # incremental runs take a few minutes. GitHub-hosted runners allow at most 360.
+    timeout-minutes: 350
     env:
       AWS_DEFAULT_REGION: auto
       DB_DIR: /home/runner/HealthData/DBs
