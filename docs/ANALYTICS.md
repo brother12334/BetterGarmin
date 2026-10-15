@@ -82,7 +82,7 @@ HR is presented as cardiovascular response only. It is never used as a proxy for
 | 3. Interactive workout experience | 🟡 Done: zoomable timeline, set selection with highlighting, set panel, tap-to-select table. To do: drag-to-edit boundaries, replay, multi-chart sync (load and reps). |
 | 4. Historical analytics | ⏳ Baselines currently use mean and SD (`src/scores/baselines.ts`). They need to move to robust rolling medians/MAD with minimum-n gates, plus comparable-set history and a unified history view. |
 | 5. Intelligent insights | ⏳ |
-| 6. Research and AI assistant | ⏳ Needs a decision. An LLM requires either a backend or a user-supplied API key, and both break the current "nothing leaves the device" guarantee. Every number would come from deterministic calculations; the model would only phrase the findings. |
+| 6. Research and AI assistant | ⏳ Decided: **bring-your-own Gemini API key**, off by default. The key stays in this browser only. Only computed results are sent, never raw GarminDB files. Every number comes from deterministic calculations; Gemini only phrases the findings and links to the evidence. Built after phases 4–5, because those produce the findings it answers from. |
 
 ## 7. Known limitations
 
