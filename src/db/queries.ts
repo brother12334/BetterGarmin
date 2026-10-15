@@ -67,6 +67,10 @@ export async function getHrv(day: string): Promise<HrvRow | null> {
   return rows[0] ?? null
 }
 
+export async function getHrvRange(startDay: string, endDay: string): Promise<HrvRow[]> {
+  return sqliteClient.query<HrvRow>('garmin', 'SELECT * FROM hrv WHERE day BETWEEN ? AND ? ORDER BY day ASC', [startDay, endDay])
+}
+
 export async function getStressForDay(day: string): Promise<StressRow[]> {
   return sqliteClient.query<StressRow>(
     'garmin',

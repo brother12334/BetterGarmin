@@ -2,27 +2,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useData } from '../../app/DataProvider'
 import {
   getAllWorkoutsWithSets,
-  getCorrections,
   getWorkoutWithSets,
   saveClockOffset,
   saveSetCorrection,
   type SetRecord,
   type WorkoutWithSets,
 } from '../../db/strengthLog'
-import {
-  getActivitiesRange,
-  getActivityRecords,
-  getDailySummary,
-  getHrv,
-  getMonitoringHrForDay,
-  getRestingHrRange,
-  getSleep,
-} from '../../db/queries'
+import { getDailySummary, getHrv, getRestingHrRange, getSleep } from '../../db/queries'
 import type { ActivityRow } from '../../db/types'
-import { addDays } from '../../lib/dateRange'
 import { hmsToMinutes } from '../../lib/duration'
-import { matchGarminActivity, parseGarminTimestamp } from './matchGarminActivity'
-import { buildWorkoutTimeline, type HrSample, type SetCorrection, type WorkoutTimeline } from './workoutTimeline'
+import { loadWorkoutAnalysis, type HrSource } from './loadWorkoutAnalysis'
+import type { SetCorrection, WorkoutTimeline } from './workoutTimeline'
 
 export interface ReadinessContext {
   sleepScore: number | null
@@ -34,8 +24,7 @@ export interface ReadinessContext {
   bodyBatteryMax: number | null
 }
 
-/** Where the HR trace came from. 'activity' = the watch's recorded strength activity (dense); 'monitoring' = all-day HR (coarse, ~1-2 min). */
-export type HrSource = 'activity' | 'monitoring' | 'none'
+export type { HrSource }
 
 export interface PreviousExerciseSession {
   workoutId: string
@@ -67,15 +56,6 @@ const EMPTY: State = {
   previousByExercise: new Map(),
 }
 
-function toSamples(rows: { timestamp: string | null; v: number | null }[]): HrSample[] {
-  const out: HrSample[] = []
-  for (const r of rows) {
-    const t = parseGarminTimestamp(r.timestamp)
-    if (t != null && r.v != null) out.push({ t, v: r.v })
-  }
-  return out
-}
-
 export function useWorkoutTimeline(workoutId: string | undefined) {
   const { loadedKinds, lastSynced } = useData()
   const [state, setState] = useState<State>(EMPTY)
@@ -94,47 +74,7 @@ export function useWorkoutTimeline(workoutId: string | undefined) {
         return
       }
 
-      const correctionRecords = await getCorrections(workoutId)
-      const clockOffsetMs = correctionRecords.find((c) => c.id === `workout:${workoutId}`)?.clockOffsetMs ?? 0
-      const corrections: SetCorrection[] = correctionRecords
-        .filter((c) => c.setId)
-        .map((c) => ({ setId: c.setId as string, startMs: c.startMs ?? null, endMs: c.endMs ?? null }))
-
-      let matchedActivity: ActivityRow | null = null
-      let hrSamples: HrSample[] = []
-      let hrSource: HrSource = 'none'
-      const timed = workout.startedAtEpochMs != null && workout.finishedAtEpochMs != null
-
-      if (timed && loadedKinds.includes('activities')) {
-        const nearby = await getActivitiesRange(addDays(workout.day, -1), addDays(workout.day, 1))
-        matchedActivity = matchGarminActivity(
-          { startedAtEpochMs: workout.startedAtEpochMs! + clockOffsetMs, finishedAtEpochMs: workout.finishedAtEpochMs! + clockOffsetMs },
-          nearby,
-        )
-        if (matchedActivity) {
-          const records = await getActivityRecords(matchedActivity.activity_id)
-          hrSamples = toSamples(records.map((r) => ({ timestamp: r.timestamp, v: r.hr })))
-          if (hrSamples.length > 0) hrSource = 'activity'
-        }
-      }
-      if (timed && hrSource === 'none' && loadedKinds.includes('monitoring')) {
-        const day = new Date(workout.startedAtEpochMs! + clockOffsetMs)
-        const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
-        const rows = await getMonitoringHrForDay(dayStr)
-        hrSamples = toSamples(rows.map((r) => ({ timestamp: r.timestamp, v: r.heart_rate })))
-        if (hrSamples.length > 0) hrSource = 'monitoring'
-      }
-
-      const timeline = timed
-        ? buildWorkoutTimeline({
-            startedAtEpochMs: workout.startedAtEpochMs!,
-            finishedAtEpochMs: workout.finishedAtEpochMs!,
-            sets: workout.sets,
-            hrSamples,
-            corrections,
-            clockOffsetMs,
-          })
-        : null
+      const { matchedActivity, hrSource, timeline, corrections, clockOffsetMs } = await loadWorkoutAnalysis(workout, loadedKinds)
 
       let readiness: ReadinessContext | null = null
       if (loadedKinds.includes('garmin')) {
