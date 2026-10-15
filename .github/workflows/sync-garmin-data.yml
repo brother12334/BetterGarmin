@@ -27,11 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
-      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-      R2_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
       DB_DIR: /home/runner/HealthData/DBs
     steps:
       - name: Check prerequisites
@@ -50,6 +46,31 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
+
+      # Secrets pasted from a web page often carry stray spaces/line breaks, and the account ID is
+      # sometimes pasted as the whole endpoint URL. Normalise all of that before anything uses them.
+      - name: Normalise R2 settings
+        if: steps.check.outputs.ready == 'true'
+        env:
+          RAW_ACCOUNT: ${{ secrets.R2_ACCOUNT_ID }}
+          RAW_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RAW_SECRET: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          RAW_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          clean() { printf '%s' "$1" | tr -d '[:space:]'; }
+          account=$(clean "$RAW_ACCOUNT"); account=${account#https://}; account=${account#http://}; account=${account%%.*}
+          key_id=$(clean "$RAW_KEY_ID"); secret=$(clean "$RAW_SECRET"); bucket=$(clean "$RAW_BUCKET")
+          echo "::add-mask::$account"; echo "::add-mask::$key_id"; echo "::add-mask::$secret"
+          if ! [[ "$account" =~ ^[0-9a-f]{32}$ ]]; then
+            echo "::error::R2_ACCOUNT_ID doesn't look like a Cloudflare account ID (32 hex characters)."
+            exit 1
+          fi
+          {
+            echo "AWS_ACCESS_KEY_ID=$key_id"
+            echo "AWS_SECRET_ACCESS_KEY=$secret"
+            echo "R2_ENDPOINT=https://$account.r2.cloudflarestorage.com"
+            echo "R2_BUCKET=$bucket"
+          } >> "$GITHUB_ENV"
 
       - name: Set up Python
         if: steps.check.outputs.ready == 'true'
