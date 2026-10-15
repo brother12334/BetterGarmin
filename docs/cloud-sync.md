@@ -105,6 +105,14 @@ npx wrangler deploy
 This prints your Worker's URL, something like
 `https://bettergarmin-sync.your-subdomain.workers.dev`. Save it.
 
+**No computer? Deploy from the dashboard instead:** Workers & Pages → Create →
+Worker (Hello World) → name it `bettergarmin-sync` → Deploy → Edit code, replace
+everything with the contents of `worker/dashboard-worker.js`, Deploy. Then in
+the Worker's **Settings → Bindings** add an **R2 bucket** binding named
+`DB_BUCKET` → your bucket, and in **Settings → Variables and Secrets** add a
+**Secret** `ACCESS_TOKEN` (a long random string, e.g. from a password manager)
+and a **Text** variable `ALLOWED_ORIGIN` = your BetterGarmin URL.
+
 ### 3. Create R2 API credentials for GitHub Actions
 
 In the Cloudflare dashboard: **R2** → **Manage R2 API Tokens** → **Create API
