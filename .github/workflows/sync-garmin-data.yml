@@ -170,6 +170,11 @@ jobs:
         run: |
           echo "Files downloaded per folder:"
           find ~/HealthData/FitFiles -type f | sed "s|$HOME/HealthData/FitFiles/||" | cut -d/ -f1 | sort | uniq -c || true
+          echo "Monitoring files (name, size, type):"
+          find ~/HealthData/FitFiles/Monitoring -type f -printf '%f %s\n' | head -20 || true
+          find ~/HealthData/FitFiles/Monitoring -type f | head -3 | xargs -r file || true
+          echo "Daily summary sample (steps, rhr per day):"
+          sqlite3 "$DB_DIR/garmin.db" "SELECT day, steps IS NOT NULL, rhr IS NOT NULL, hr_max IS NOT NULL FROM daily_summary" 2>/dev/null || true
           for t in garmin.db:daily_summary garmin.db:sleep garmin.db:resting_hr garmin_monitoring.db:monitoring_hr garmin_monitoring.db:monitoring garmin_activities.db:activities; do
             db=${t%%:*}; table=${t##*:}
             n=$(sqlite3 "$DB_DIR/$db" "SELECT COUNT(*) FROM $table" 2>/dev/null || echo "missing")
