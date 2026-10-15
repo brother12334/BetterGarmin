@@ -164,6 +164,18 @@ jobs:
             exit 1
           fi
 
+      # Counts only, no health values: shows whether Garmin actually returned data.
+      - name: Summarise downloaded data
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          echo "Files downloaded per folder:"
+          find ~/HealthData/FitFiles -type f | sed "s|$HOME/HealthData/FitFiles/||" | cut -d/ -f1 | sort | uniq -c || true
+          for t in garmin.db:daily_summary garmin.db:sleep garmin.db:resting_hr garmin_monitoring.db:monitoring_hr garmin_monitoring.db:monitoring garmin_activities.db:activities; do
+            db=${t%%:*}; table=${t##*:}
+            n=$(sqlite3 "$DB_DIR/$db" "SELECT COUNT(*) FROM $table" 2>/dev/null || echo "missing")
+            echo "$db $table: $n rows"
+          done
+
       - name: Upload updated database state to R2
         if: steps.check.outputs.ready == 'true'
         run: |
