@@ -104,6 +104,8 @@ jobs:
           else
             echo "::warning::GarminDB changed; couldn't extend the download range to include today."
           fi
+          # Same for the non-incremental range, used by the dedicated sleep download below.
+          sed -i 's/days = min((datetime.date.today() - date).days, days)$/days = min((datetime.date.today() - date).days + 1, days + 1)/' "$f"
 
       # Checked before logging in to Garmin, so a bad key doesn't spend a Garmin login attempt.
       - name: Verify R2 access
@@ -184,6 +186,14 @@ jobs:
             echo "::error::Garmin Connect login failed. Check GARMIN_USERNAME / GARMIN_PASSWORD. Accounts with two-step verification can't be used by this automated login."
             exit 1
           fi
+
+      # --latest decides the sleep range from the stored total_sleep value rather than its date, so last night's
+      # sleep can be skipped. Always re-fetch the last week of sleep (about 8 small requests).
+      - name: Refresh recent sleep
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          set -o pipefail
+          garmindb_cli.py --sleep --download --import 2>&1 | tail -n 20
 
       # Counts only, no health values: shows whether Garmin actually returned data.
       - name: Summarise downloaded data
