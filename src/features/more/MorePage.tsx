@@ -7,6 +7,7 @@ import { useUnits } from '../../app/units'
 import { useData } from '../../app/DataProvider'
 import { SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
+import { CloudSetupWizard } from '../onboarding/CloudSetupWizard'
 import { formatRelativeTime } from '../../lib/relativeTime'
 import { GoalsCard } from './GoalsCard'
 import { QuickExport } from './QuickExport'
@@ -153,7 +154,11 @@ export function MorePage() {
             </div>
           </div>
         ) : showConnectForm ? (
-          <CloudConnectForm onConnected={() => setShowConnectForm(false)} />
+          <div className="flex flex-col gap-3">
+            <CloudSetupWizard onDone={() => setShowConnectForm(false)} />
+            <p className="text-xs text-[var(--text-tertiary)]">Already have a Worker?</p>
+            <CloudConnectForm onConnected={() => setShowConnectForm(false)} />
+          </div>
         ) : (
           <Button variant="secondary" onClick={() => setShowConnectForm(true)}>
             Set up automatic sync

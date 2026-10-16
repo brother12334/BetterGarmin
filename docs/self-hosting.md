@@ -43,8 +43,9 @@ Choose one:
 
 - **By hand (fully private):** run GarminDB on your computer and drop the
   `.db` files in. See [Getting your data](../README.md#getting-your-data).
-- **Automatically (cloud sync):** follow [cloud-sync.md](cloud-sync.md). It
-  takes about 20 minutes and uses free Cloudflare and GitHub accounts.
+- **Automatically (cloud sync):** tap **Set up automatic sync (guided)** in
+  the app. It takes about 15 minutes on free Cloudflare and GitHub accounts.
+  The same steps are written out in [cloud-sync.md](cloud-sync.md).
 - **Just looking:** tap **Try demo mode** on the welcome screen.
 
 ## 5. Optional extras

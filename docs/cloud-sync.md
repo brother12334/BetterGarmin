@@ -70,6 +70,12 @@ checked roughly every hour," not literally real-time.
 
 ## Setup
 
+> **Easiest:** open your BetterGarmin and choose **Set up automatic sync (guided)**
+> on the welcome screen, or **More → Cloud sync → Set up automatic sync**. The
+> in-app wizard walks through every step below with direct links, copy buttons,
+> a generated access token and the Worker code built in. The rest of this
+> section is the same process written out.
+
 ### 1. Create a Cloudflare account and R2 bucket
 
 1. Sign up at [dash.cloudflare.com](https://dash.cloudflare.com) (free).

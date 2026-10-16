@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { CopyField } from './CopyField'
 import { DropZone } from './DropZone'
 import { CloudConnectForm } from './CloudConnectForm'
+import { CloudSetupWizard } from './CloudSetupWizard'
 import { Logo } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
 
@@ -36,6 +37,7 @@ const STEPS = [
 
 export function OnboardingFlow() {
   const [step, setStep] = useState<Step>('welcome')
+  const [haveWorker, setHaveWorker] = useState(false)
   const { loadDemo } = useData()
   const [demoError, setDemoError] = useState(false)
 
@@ -77,7 +79,7 @@ export function OnboardingFlow() {
                   Try demo mode first
                 </Button>
                 <Button variant="ghost" onClick={() => setStep('cloud')}>
-                  Set up automatic sync (advanced)
+                  Set up automatic sync (guided, ~15 min)
                 </Button>
               </div>
               {demoError && <p className="text-sm text-rose-400">Couldn't load the demo data. Please try again.</p>}
@@ -155,12 +157,18 @@ export function OnboardingFlow() {
               <div>
                 <h2 className="text-xl font-bold">Automatic sync</h2>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  Already deployed the sync Worker and GitHub Action from <code>docs/cloud-sync.md</code>? Connect
-                  to it here. Otherwise, set that up first — it's a one-time process on your own free Cloudflare
-                  and GitHub accounts.
+                  A one-time, guided setup (about 15 minutes) on your own free GitHub and Cloudflare accounts. You can
+                  stop and come back; your progress is saved.
                 </p>
               </div>
-              <CloudConnectForm />
+              {haveWorker ? <CloudConnectForm /> : <CloudSetupWizard />}
+              <button
+                type="button"
+                onClick={() => setHaveWorker((v) => !v)}
+                className="self-center text-sm text-[var(--text-secondary)] underline hover:text-[var(--text-primary)]"
+              >
+                {haveWorker ? 'Use the guided setup instead' : 'Already set up? Enter your Worker address and token'}
+              </button>
             </motion.div>
           )}
 
