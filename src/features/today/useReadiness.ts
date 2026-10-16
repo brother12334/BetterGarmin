@@ -40,8 +40,7 @@ export function useReadiness(day: string | null, sleepScore: number | null) {
       const formBaseline = computeBaseline(formValues)
       const todayForm = fitnessFatigueForm.length > 0 ? fitnessFatigueForm[fitnessFatigueForm.length - 1].form : null
 
-      setResult(
-        computeReadiness({
+      const readiness = computeReadiness({
           sleepScore,
           restingHr: todayRhr,
           restingHrBaseline,
@@ -49,8 +48,9 @@ export function useReadiness(day: string | null, sleepScore: number | null) {
           formBaseline,
           stressAvg: todayStress,
           stressBaseline,
-        }),
-      )
+        })
+      // With no inputs at all there is no score to show, not a neutral 50.
+      setResult(Object.values(readiness.components).some((v) => v != null) ? readiness : null)
     }
     load()
     return () => {

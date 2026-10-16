@@ -94,6 +94,29 @@ function runQuery(db: Database, sql: string, params: (string | number | null)[] 
   }
 }
 
+/**
+ * GarminDB (via SQLAlchemy) stores DATE columns as '2026-10-15 00:00:00.000000', while every query here compares
+ * against 'YYYY-MM-DD'. Rewrite them in the in-memory copy once at load, so equality/range filters and date
+ * parsing all see plain days. The file itself is never modified.
+ */
+function normalizeDateColumns(db: Database) {
+  for (const table of tableNamesOf(db)) {
+    const info = db.exec(`PRAGMA table_info("${table.replace(/"/g, '""')}")`)[0]
+    if (!info) continue
+    for (const row of info.values) {
+      const column = String(row[1])
+      const type = String(row[2] ?? '').toUpperCase()
+      if (type !== 'DATE' && column !== 'day') continue
+      const q = `"${column.replace(/"/g, '""')}"`
+      try {
+        db.run(`UPDATE "${table.replace(/"/g, '""')}" SET ${q} = substr(${q}, 1, 10) WHERE typeof(${q}) = 'text' AND length(${q}) > 10 AND ${q} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'`)
+      } catch {
+        // e.g. a uniqueness clash; leave that column as stored
+      }
+    }
+  }
+}
+
 self.onmessage = async (event: MessageEvent<Request>) => {
   const msg = event.data
   try {
@@ -101,6 +124,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       case 'loadFile': {
         const SQL = await getSqlJs()
         const db = new SQL.Database(new Uint8Array(msg.buffer))
+        normalizeDateColumns(db)
         const tables = tableNamesOf(db)
         const kind = identifyDbKind(tables)
         if (!kind) {
@@ -116,6 +140,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       case 'loadKnown': {
         const SQL = await getSqlJs()
         const db = new SQL.Database(new Uint8Array(msg.buffer))
+        normalizeDateColumns(db)
         databases.get(msg.kind)?.close()
         databases.set(msg.kind, db)
         self.postMessage({ id: msg.id, ok: true, result: { kind: msg.kind } })
