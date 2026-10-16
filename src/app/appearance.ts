@@ -94,7 +94,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   radius: 'round',
   font: 'manrope',
   density: 'comfortable',
-  navStyle: 'pill',
+  navStyle: 'glassSmoke',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 
