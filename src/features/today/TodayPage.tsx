@@ -77,8 +77,7 @@ export function TodayPage() {
     return (
       <div className="flex flex-col gap-6">
         <SyncBar />
-
-      <LiveHeartRateCard />
+        <LiveHeartRateCard />
         <Card className="text-center text-[var(--text-secondary)]">
           {hasGarmin
             ? 'No daily data found yet in your garmin.db.'
@@ -99,6 +98,8 @@ export function TodayPage() {
   return (
     <div className="flex flex-col gap-6">
       <ReadinessHero formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />
+
+      <SyncBar />
 
       <LiveHeartRateCard />
 
