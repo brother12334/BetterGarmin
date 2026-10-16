@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
 import { cn } from '../../lib/cn'
+import { NavStylePicker } from './NavStylePicker'
 import { useTheme } from '../../app/theme'
 import {
   ACCENTS,
@@ -47,6 +48,8 @@ export function CustomizePage() {
           ))}
         </div>
       </Section>
+
+      <NavStylePicker />
 
       <BackgroundSection />
 

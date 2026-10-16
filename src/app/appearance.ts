@@ -23,6 +23,7 @@ export type CardStyle = 'glass' | 'liquid' | 'solid' | 'outline'
 export type Radius = 'sharp' | 'rounded' | 'round'
 export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
+export type NavStyle = 'pill' | 'expand' | 'dock' | 'classic' | 'bubbles' | 'notch' | 'line' | 'glass' | 'center' | 'minimal'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 
 export interface Appearance {
@@ -44,6 +45,8 @@ export interface Appearance {
   radius: Radius
   font: FontChoice
   density: Density
+  /** Phone tab bar style. */
+  navStyle: NavStyle
   todayLayout: WidgetSlot[]
 }
 
@@ -91,6 +94,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   radius: 'round',
   font: 'manrope',
   density: 'comfortable',
+  navStyle: 'pill',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 
