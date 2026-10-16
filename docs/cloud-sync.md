@@ -48,7 +48,7 @@ still stay on the free plan.
 ## How it works
 
 1. A GitHub Actions workflow (`.github/workflows/sync-garmin-data.yml`) runs
-   on a schedule (hourly by default). It restores your last synced database
+   on a schedule (every 30 minutes by default). It restores your last synced database
    files from R2, runs the real `garmindb_cli.py --latest` to pull anything
    new from Garmin Connect, and uploads the updated files back to R2.
 2. A small Cloudflare Worker (`worker/`) sits in front of that R2 bucket. It
