@@ -1,14 +1,9 @@
 # BetterGarmin
 
-A sleeker, deeper dashboard for your Garmin health data. Built on top of the
-open-source [GarminDB](https://github.com/tcgoetz/GarminDB) project. By
-default it runs entirely in your browser — nothing is ever uploaded anywhere
-— with an optional, opt-in [cloud sync](docs/cloud-sync.md) if you want it
-updated automatically instead of dropping files in by hand. The Today screen
-can also show truly live, second-by-second heart rate by connecting directly
-to your watch over Bluetooth — no sync, no cloud, just your browser talking
-to your wrist (Chrome/Edge only; turn on **Broadcast Heart Rate** on the
-watch first).
+A sleeker, deeper dashboard for your Garmin health data, built on the
+open-source [GarminDB](https://github.com/tcgoetz/GarminDB) project. It runs
+entirely in your browser as an installable app. Nothing is uploaded unless
+you turn on the optional [cloud sync](docs/cloud-sync.md).
 
 Not affiliated with Garmin. Not medical advice.
 
@@ -19,6 +14,25 @@ Not affiliated with Garmin. Not medical advice.
   <img src="docs/screenshots/today-mobile.png" alt="BetterGarmin Today screen, mobile, dark mode" width="32%" />
   <img src="docs/screenshots/onboarding.png" alt="BetterGarmin onboarding welcome screen, light mode" width="32%" />
 </p>
+
+## Features
+
+- **Today**: a readiness score, Energy Reserve curve, sleep and stress bars, steps and active calories, and plain-language insights.
+- **Health, Sleep, Training**: trends, records and activity details, including maps.
+- **Strength training**: log workouts, or import them from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
+- **Insights**: findings that link training with sleep, resting HR and HRV, with sample sizes and evidence levels instead of overconfident claims. Also history charts, personal experiments, and an optional Gemini assistant that uses your own API key.
+- **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge, or Bluefy on iPhone).
+- **Automatic sync** (optional): a scheduled job pulls from Garmin every 30 minutes, and **Sync now** pulls on demand.
+- **Power tools**: units, goals, CSV export and an SQL console.
+
+## Quick start
+
+| I want to… | Do this |
+| --- | --- |
+| Look around | Open the app and tap **Try demo mode**. |
+| Use my data privately | Run GarminDB on your computer and drop the `.db` files in. See [Getting your data](#getting-your-data). |
+| Have it update itself | [Fork it and host your own copy](docs/self-hosting.md), then set up [cloud sync](docs/cloud-sync.md). |
+| Fix a problem | See [troubleshooting](docs/troubleshooting.md). |
 
 ## How it works
 
@@ -101,6 +115,8 @@ before enabling.
 npm install
 npm run dev          # start the dev server
 npm run build         # type-check + production build
+npm test              # unit tests (vitest)
+npm run lint
 npm run generate:demo # regenerate the fake demo dataset in public/demo-data
 ```
 
@@ -126,6 +142,9 @@ scripts/      the demo-data generator
 worker/       optional Cloudflare Worker for cloud sync (see docs/cloud-sync.md)
 docs/scores/  formulas and research sources behind every calculated score
 docs/cloud-sync.md  full cloud-sync setup walkthrough
+docs/self-hosting.md  fork + GitHub Pages setup
+docs/troubleshooting.md  common problems and fixes
+docs/ANALYTICS.md  how the training analytics work and their limits
 ```
 
 ## Calculated scores

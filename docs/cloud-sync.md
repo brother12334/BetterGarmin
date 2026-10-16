@@ -1,5 +1,9 @@
 # Cloud sync (optional)
 
+> Cloud sync needs your own copy of the repo. Set that up first with
+> [self-hosting.md](self-hosting.md). If something fails, see
+> [troubleshooting.md](troubleshooting.md#cloud-sync).
+
 By default, BetterGarmin is 100% local: you run GarminDB yourself and drop the
 resulting files in. **Cloud sync is a separate, opt-in feature** that
 automates that step — a scheduled job fetches your Garmin data on its own and
@@ -174,6 +178,10 @@ It needs a GitHub token the Worker can use to start the workflow:
    `GITHUB_REPO` (e.g. `brother12334/BetterGarmin`) and `GITHUB_REF` (the
    branch the workflow lives on). If you deployed from the dashboard, also
    paste the latest `worker/dashboard-worker.js` into the editor and Deploy.
+
+If you deploy with wrangler instead, edit `GITHUB_REPO`, `GITHUB_REF` (and
+`ALLOWED_ORIGIN`) in `worker/wrangler.toml` to match your fork, then run
+`npx wrangler secret put GITHUB_TOKEN` and `npx wrangler deploy`.
 
 The token can only start workflows in that one repo; it never reaches the app.
 

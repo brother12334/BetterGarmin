@@ -15,9 +15,10 @@ function gitCommit(): string {
   }
 }
 
-// Project is deployed to GitHub Pages at https://<user>.github.io/BetterGarmin/
-// GitHub Pages paths are case-sensitive, so this must match the repo name exactly.
-const REPO_BASE = '/BetterGarmin/'
+// Deployed to GitHub Pages at https://<user>.github.io/<repo>/. Paths are case-sensitive, so the base is
+// taken from the repo name in CI (forks under another name just work); BASE_PATH overrides it.
+const REPO_NAME = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'BetterGarmin'
+const REPO_BASE = process.env.BASE_PATH ?? `/${REPO_NAME}/`
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? REPO_BASE : '/',
