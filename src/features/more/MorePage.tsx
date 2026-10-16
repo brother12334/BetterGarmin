@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
 import { useData } from '../../app/DataProvider'
-import { SunIcon, MoonIcon } from '../../app/icons'
+import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
 import { CloudSetupWizard } from '../onboarding/CloudSetupWizard'
 import { formatRelativeTime } from '../../lib/relativeTime'
@@ -27,8 +27,8 @@ export function MorePage() {
 
       <Link to="/customize">
         <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-xl">
-            🎨
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-[var(--accent)]">
+            <CustomizeIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold">Customize</p>

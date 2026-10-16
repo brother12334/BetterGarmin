@@ -150,3 +150,17 @@ export function TrophyIcon(props: IconProps) {
     </svg>
   )
 }
+
+/** Customize: three style "dials" (tracks with knobs), the middle knob a ring echoing the Dual Orbit mark. */
+export function CustomizeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 6h9M17 6h3" />
+      <path d="M4 12h3M11 12h9" />
+      <path d="M4 18h11M19 18h1" />
+      <circle cx="15" cy="6" r="2" fill="currentColor" />
+      <circle cx="9" cy="12" r="2.4" />
+      <circle cx="17" cy="18" r="2" fill="currentColor" />
+    </svg>
+  )
+}
