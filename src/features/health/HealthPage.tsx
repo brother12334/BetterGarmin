@@ -138,6 +138,19 @@ export function HealthPage() {
 
   const today = data.summaries.find((s) => s.day.slice(0, 10) === data.day.slice(0, 10)) ?? null
   const steps = pts(data.summaries, (s) => dayMs(s.day), (s) => s.steps)
+  // Always show at least a week so a few days of data still reads as a proper chart, not two giant bars.
+  const stepSlots: { t: number; v: number | null }[] = (() => {
+    if (!steps.length) return []
+    const byDay = new Map(steps.map(([t, v]) => [new Date(t).toDateString(), v]))
+    const lastT = steps[steps.length - 1][0]
+    const n = Math.max(7, Math.round((lastT - steps[0][0]) / 86_400_000) + 1)
+    return Array.from({ length: n }, (_, i) => {
+      const d = new Date(lastT)
+      d.setDate(d.getDate() - (n - 1 - i))
+      return { t: d.getTime(), v: byDay.get(d.toDateString()) ?? null }
+    })
+  })()
+  const showStepAvg = steps.length >= 3
   const stepGoal = today?.step_goal ?? null
   const hrvToday = data.hrvRows.at(-1)
   const perHour = [...Array(24).keys()].map((h) => {
@@ -233,20 +246,20 @@ export function HealthPage() {
         />
       )}
 
-      {steps.length > 1 && (
+      {steps.length > 0 && (
         <DetailChart
           title="Steps"
-          hint="line = 7-day average"
+          hint={showStepAvg ? 'line = 7-day average' : 'more days fill in as you sync'}
           option={{
-            grid: { ...detailGrid, top: 34, right: 34, bottom: steps.length > 21 ? 26 : 8 },
-            legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8a92a3', fontSize: 10 }, data: ['Steps', '7-day average'] },
+            grid: { ...detailGrid, top: 34, right: 34, bottom: stepSlots.length > 21 ? 26 : 8 },
+            legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8a92a3', fontSize: 10 }, data: showStepAvg ? ['Steps', '7-day average'] : ['Steps'] },
             dataZoom:
-              steps.length > 21
-                ? [{ type: 'inside', start: startPct(steps.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(steps.length, 21), end: 100, bottom: 2, right: 46 }]
+              stepSlots.length > 21
+                ? [{ type: 'inside', start: startPct(stepSlots.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(stepSlots.length, 21), end: 100, bottom: 2, right: 46 }]
                 : [],
             xAxis: {
               type: 'category',
-              data: steps.map(([t]) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
+              data: stepSlots.map(({ t }) => (stepSlots.length <= 7 ? new Date(t).toLocaleDateString(undefined, { weekday: 'short' }) : new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))),
               axisLine: { lineStyle: { color: 'rgba(140,150,170,0.25)' } },
               axisTick: { show: false },
               axisLabel: { color: '#8a92a3', fontSize: 10, hideOverlap: true },
@@ -257,9 +270,12 @@ export function HealthPage() {
                 type: 'bar',
                 name: 'Steps',
                 color: ENERGY,
-                barWidth: '62%',
-                label: { show: steps.length <= 21, position: 'top', color: '#8a92a3', fontSize: 9, formatter: (p: unknown) => `${((p as { value: number }).value / 1000).toFixed(1)}k` },
-                data: steps.map(([, v]) => ({ value: v, itemStyle: { borderRadius: [5, 5, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.45) } })),
+                barWidth: '58%',
+                barMaxWidth: 34,
+                showBackground: true,
+                backgroundStyle: { color: 'rgba(140,150,170,0.08)', borderRadius: [6, 6, 0, 0] },
+                label: { show: stepSlots.length <= 21, position: 'top', color: '#8a92a3', fontSize: 9, formatter: (p: unknown) => `${((p as { value: number }).value / 1000).toFixed(1)}k` },
+                data: stepSlots.map(({ v }) => (v == null ? null : { value: v, itemStyle: { borderRadius: [6, 6, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.55) } })),
                 markLine: stepGoal
                   ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', position: 'end', color: ENERGY, fontSize: 10 }, data: [{ yAxis: stepGoal }] }
                   : undefined,
@@ -270,7 +286,13 @@ export function HealthPage() {
                 color: '#e8eaf0',
                 smooth: true,
                 showSymbol: false,
-                data: steps.map((_, i) => Math.round(steps.slice(Math.max(0, i - 6), i + 1).reduce((sum, [, v]) => sum + v, 0) / Math.min(7, i + 1))),
+                data: showStepAvg
+                  ? stepSlots.map((_, i) => {
+                      const win = stepSlots.slice(Math.max(0, i - 6), i + 1).filter((x) => x.v != null)
+                      return win.length ? Math.round(win.reduce((sum, x) => sum + (x.v ?? 0), 0) / win.length) : null
+                    })
+                  : [],
+                connectNulls: true,
                 lineStyle: { color: '#e8eaf0', width: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.5)' },
                 z: 5,
               },
