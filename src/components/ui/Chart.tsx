@@ -25,6 +25,8 @@ interface ChartProps {
 export function Chart({ option, height = 220, className, onHover, onClick, onReady }: ChartProps) {
   const merged: EChartsOption = {
     backgroundColor: 'transparent',
+    // Zooming and panning redraw instantly instead of tweening between frames, which reads as lag.
+    animationDurationUpdate: 0,
     textStyle: { fontFamily: 'inherit', color: 'var(--text-secondary)' },
     grid: { left: 36, right: 12, top: 16, bottom: 28, containLabel: true },
     tooltip: {

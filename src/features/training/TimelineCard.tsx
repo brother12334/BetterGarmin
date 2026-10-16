@@ -1,3 +1,4 @@
+import { GLASS_SLIDER } from '../../components/charts/chartKit'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ECharts, EChartsOption } from 'echarts'
 import { Card } from '../../components/ui/Card'
@@ -180,7 +181,7 @@ export function TimelineCard({
       dataZoom: [
         // While a set's handles are shown, dragging on the chart must move a handle, not pan the view.
         { type: 'inside', xAxisIndex: [0, 1], start: zoom.start, end: zoom.end, minValueSpan: 30_000, moveOnMouseMove: !handles },
-        { type: 'slider', xAxisIndex: [0, 1], start: zoom.start, end: zoom.end, height: 16, bottom: 4, borderColor: 'transparent', textStyle: { color: 'transparent' } },
+        { ...GLASS_SLIDER, xAxisIndex: [0, 1], start: zoom.start, end: zoom.end, bottom: 4, left: 44, right: 12 },
       ],
       xAxis: [
         { ...xBase, gridIndex: 0, axisLabel: { show: false } },

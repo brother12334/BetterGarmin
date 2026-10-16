@@ -7,6 +7,7 @@ import { InfoButton } from '../../components/ui/InfoButton'
 import { addDays } from '../../lib/dateRange'
 import type { AnalyticsDataset, DayRecord } from '../analytics/model'
 import { mad, median } from '../analytics/robust'
+import { GLASS_SLIDER } from '../../components/charts/chartKit'
 
 const RANGES = [
   { label: '7d', days: 7 },
@@ -100,8 +101,8 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
           valueFormatter: (v: unknown) => (v == null ? 'no data' : String(v)),
         },
         dataZoom: [
-          { type: 'inside', xAxisIndex: PANELS.map((_, i) => i).concat(vi) },
-          { type: 'slider', xAxisIndex: PANELS.map((_, i) => i).concat(vi), bottom: 0, height: 16, borderColor: 'transparent', fillerColor: 'rgba(140,150,170,0.18)', showDetail: false },
+          { type: 'inside', xAxisIndex: PANELS.map((_, i) => i).concat(vi), throttle: 0 },
+          { ...GLASS_SLIDER, xAxisIndex: PANELS.map((_, i) => i).concat(vi), bottom: 4, left: 44, right: 12 },
         ],
         series,
       } as EChartsOption,

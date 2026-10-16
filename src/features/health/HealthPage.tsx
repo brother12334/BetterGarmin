@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { BigStat, ClockRing, DetailChart, Dial } from '../../components/charts/HealthCharts'
-import { detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
+import { GLASS_SLIDER, detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
 import { useUnits } from '../../app/units'
@@ -238,9 +238,9 @@ export function HealthPage() {
           title="Steps"
           hint="line = 7-day average"
           option={{
-            grid: { ...detailGrid, top: 34 },
+            grid: { ...detailGrid, top: 34, right: 34 },
             legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8a92a3', fontSize: 10 }, data: ['Steps', '7-day average'] },
-            dataZoom: zoom(startPct(steps.length, 21)),
+            dataZoom: [{ type: 'inside', start: startPct(steps.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(steps.length, 21), end: 100, right: 46 }],
             xAxis: timeAxis('day'),
             yAxis: valueAxis(),
             series: [
@@ -252,7 +252,7 @@ export function HealthPage() {
                 label: { show: steps.length <= 21, position: 'top', color: '#8a92a3', fontSize: 9, formatter: (p: unknown) => `${((p as { value: [number, number] }).value[1] / 1000).toFixed(1)}k` },
                 data: steps.map(([t, v]) => ({ value: [t, v], itemStyle: { borderRadius: [5, 5, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.45) } })),
                 markLine: stepGoal
-                  ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', position: 'insideStartTop', color: ENERGY, fontSize: 10 }, data: [{ yAxis: stepGoal }] }
+                  ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', position: 'end', color: ENERGY, fontSize: 10 }, data: [{ yAxis: stepGoal }] }
                   : undefined,
               },
               {

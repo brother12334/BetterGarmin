@@ -22,23 +22,33 @@ export const fade = (color: string, a = 0.3) => ({
 export const AXIS_TEXT = '#8a92a3'
 export const GRID_LINE = 'rgba(140,150,170,0.15)'
 
-/** Pinch/scroll to zoom inside the chart, plus a slim drag handle underneath. */
+/** Frosted-glass zoom pill that floats inside the bottom of the plot. Shared so every chart's zoom feels the same. */
+export const GLASS_SLIDER = {
+  type: 'slider' as const,
+  height: 12,
+  bottom: 30,
+  left: 56,
+  right: 22,
+  borderColor: 'rgba(255,255,255,0.28)',
+  borderRadius: 6,
+  backgroundColor: 'rgba(255,255,255,0.07)',
+  fillerColor: 'rgba(255,255,255,0.32)',
+  dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
+  selectedDataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
+  handleSize: 0,
+  moveHandleSize: 0,
+  showDetail: false,
+  brushSelect: false,
+  // Redraw on every pointer move, with no throttling, so the chart tracks the finger exactly.
+  realtime: true,
+  throttle: 0,
+}
+
+/** Pinch/scroll to zoom inside the chart, plus the glass pill to drag. */
 export function zoom(startPct = 0): EChartsOption['dataZoom'] {
   return [
-    { type: 'inside', start: startPct, end: 100, zoomOnMouseWheel: true, moveOnMouseMove: true },
-    {
-      type: 'slider',
-      height: 16,
-      bottom: 2,
-      start: startPct,
-      end: 100,
-      borderColor: 'transparent',
-      backgroundColor: 'rgba(140,150,170,0.08)',
-      fillerColor: 'rgba(140,150,170,0.18)',
-      dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
-      handleSize: '100%',
-      showDetail: false,
-    },
+    { type: 'inside', start: startPct, end: 100, zoomOnMouseWheel: true, moveOnMouseMove: true, throttle: 0 },
+    { ...GLASS_SLIDER, start: startPct, end: 100 },
   ]
 }
 
@@ -56,5 +66,5 @@ export function valueAxis(extra: Record<string, unknown> = {}): EChartsOption['y
   return { type: 'value', axisLabel: { color: AXIS_TEXT, fontSize: 10 }, splitLine: { lineStyle: { color: GRID_LINE, type: 'dashed' } }, ...extra }
 }
 
-export const detailGrid = { left: 8, right: 10, top: 14, bottom: 34, containLabel: true }
+export const detailGrid = { left: 8, right: 10, top: 14, bottom: 8, containLabel: true }
 
