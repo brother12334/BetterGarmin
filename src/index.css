@@ -21,6 +21,7 @@
 }
 
 :root {
+  --nav-surface: #0c0d12;
   --accent: #38bdf8;
   --radius-card: 24px;
   --radius-control: 16px;
@@ -141,21 +142,11 @@ body {
     inset 0 -1px 1px rgba(255, 255, 255, 0.06),
     0 14px 36px rgba(0, 0, 0, 0.45);
 }
-:root[data-card="liquid"][data-glass="dark"] nav {
-  background: rgba(8, 10, 20, 0.45) !important;
-  border-top-color: rgba(255, 255, 255, 0.12) !important;
-}
 :root[data-theme="light"][data-card="liquid"]:not([data-glass="dark"]) .glass-panel {
   background:
     radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 60%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25));
   border-color: rgba(255, 255, 255, 0.85);
-}
-:root[data-card="liquid"] nav {
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(28px) saturate(185%);
-  -webkit-backdrop-filter: blur(28px) saturate(185%);
-  border-top-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Over a full-screen photo, glass cards need a little more body to stay readable. */
@@ -171,4 +162,9 @@ body {
 }
 .no-scrollbar {
   scrollbar-width: none;
+}
+
+/* Floating "blob" tab bar: light mode uses a near-black bar like the dark theme. */
+:root[data-theme="light"] {
+  --nav-surface: #16181d;
 }
