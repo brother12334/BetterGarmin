@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
-import { Chart } from '../../components/ui/Chart'
-import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { BigStat, ClockRing, DetailChart, Dial } from '../../components/charts/HealthCharts'
+import { detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
+import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
 import { useUnits } from '../../app/units'
 import { convertWeight, weightUnitLabel } from '../../lib/units'
 import {
+  getDailySummaryRange,
+  getHrvRange,
   getLatestDay,
   getMonitoringHrForDay,
   getMonitoringPulseOxForDay,
@@ -14,47 +17,43 @@ import {
   getStressForDay,
   getWeightRange,
 } from '../../db/queries'
+import type { DailySummaryRow, HrvRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
-import { computeBaseline, zScore, type Baseline } from '../../scores/baselines'
-import { METRIC_COLORS } from '../../components/ui/metricColors'
+import { computeBaseline, type Baseline } from '../../scores/baselines'
+import { parseGarminTimestamp } from '../training/matchGarminActivity'
 
 const WINDOW_DAYS = 90
+const TREND_DAYS = 14
+const HEART = METRIC_COLORS.heart.solid
+const STRESS = METRIC_COLORS.stress.solid
+const ENERGY = METRIC_COLORS.energy.solid
+const HRV = METRIC_COLORS.readiness.solid
+const SPO2 = '#60a5fa'
+const WEIGHT = METRIC_COLORS.neutral.solid
 
 interface HealthData {
   day: string
-  restingHrSeries: { day: string; resting_heart_rate: number | null }[]
-  allDayHr: { timestamp: string; heart_rate: number | null }[]
-  stressToday: { timestamp: string; stress: number | null }[]
-  weightSeries: { day: string; weight: number | null }[]
-  spo2Today: { timestamp: string; pulse_ox: number | null }[]
-  restingHrBaseline: Baseline | null
+  rhr: Point[]
+  hrv: Point[]
+  hrvRows: HrvRow[]
+  summaries: DailySummaryRow[]
+  weight: Point[]
+  allDayHr: Point[]
+  stress: Point[]
+  spo2: Point[]
+  rhrBaseline: Baseline | null
 }
 
-function timeAxisOption() {
-  return {
-    type: 'time' as const,
-    splitNumber: 4,
-    axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-    axisLabel: {
-      color: 'var(--text-tertiary)',
-      hideOverlap: true,
-      formatter: (v: number) => new Date(v).toLocaleTimeString(undefined, { hour: 'numeric' }),
-    },
-  }
-}
-
-function dayAxisOption() {
-  return {
-    type: 'time' as const,
-    splitNumber: 4,
-    axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-    axisLabel: {
-      color: 'var(--text-tertiary)',
-      hideOverlap: true,
-      formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-    },
-  }
-}
+const dayMs = (day: string) => new Date(`${day.slice(0, 10)}T00:00:00`).getTime()
+const pts = <T,>(rows: T[], t: (r: T) => number | null, v: (r: T) => number | null): Point[] =>
+  rows.flatMap((r) => {
+    const x = t(r)
+    const y = v(r)
+    return x != null && y != null ? [[x, y] as Point] : []
+  })
+const last = (p: Point[]) => (p.length ? p[p.length - 1][1] : null)
+const tail = (p: Point[], n = TREND_DAYS) => p.slice(-n)
+const startPct = (n: number, show: number) => (n > show ? Math.round((1 - show / n) * 100) : 0)
 
 export function HealthPage() {
   const { loadedKinds, lastSynced } = useData()
@@ -83,35 +82,47 @@ export function HealthPage() {
         }
         return
       }
-      const startDay = addDays(day, -WINDOW_DAYS)
-      const [restingHrSeries, weightSeries, stressToday, allDayHr, spo2Today] = await Promise.all([
-        getRestingHrRange(startDay, day),
-        getWeightRange(startDay, day),
+      const start = addDays(day, -WINDOW_DAYS)
+      const [rhrRows, hrvRows, summaries, weightRows, stressRows, hrRows, spo2Rows] = await Promise.all([
+        getRestingHrRange(start, day),
+        getHrvRange(start, day),
+        getDailySummaryRange(start, day),
+        getWeightRange(start, day),
         getStressForDay(day),
         hasMonitoring ? getMonitoringHrForDay(day) : Promise.resolve([]),
         hasMonitoring ? getMonitoringPulseOxForDay(day) : Promise.resolve([]),
       ])
       if (cancelled) return
-
-      const rhrValues = restingHrSeries.map((r) => r.resting_heart_rate).filter((v): v is number => v != null)
-      const restingHrBaseline = computeBaseline(rhrValues)
-
-      setData({ day, restingHrSeries, allDayHr, stressToday, weightSeries, spo2Today, restingHrBaseline })
+      const rhr = pts(rhrRows, (r) => dayMs(r.day), (r) => r.resting_heart_rate)
+      setData({
+        day,
+        rhr,
+        hrv: pts(hrvRows, (r) => dayMs(r.day), (r) => r.last_night_avg),
+        hrvRows,
+        summaries,
+        weight: pts(weightRows, (r) => dayMs(r.day), (r) => (r.weight == null ? null : +convertWeight(r.weight, units).toFixed(1))),
+        allDayHr: pts(hrRows, (r) => parseGarminTimestamp(r.timestamp), (r) => r.heart_rate),
+        stress: pts(stressRows, (r) => parseGarminTimestamp(r.timestamp), (r) => (r.stress != null && r.stress >= 0 ? r.stress : null)),
+        spo2: pts(spo2Rows, (r) => parseGarminTimestamp(r.timestamp), (r) => r.pulse_ox),
+        rhrBaseline: computeBaseline(rhr.map((p) => p[1])),
+      })
       setLoading(false)
     }
     load()
     return () => {
       cancelled = true
     }
-  }, [hasGarmin, hasMonitoring, lastSynced])
+  }, [hasGarmin, hasMonitoring, lastSynced, units])
 
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
         <Skeleton className="h-8 w-32" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-52 w-full" />
-        ))}
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-44" />
+          <Skeleton className="h-44" />
+        </div>
+        <Skeleton className="h-72 w-full" />
       </div>
     )
   }
@@ -125,145 +136,196 @@ export function HealthPage() {
     )
   }
 
-  const todayRhr = data.restingHrSeries.find((r) => r.day === data.day)?.resting_heart_rate ?? null
-  const weightValues = data.weightSeries.map((w) => w.weight).filter((v): v is number => v != null)
-  const hasWeight = weightValues.length > 0
+  const today = data.summaries.find((s) => s.day.slice(0, 10) === data.day.slice(0, 10)) ?? null
+  const steps = pts(data.summaries, (s) => dayMs(s.day), (s) => s.steps)
+  const stepGoal = today?.step_goal ?? null
+  const hrvToday = data.hrvRows.at(-1)
+  const perHour = [...Array(24).keys()].map((h) => {
+    const v = data.allDayHr.filter(([t]) => new Date(t).getHours() === h).map(([, y]) => y)
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null
+  })
+  const base = data.rhrBaseline
+  const normalBand = base
+    ? { silent: true, itemStyle: { color: rgba(HEART, 0.08) }, data: [[{ yAxis: Math.round(base.mean - base.stdDev) }, { yAxis: Math.round(base.mean + base.stdDev) }]] as never }
+    : undefined
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Health</h1>
 
-      <Card>
-        <div className="mb-1 flex items-center gap-1.5">
-          <p className="font-semibold">Resting heart rate</p>
-          <InfoButton title="Resting heart rate">
-            Your heart rate at rest, usually measured overnight. Trending down over weeks/months is generally a
-            sign of improving cardiovascular fitness.
-          </InfoButton>
-        </div>
-        {data.restingHrBaseline && todayRhr != null && (
-          <p className="mb-2 text-sm text-[var(--text-secondary)]">
-            Today: <span className="font-semibold text-[var(--text-primary)]">{todayRhr} bpm</span> · your{' '}
-            {WINDOW_DAYS}-day average is {Math.round(data.restingHrBaseline.mean)} bpm
-            {Math.abs(zScore(todayRhr, data.restingHrBaseline)) >= 1.5 ? ' — an unusual day' : ''}
-          </p>
-        )}
-        <Chart
+      {/* Dials: where you are right now. */}
+      <div className="grid grid-cols-2 gap-3">
+        <Dial label="Body Battery" value={today?.bb_max ?? null} color={ENERGY} caption={today?.bb_min != null ? `low ${today.bb_min}` : 'peak today'} />
+        <Dial label="Stress" value={today?.stress_avg ?? null} color={STRESS} caption="average today" />
+      </div>
+
+      {hasMonitoring && data.allDayHr.length > 0 && (
+        <ClockRing
+          title="Heart rate around the clock"
+          perHour={perHour}
+          color={HEART}
+          unit="bpm"
+          highlightAbove={(base?.mean ?? 60) + 25}
+          info="Your average heart rate for each hour of the day, arranged like a clock face with midnight at the top. Brighter bars are hours well above your resting heart rate."
+        />
+      )}
+
+      {/* Big numbers. */}
+      <div className="grid grid-cols-2 gap-3">
+        <BigStat
+          label="Resting HR"
+          value={last(data.rhr)}
+          unit="bpm"
+          sub={base ? `normal ${Math.round(base.mean - base.stdDev)}–${Math.round(base.mean + base.stdDev)}` : undefined}
+          color={HEART}
+          trend={tail(data.rhr)}
+          info="Your heart rate at rest, usually measured overnight. A lower number over weeks generally means better cardiovascular fitness."
+        />
+        <BigStat
+          label="HRV"
+          value={last(data.hrv)}
+          unit="ms"
+          sub={hrvToday?.status ? hrvToday.status.toLowerCase() : undefined}
+          color={HRV}
+          trend={tail(data.hrv)}
+          info="Heart-rate variability overnight. Compare it with your own baseline rather than with other people."
+        />
+        <BigStat label="Steps" value={last(steps)?.toLocaleString() ?? null} sub={stepGoal ? `goal ${stepGoal.toLocaleString()}` : undefined} color={ENERGY} trend={tail(steps)} />
+        <BigStat
+          label="Blood oxygen"
+          value={today?.spo2_avg ?? null}
+          unit="%"
+          sub={today?.spo2_min != null ? `lowest ${today.spo2_min}%` : undefined}
+          color={SPO2}
+          trend={tail(pts(data.summaries, (s) => dayMs(s.day), (s) => s.spo2_avg))}
+        />
+      </div>
+
+      {/* Detail: zoomable charts. */}
+      {data.allDayHr.length > 0 && (
+        <DetailChart
+          title="Heart rate today"
+          hint="pinch or drag to zoom"
           option={{
-            xAxis: dayAxisOption(),
-            yAxis: { type: 'value', splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
+            grid: detailGrid,
+            dataZoom: zoom(),
+            xAxis: timeAxis('hour'),
+            yAxis: valueAxis({ scale: true }),
+            series: [{ type: 'line', data: data.allDayHr, showSymbol: false, sampling: 'lttb', lineStyle: { color: HEART, width: 1.5 }, areaStyle: { color: fade(HEART, 0.25) } }],
+          }}
+        />
+      )}
+
+      {data.stress.length > 0 && (
+        <DetailChart
+          title="Stress today"
+          hint="pinch or drag to zoom"
+          info="A 0–100 estimate from heart-rate variability. Below 25 is rest, 26–50 low, 51–75 medium, above 75 high."
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(),
+            xAxis: timeAxis('hour'),
+            yAxis: valueAxis({ min: 0, max: 100 }),
             series: [
               {
-                type: 'line',
-                data: data.restingHrSeries
-                  .filter((r) => r.resting_heart_rate != null)
-                  .map((r) => [`${r.day}T00:00:00`, r.resting_heart_rate]),
-                smooth: true,
-                symbol: 'none',
-                lineStyle: { color: METRIC_COLORS.heart.solid, width: 2 },
-                areaStyle: { color: 'rgba(251, 74, 89, 0.08)' },
+                type: 'bar',
+                barWidth: '90%',
+                data: data.stress.map(([t, v]) => ({ value: [t, v], itemStyle: { color: v > 50 ? STRESS : rgba(STRESS, 0.45) } })),
               },
             ],
           }}
         />
-      </Card>
-
-      {hasMonitoring && data.allDayHr.length > 0 && (
-        <Card>
-          <p className="mb-2 font-semibold">All-day heart rate</p>
-          <Chart
-            option={{
-              xAxis: timeAxisOption(),
-              yAxis: { type: 'value', splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-              series: [
-                {
-                  type: 'line',
-                  data: data.allDayHr
-                    .filter((h) => h.heart_rate != null)
-                    .map((h) => [h.timestamp.replace(' ', 'T'), h.heart_rate]),
-                  symbol: 'none',
-                  lineStyle: { color: METRIC_COLORS.heart.solid, width: 1.5 },
-                },
-              ],
-            }}
-          />
-        </Card>
       )}
 
-      {data.stressToday.length > 0 && (
-        <Card>
-          <div className="mb-2 flex items-center gap-1.5">
-            <p className="font-semibold">Stress today</p>
-            <InfoButton title="Stress">
-              A 0-100 estimate from your heart-rate variability relative to resting heart rate. Below 25 is calm,
-              25-50 is typical daily stress, 50-75 is medium, above 75 is high.
-            </InfoButton>
-          </div>
-          <Chart
-            option={{
-              xAxis: timeAxisOption(),
-              yAxis: { type: 'value', min: 0, max: 100, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-              series: [
-                {
-                  type: 'line',
-                  data: data.stressToday
-                    .filter((s) => s.stress != null && s.stress >= 0)
-                    .map((s) => [s.timestamp.replace(' ', 'T'), s.stress]),
-                  symbol: 'none',
-                  lineStyle: { color: METRIC_COLORS.stress.solid, width: 1.5 },
-                  areaStyle: { color: 'rgba(245, 166, 35, 0.1)' },
-                },
-              ],
-            }}
-          />
-        </Card>
+      {steps.length > 1 && (
+        <DetailChart
+          title="Steps"
+          hint="pinch or drag to zoom"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(startPct(steps.length, 21)),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis(),
+            series: [
+              {
+                type: 'bar',
+                barWidth: '60%',
+                data: steps.map(([t, v]) => ({ value: [t, v], itemStyle: { borderRadius: [5, 5, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.45) } })),
+                markLine: stepGoal
+                  ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', color: '#8a92a3', fontSize: 10 }, data: [{ yAxis: stepGoal }] }
+                  : undefined,
+              },
+            ],
+          }}
+        />
       )}
 
-      {hasWeight && (
-        <Card>
-          <p className="mb-2 font-semibold">Weight ({weightUnitLabel(units)})</p>
-          <Chart
-            option={{
-              xAxis: dayAxisOption(),
-              yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-              series: [
-                {
-                  type: 'line',
-                  data: data.weightSeries
-                    .filter((w) => w.weight != null)
-                    .map((w) => [`${w.day}T00:00:00`, convertWeight(w.weight as number, units)]),
-                  smooth: true,
-                  symbol: 'circle',
-                  symbolSize: 5,
-                  lineStyle: { color: '#8b7bf6', width: 2 },
-                },
-              ],
-            }}
-          />
-        </Card>
+      {data.rhr.length > 1 && (
+        <DetailChart
+          title="Resting heart rate"
+          hint="shaded = your normal"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(startPct(data.rhr.length, 30)),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis({ scale: true }),
+            series: [{ type: 'line', data: data.rhr, smooth: true, symbolSize: 5, lineStyle: { color: HEART, width: 2 }, itemStyle: { color: HEART }, markArea: normalBand }],
+          }}
+        />
       )}
 
-      {hasMonitoring && data.spo2Today.length > 0 && (
-        <Card>
-          <p className="mb-2 font-semibold">Blood oxygen (SpO2)</p>
-          <Chart
-            option={{
-              xAxis: timeAxisOption(),
-              yAxis: { type: 'value', min: 85, max: 100, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-              series: [
-                {
-                  type: 'line',
-                  data: data.spo2Today
-                    .filter((s) => s.pulse_ox != null)
-                    .map((s) => [s.timestamp.replace(' ', 'T'), s.pulse_ox]),
-                  symbol: 'none',
-                  lineStyle: { color: '#38bdf8', width: 1.5 },
-                },
-              ],
-            }}
-            height={160}
-          />
-        </Card>
+      {data.hrv.length > 1 && (
+        <DetailChart
+          title="HRV"
+          hint="shaded = Garmin's baseline"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(startPct(data.hrv.length, 30)),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis({ scale: true }),
+            series: [
+              {
+                type: 'line',
+                data: data.hrv,
+                smooth: true,
+                symbolSize: 5,
+                lineStyle: { color: HRV, width: 2 },
+                itemStyle: { color: HRV },
+                markArea:
+                  hrvToday?.baseline_low != null && hrvToday.baseline_upper != null
+                    ? { silent: true, itemStyle: { color: rgba(HRV, 0.08) }, data: [[{ yAxis: hrvToday.baseline_low }, { yAxis: hrvToday.baseline_upper }]] as never }
+                    : undefined,
+              },
+            ],
+          }}
+        />
+      )}
+
+      {data.spo2.length > 0 && (
+        <DetailChart
+          title="Blood oxygen today"
+          hint="pinch or drag to zoom"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(),
+            xAxis: timeAxis('hour'),
+            yAxis: valueAxis({ min: 85, max: 100 }),
+            series: [{ type: 'scatter', data: data.spo2.map(([t, v]) => ({ value: [t, v], itemStyle: { color: v < 94 ? STRESS : SPO2 } })), symbolSize: 6 }],
+          }}
+        />
+      )}
+
+      {data.weight.length > 0 && (
+        <DetailChart
+          title={`Weight (${weightUnitLabel(units)})`}
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis({ scale: true }),
+            series: [{ type: 'line', data: data.weight, smooth: true, symbolSize: 6, lineStyle: { color: WEIGHT, width: 2 }, itemStyle: { color: WEIGHT } }],
+          }}
+        />
       )}
     </div>
   )
