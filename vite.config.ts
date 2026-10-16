@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { copyFileSync, readFileSync } from 'node:fs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
@@ -20,6 +20,19 @@ function gitCommit(): string {
 const REPO_NAME = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'BetterGarmin'
 const REPO_BASE = process.env.BASE_PATH ?? `/${REPO_NAME}/`
 
+// GitHub Pages only serves real files, so reloading a screen like /insights would hit its 404 page. Serving the
+// app itself as 404.html lets the router take over and show the right screen.
+const spaFallback = {
+  name: 'spa-404-fallback',
+  closeBundle() {
+    try {
+      copyFileSync('dist/index.html', 'dist/404.html')
+    } catch {
+      // not a production build
+    }
+  },
+}
+
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? REPO_BASE : '/',
   define: {
@@ -28,6 +41,7 @@ export default defineConfig(({ command }) => ({
     __APP_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
   },
   plugins: [
+    spaFallback,
     react(),
     tailwindcss(),
     VitePWA({
