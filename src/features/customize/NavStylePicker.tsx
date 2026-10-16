@@ -45,7 +45,10 @@ function Preview({ id, label, selected }: { id: NavStyle; label: string; selecte
           {selected ? 'In use' : 'Use this'}
         </button>
       </div>
-      <div className={cn('flex justify-center bg-[var(--bg-base)]', isEdgeStyle(id) ? 'pt-8' : 'px-3 pb-4 pt-9')}>
+      <div
+        className={cn('flex justify-center bg-[var(--bg-base)]', isEdgeStyle(id) ? 'pt-8' : 'px-3 pb-4 pt-9')}
+        style={id.startsWith('glass') ? { background: `center / cover url(${import.meta.env.BASE_URL}backgrounds/green-valley.jpg)` } : undefined}
+      >
         <NavBar variant={id} active={active} onSelect={setActive} layoutKey={`preview-${id}`} />
       </div>
     </div>

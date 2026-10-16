@@ -159,6 +159,119 @@ export function NavBar({ variant, active, onSelect, layoutKey }: Props) {
           )}
         </div>
       )
+    case 'glassFrost':
+    case 'glassSmoke':
+    case 'glassTint':
+    case 'glassThick':
+    case 'glassDrop': {
+      const shell = {
+        glassFrost:
+          'border-white/50 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-3xl',
+        glassSmoke:
+          'border-white/15 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl',
+        glassTint:
+          'border-[color-mix(in_srgb,var(--accent)_45%,transparent)] bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-2xl backdrop-saturate-[1.8]',
+        glassThick:
+          'border-white/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.06)_55%,rgba(255,255,255,0.14))] shadow-[inset_0_2px_1px_rgba(255,255,255,0.7),inset_0_-3px_6px_rgba(0,0,0,0.25),inset_0_0_18px_rgba(255,255,255,0.12),0_14px_36px_rgba(0,0,0,0.35)] backdrop-blur-xl backdrop-saturate-[2]',
+        glassDrop:
+          'border-white/25 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-2xl backdrop-saturate-[1.8]',
+      }[variant]
+      const dark = variant === 'glassFrost'
+      return (
+        <div className={cn('flex h-14 items-center gap-1 rounded-full border p-1.5', shell)}>
+          {TABS.map((_, i) =>
+            item(
+              i,
+              <>
+                {on(i) &&
+                  (variant === 'glassDrop' ? (
+                    <motion.span
+                      layoutId={`${layoutKey}-gd`}
+                      transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                      className="absolute h-10 w-10 rounded-full bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,0.95),color-mix(in_srgb,var(--accent)_70%,transparent)_45%,color-mix(in_srgb,var(--accent)_90%,black)_100%)] shadow-[0_4px_12px_color-mix(in_srgb,var(--accent)_45%,transparent),inset_0_-2px_4px_rgba(0,0,0,0.25)]"
+                    />
+                  ) : (
+                    <motion.span
+                      layoutId={`${layoutKey}-gv`}
+                      transition={spring}
+                      className={cn(
+                        'absolute inset-0 rounded-full border',
+                        variant === 'glassFrost' && 'border-white/80 bg-white/70 shadow-[0_2px_8px_rgba(0,0,0,0.12)]',
+                        variant === 'glassSmoke' && 'border-white/20 bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]',
+                        variant === 'glassTint' && 'border-white/40 bg-[color-mix(in_srgb,var(--accent)_55%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+                        variant === 'glassThick' &&
+                          'border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0.15))] shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_3px_10px_rgba(0,0,0,0.2)]',
+                      )}
+                    />
+                  ))}
+                <Icon
+                  i={i}
+                  className={
+                    dark
+                      ? on(i) ? 'text-black/85' : 'text-black/55'
+                      : variant === 'glassDrop' && on(i) ? 'text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]' : on(i) ? 'text-white' : 'text-white/70'
+                  }
+                />
+              </>,
+              'h-full w-11 flex-none',
+            ),
+          )}
+        </div>
+      )
+    }
+    case 'glassLabel':
+      return (
+        <div className="flex h-16 items-center gap-0 rounded-[26px] border border-white/25 bg-white/10 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-2xl backdrop-saturate-[1.8]">
+          {TABS.map((t, i) =>
+            item(
+              i,
+              <span className="flex flex-col items-center gap-0.5">
+                {on(i) && <motion.span layoutId={`${layoutKey}-gl`} transition={spring} className="absolute inset-0 rounded-[20px] border border-white/40 bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" />}
+                <Icon i={i} className={on(i) ? 'text-white' : 'text-white/70'} />
+                <span className={cn('relative z-10 text-[9px] font-semibold', on(i) ? 'text-white' : 'text-white/60')}>{t.label}</span>
+              </span>,
+              'h-full w-12 flex-none',
+            ),
+          )}
+        </div>
+      )
+    case 'glassBubbles':
+      return (
+        <div className="flex h-16 items-center gap-1.5">
+          {TABS.map((_, i) =>
+            item(
+              i,
+              <motion.span
+                animate={{ scale: on(i) ? 1.12 : 1, y: on(i) ? -3 : 0 }}
+                transition={spring}
+                className={cn(
+                  'flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-2xl backdrop-saturate-[1.8]',
+                  on(i)
+                    ? 'border-white/50 bg-[color-mix(in_srgb,var(--accent)_45%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_6px_16px_rgba(0,0,0,0.3)]'
+                    : 'border-white/25 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_6px_16px_rgba(0,0,0,0.25)]',
+                )}
+              >
+                <Icon i={i} className={on(i) ? 'text-white' : 'text-white/75'} />
+              </motion.span>,
+              'flex-none',
+            ),
+          )}
+        </div>
+      )
+    case 'glassBar':
+      return (
+        <div className="flex h-16 w-full items-stretch border-t border-white/20 bg-white/[0.08] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-[1.8]">
+          {TABS.map((_, i) =>
+            item(
+              i,
+              <>
+                {on(i) && <motion.span layoutId={`${layoutKey}-gb`} transition={spring} className="absolute inset-x-1 inset-y-2 rounded-2xl border border-white/30 bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]" />}
+                <Icon i={i} className={on(i) ? 'text-white' : 'text-white/65'} />
+              </>,
+            ),
+          )}
+        </div>
+      )
     case 'center':
       return (
         <div className="relative flex h-14 w-full items-center rounded-[20px] bg-[var(--nav-surface)] px-1 shadow-[0_10px_30px_rgba(0,0,0,0.4)]">

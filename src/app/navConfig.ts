@@ -22,9 +22,17 @@ export const NAV_STYLES: { id: NavStyle; label: string }[] = [
   { id: 'glass', label: 'Glass capsule' },
   { id: 'center', label: 'Center button' },
   { id: 'minimal', label: 'Minimal glow' },
+  { id: 'glassFrost', label: 'Glass · frosted milk' },
+  { id: 'glassSmoke', label: 'Glass · smoked' },
+  { id: 'glassTint', label: 'Glass · accent tint' },
+  { id: 'glassThick', label: 'Glass · thick lens' },
+  { id: 'glassDrop', label: 'Glass · liquid drop' },
+  { id: 'glassLabel', label: 'Glass · with labels' },
+  { id: 'glassBubbles', label: 'Glass · bubbles' },
+  { id: 'glassBar', label: 'Glass · full width' },
 ]
 
 /** Whether a style spans the full screen width (flush to the bottom edge) rather than floating. */
 export function isEdgeStyle(variant: NavStyle): boolean {
-  return variant === 'classic' || variant === 'line'
+  return variant === 'classic' || variant === 'line' || variant === 'glassBar'
 }

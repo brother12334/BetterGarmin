@@ -23,7 +23,7 @@ export type CardStyle = 'glass' | 'liquid' | 'solid' | 'outline'
 export type Radius = 'sharp' | 'rounded' | 'round'
 export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
-export type NavStyle = 'pill' | 'expand' | 'dock' | 'classic' | 'bubbles' | 'notch' | 'line' | 'glass' | 'center' | 'minimal'
+export type NavStyle = 'pill' | 'expand' | 'dock' | 'classic' | 'bubbles' | 'notch' | 'line' | 'glass' | 'center' | 'minimal' | 'glassFrost' | 'glassSmoke' | 'glassTint' | 'glassLabel' | 'glassBubbles' | 'glassDrop' | 'glassBar' | 'glassThick'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 
 export interface Appearance {
