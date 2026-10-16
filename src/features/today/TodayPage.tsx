@@ -14,7 +14,6 @@ import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { getDailySummary, getHrv, getLatestDay, getSleep } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
-import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
 import { Button } from '../../components/ui/Button'
@@ -22,6 +21,7 @@ import { formatRelativeTime } from '../../lib/relativeTime'
 import { useUnits } from '../../app/units'
 import { convertDistance, distanceUnitLabel } from '../../lib/units'
 import { LiveHeartRateCard } from './LiveHeartRateCard'
+import { HowYouSlept } from './HowYouSlept'
 import { useReadiness } from './useReadiness'
 import { useEnergyReserve } from './useEnergyReserve'
 import { EnergyReserveCard } from './EnergyReserveCard'
@@ -145,30 +145,7 @@ export function TodayPage() {
         />
       </div>
     ),
-    lastNight: (
-      <>
-      {sleep && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <p className="font-semibold">Last night</p>
-            <span className="text-sm text-[var(--text-secondary)]">{formatHoursMinutes(hmsToMinutes(sleep.total_sleep))}</span>
-          </div>
-          <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-[var(--ring-track)]">
-            <SleepStageBar minutes={hmsToMinutes(sleep.deep_sleep)} total={hmsToMinutes(sleep.total_sleep)} color="#6d5bd0" />
-            <SleepStageBar minutes={hmsToMinutes(sleep.rem_sleep)} total={hmsToMinutes(sleep.total_sleep)} color="#8b7bf6" />
-            <SleepStageBar minutes={hmsToMinutes(sleep.light_sleep)} total={hmsToMinutes(sleep.total_sleep)} color="#c2b6ff" />
-            <SleepStageBar minutes={hmsToMinutes(sleep.awake)} total={hmsToMinutes(sleep.total_sleep)} color="#3a3d4a" />
-          </div>
-          <div className="mt-2 flex gap-4 text-xs text-[var(--text-tertiary)]">
-            <LegendDot color="#6d5bd0" label="Deep" />
-            <LegendDot color="#8b7bf6" label="REM" />
-            <LegendDot color="#c2b6ff" label="Light" />
-            <LegendDot color="#3a3d4a" label="Awake" />
-          </div>
-        </Card>
-      )}
-      </>
-    ),
+    lastNight: sleep ? <HowYouSlept sleep={sleep} day={data.day} /> : null,
     insights: (
       <>
       {insights.length > 0 && (
@@ -283,20 +260,6 @@ function StatCard({
       </p>
       {goal != null && <p className="text-xs text-[var(--text-tertiary)]">of {goal.toLocaleString()} goal</p>}
     </Card>
-  )
-}
-
-function SleepStageBar({ minutes, total, color }: { minutes: number | null; total: number | null; color: string }) {
-  const pct = minutes && total ? (minutes / total) * 100 : 0
-  return <div style={{ width: `${pct}%`, backgroundColor: color }} />
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-      {label}
-    </span>
   )
 }
 

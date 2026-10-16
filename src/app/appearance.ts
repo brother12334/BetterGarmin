@@ -8,7 +8,7 @@ export const TODAY_WIDGETS = [
   { id: 'bars', label: 'Sleep / Stress / Energy bars' },
   { id: 'energy', label: 'Energy Reserve curve' },
   { id: 'stats', label: 'Steps, floors, calories, distance' },
-  { id: 'lastNight', label: 'Last night (sleep stages)' },
+  { id: 'lastNight', label: 'How you slept (sleep stages)' },
   { id: 'insights', label: "Today's insights" },
 ] as const
 
