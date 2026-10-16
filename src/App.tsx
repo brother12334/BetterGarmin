@@ -4,6 +4,7 @@ import { useData } from './app/DataProvider'
 import { AppShell } from './app/AppShell'
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow'
 import { Skeleton } from './components/ui/Skeleton'
+import { useApplyAppearance } from './app/appearance'
 
 const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
 const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ default: m.MorePage })))
@@ -23,6 +24,7 @@ const ImportReviewPage = lazy(() => import('./features/training/ImportReviewPage
 const CompareWorkoutsPage = lazy(() =>
   import('./features/training/CompareWorkoutsPage').then((m) => ({ default: m.CompareWorkoutsPage })),
 )
+const CustomizePage = lazy(() => import('./features/customize/CustomizePage').then((m) => ({ default: m.CustomizePage })))
 const InsightsPage = lazy(() => import('./features/insights/InsightsPage').then((m) => ({ default: m.InsightsPage })))
 
 function RouteFallback() {
@@ -37,6 +39,7 @@ function RouteFallback() {
 
 export default function App() {
   const { status } = useData()
+  useApplyAppearance()
 
   if (status === 'restoring') {
     return (
@@ -65,6 +68,7 @@ export default function App() {
           <Route path="sleep" element={<SleepPage />} />
           <Route path="insights" element={<InsightsPage />} />
           <Route path="more" element={<MorePage />} />
+          <Route path="customize" element={<CustomizePage />} />
         </Route>
       </Routes>
     </Suspense>

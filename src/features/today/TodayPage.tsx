@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { cn } from '../../lib/cn'
+import { useAppearance, type WidgetId } from '../../app/appearance'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
 import { Ring } from '../../components/ui/Ring'
@@ -37,6 +40,7 @@ export function TodayPage() {
   const { loadedKinds, lastSynced } = useData()
   const { units } = useUnits()
   const hasGarmin = loadedKinds.includes('garmin')
+  const layout = useAppearance().todayLayout
   const readiness = useReadiness(data?.day ?? null, data?.sleep?.score ?? null)
   const energy = useEnergyReserve(data?.day ?? null, data?.summary?.bb_min ?? 55)
 
@@ -95,14 +99,11 @@ export function TodayPage() {
     day: 'numeric',
   })
 
-  return (
-    <div className="flex flex-col gap-6">
-      <ReadinessHero formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />
-
-      <SyncBar />
-
-      <LiveHeartRateCard />
-
+  const widgets: Record<WidgetId, ReactNode> = {
+    hero: <ReadinessHero atTop={layout.find((w) => w.visible)?.id === 'hero'} formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
+    sync: <SyncBar />,
+    heartRate: <LiveHeartRateCard />,
+    bars: (
       <Card className="divide-y divide-[var(--border-panel)] py-1">
         <RangeBar
           label="Sleep"
@@ -129,9 +130,9 @@ export function TodayPage() {
           infoDescription="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. See the curve below for BetterGarmin's own estimated intraday trace."
         />
       </Card>
-
-      <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />
-
+    ),
+    energy: <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />,
+    stats: (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />
         <StatCard label="Floors" value={summary?.floors_up ?? 0} suffix=" fl" />
@@ -143,7 +144,9 @@ export function TodayPage() {
           suffix={` ${distanceUnitLabel(units)}`}
         />
       </div>
-
+    ),
+    lastNight: (
+      <>
       {sleep && (
         <Card>
           <div className="flex items-center justify-between">
@@ -164,7 +167,10 @@ export function TodayPage() {
           </div>
         </Card>
       )}
-
+      </>
+    ),
+    insights: (
+      <>
       {insights.length > 0 && (
         <Card>
           <div className="mb-3 flex items-center gap-2">
@@ -186,28 +192,48 @@ export function TodayPage() {
           </ul>
         </Card>
       )}
+      </>
+    ),
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {layout
+        .filter((slot) => slot.visible)
+        .map((slot) => (
+          <Fragment key={slot.id}>{widgets[slot.id]}</Fragment>
+        ))}
+      <Link to="/customize" className="self-center text-xs font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+        Customize this screen
+      </Link>
     </div>
   )
 }
 
 function ReadinessHero({
+  atTop,
   formattedDay,
   score,
   recommendation,
 }: {
+  atTop: boolean
   formattedDay: string
   score: number | null
   recommendation: string | null
 }) {
   const status = statusForScore(score)
   const color = status ? STATUS_COLORS[status] : METRIC_COLORS.readiness.solid
+  // With a full-screen backdrop the page itself already shows it, so the hero stays transparent.
+  const fullPage = useAppearance().fullPage
 
   return (
-    <div className="relative -mx-4 -mt-6 overflow-hidden rounded-b-[2rem] md:-mx-8">
-      <div className="absolute inset-0">
-        <MountainBackdrop height={320} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] from-25% via-[var(--bg-base)]/70 via-60% to-transparent" />
-      </div>
+    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-6 rounded-b-[2rem]' : 'rounded-[2rem]')}>
+      {!fullPage && (
+        <div className="absolute inset-0">
+          <MountainBackdrop height={320} />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] from-25% via-[var(--bg-base)]/70 via-60% to-transparent" />
+        </div>
+      )}
       <div className="relative flex flex-col gap-5 px-4 pb-8 pt-6 md:px-8">
         <div>
           <h1 className="text-2xl font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">Today</h1>

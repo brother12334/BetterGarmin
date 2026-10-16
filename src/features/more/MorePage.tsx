@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
@@ -22,6 +23,19 @@ export function MorePage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">More</h1>
+
+      <Link to="/customize">
+        <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-xl">
+            🎨
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Customize</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Backgrounds, widget layout, colours, fonts and themes</p>
+          </div>
+          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
+        </Card>
+      </Link>
 
       <Card>
         <p className="mb-3 font-semibold">Appearance</p>
