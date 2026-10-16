@@ -42,3 +42,16 @@ export async function testCloudConfig(config: CloudConfig): Promise<{ ok: true; 
     return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
+
+/** Asks the Worker to start the Garmin download right away. Resolves with when it was started. */
+export async function startCloudSync(config: CloudConfig): Promise<Date> {
+  const res = await fetch(`${normalizeUrl(config.workerUrl)}/sync`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${config.token}` },
+  })
+  if (res.status === 401) throw new Error('Access token was rejected. Check the token in your Worker settings.')
+  if (res.status === 404) throw new Error('Your Worker needs updating for Sync now — paste the latest worker/dashboard-worker.js.')
+  if (!res.ok) throw new Error((await res.text()) || `Couldn't start a sync (${res.status})`)
+  const data = (await res.json()) as { started: string }
+  return new Date(data.started)
+}

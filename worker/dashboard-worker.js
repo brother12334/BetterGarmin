@@ -1,14 +1,15 @@
 // Plain-JavaScript copy of worker/src/index.ts, for pasting into the Cloudflare
 // dashboard editor when you can't run wrangler. Keep it in sync with index.ts.
 // Needs: an R2 bucket binding named DB_BUCKET, a secret ACCESS_TOKEN, and
-// (optionally) a variable ALLOWED_ORIGIN — see docs/cloud-sync.md.
+// (optionally) a variable ALLOWED_ORIGIN, and for "Sync now" a secret
+// GITHUB_TOKEN plus variables GITHUB_REPO and GITHUB_REF — see docs/cloud-sync.md.
 
 const DB_PREFIX = 'DBs/'
 
 function corsHeaders(env) {
   return {
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization',
     'Access-Control-Max-Age': '86400',
   }
@@ -25,6 +26,32 @@ function isAuthorized(request, env) {
   const header = request.headers.get('Authorization') || ''
   const token = header.startsWith('Bearer ') ? header.slice(7) : ''
   return token.length > 0 && timingSafeEqual(token, env.ACCESS_TOKEN)
+}
+
+const SYNC_WORKFLOW = 'sync-garmin-data.yml'
+
+// Asks GitHub to run the sync workflow now, instead of waiting for its schedule.
+async function startGarminSync(env, headers) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO || !env.GITHUB_REF) {
+    return new Response('Sync now is not set up: add GITHUB_TOKEN, GITHUB_REPO and GITHUB_REF to the Worker.', { status: 501, headers })
+  }
+  const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/${SYNC_WORKFLOW}/dispatches`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'bettergarmin-sync-worker',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ref: env.GITHUB_REF }),
+  })
+  if (!res.ok) {
+    return new Response(`GitHub refused to start the sync (${res.status}). Check the Worker's GITHUB_TOKEN.`, { status: 502, headers })
+  }
+  return new Response(JSON.stringify({ started: new Date().toISOString() }), {
+    status: 202,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+  })
 }
 
 export default {
@@ -44,6 +71,10 @@ export default {
     }
 
     const url = new URL(request.url)
+
+    if (url.pathname === '/sync' && request.method === 'POST') {
+      return startGarminSync(env, headers)
+    }
 
     if (url.pathname === '/manifest') {
       const listed = await env.DB_BUCKET.list({ prefix: DB_PREFIX })

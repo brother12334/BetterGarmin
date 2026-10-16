@@ -14,7 +14,7 @@ import { SqlConsole } from './SqlConsole'
 export function MorePage() {
   const { theme, setTheme } = useTheme()
   const { units, setUnits } = useUnits()
-  const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, syncNow } =
+  const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } =
     useData()
   const [confirming, setConfirming] = useState(false)
   const [showConnectForm, setShowConnectForm] = useState(false)
@@ -121,9 +121,17 @@ export function MorePage() {
               <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
             </div>
             {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
+            {garminPull.status === 'running' && (
+              <p className="text-sm text-[var(--text-secondary)]">Downloading from Garmin… usually about 2 minutes.</p>
+            )}
+            {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => syncNow()} disabled={cloudStatus === 'syncing'}>
-                Sync now
+              <Button
+                variant="secondary"
+                onClick={() => pullFromGarmin()}
+                disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}
+              >
+                {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
               </Button>
               <Button variant="ghost" onClick={disconnectCloud}>
                 Disconnect

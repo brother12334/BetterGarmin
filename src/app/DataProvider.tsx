@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
-import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig } from '../db/cloudSync'
+import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig, startCloudSync } from '../db/cloudSync'
 import { deleteWorkout, getAllWorkoutsWithSets, hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
 type DataStatus = 'restoring' | 'empty' | 'ready'
@@ -29,13 +29,20 @@ interface DataContextValue {
   connectCloud: (config: CloudConfig) => Promise<{ ok: boolean; error?: string }>
   disconnectCloud: () => void
   syncNow: () => Promise<void>
+  /** Runs the Garmin download now (not just a re-check of storage), then loads the result. */
+  pullFromGarmin: () => Promise<void>
+  garminPull: GarminPullState
 }
+
+export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date } | { status: 'error'; message: string }
 
 const DataContext = createContext<DataContextValue | null>(null)
 const SOURCE_KEY = 'bettergarmin:dataSource'
 const CLOUD_CONFIG_KEY = 'bettergarmin:cloudConfig'
 const CLOUD_MANIFEST_KEY = 'bettergarmin:cloudManifest'
 const CLOUD_POLL_INTERVAL_MS = 5 * 60 * 1000
+const PULL_POLL_MS = 5000
+const PULL_TIMEOUT_MS = 6 * 60 * 1000
 
 const DEMO_FILES: { fileName: string; kind: DbKind }[] = [
   { fileName: 'garmin.db', kind: 'garmin' },
@@ -322,6 +329,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSource((prev) => (prev === 'cloud' ? 'user' : prev))
   }, [])
 
+  const [garminPull, setGarminPull] = useState<GarminPullState>({ status: 'idle' })
+
+  const pullFromGarmin = useCallback(async () => {
+    const config = cloudConfigRef.current
+    if (!config) return
+    try {
+      const startedAt = await startCloudSync(config)
+      setGarminPull({ status: 'running', startedAt })
+      // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
+      const deadline = Date.now() + PULL_TIMEOUT_MS
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, PULL_POLL_MS))
+        if (cloudConfigRef.current !== config) return
+        const files = await fetchManifest(config)
+        if (files.some((f) => new Date(f.lastModified).getTime() > startedAt.getTime())) {
+          await syncFromCloud(config)
+          setGarminPull({ status: 'idle' })
+          return
+        }
+      }
+      setGarminPull({ status: 'error', message: "The sync is taking longer than usual. It will show up automatically when it's done." })
+    } catch (err) {
+      setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
+    }
+  }, [syncFromCloud])
+
   const syncNow = useCallback(async () => {
     if (cloudConfigRef.current) await syncFromCloud(cloudConfigRef.current, { force: true })
   }, [syncFromCloud])
@@ -341,6 +374,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       connectCloud,
       disconnectCloud,
       syncNow,
+      pullFromGarmin,
+      garminPull,
     }),
     [
       status,
@@ -356,6 +391,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       connectCloud,
       disconnectCloud,
       syncNow,
+      pullFromGarmin,
+      garminPull,
     ],
   )
 

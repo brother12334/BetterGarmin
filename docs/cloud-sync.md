@@ -155,10 +155,32 @@ Open BetterGarmin → onboarding → **Set up automatic sync (advanced)** (or
 **More → Cloud sync** if you're already past onboarding). Enter your Worker
 URL from step 2 and the access token you generated. Click **Connect**.
 
+## "Sync now" button (optional, recommended)
+
+The app's **Sync now** button (on Today and in More → Cloud sync) makes the
+Worker start the GitHub sync job immediately, then loads the result as soon as
+it lands — typically about 2 minutes after you tap it. Open Garmin Connect on
+your phone first so the watch's newest data is on Garmin's servers.
+
+It needs a GitHub token the Worker can use to start the workflow:
+
+1. GitHub → **Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token**.
+2. **Repository access**: Only select repositories → your BetterGarmin repo.
+3. **Permissions → Repository permissions → Actions: Read and write**. Nothing else.
+4. Generate, and copy the token.
+5. In Cloudflare: your Worker → **Settings → Variables and Secrets**. Add a
+   **Secret** `GITHUB_TOKEN` (the token), and **Text** variables
+   `GITHUB_REPO` (e.g. `brother12334/BetterGarmin`) and `GITHUB_REF` (the
+   branch the workflow lives on). If you deployed from the dashboard, also
+   paste the latest `worker/dashboard-worker.js` into the editor and Deploy.
+
+The token can only start workflows in that one repo; it never reaches the app.
+
 ## Changing the sync frequency
 
 Edit the `cron` line in `.github/workflows/sync-garmin-data.yml`. The default
-is hourly. Garmin can flag accounts that authenticate too often, so avoid
+is every 30 minutes. Garmin can flag accounts that authenticate too often, so avoid
 going much tighter than every 15–30 minutes.
 
 ## Turning it off

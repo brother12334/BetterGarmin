@@ -14,6 +14,9 @@ bucket_name = "bettergarmin-data"
 # request still needs the bearer token — this just adds one more layer.
 [vars]
 ALLOWED_ORIGIN = "https://brother12334.github.io"
+# For the app's "Sync now" button (also set the GITHUB_TOKEN secret, see docs/cloud-sync.md).
+GITHUB_REPO = "brother12334/BetterGarmin"
+GITHUB_REF = "claude/bettergarmin-web-app-vdfhxe"
 
 # ACCESS_TOKEN is a secret, not a var — set it after first deploy with:
 #   wrangler secret put ACCESS_TOKEN

@@ -14,6 +14,8 @@ import { buildTodayInsights } from './insights'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
+import { Button } from '../../components/ui/Button'
+import { formatRelativeTime } from '../../lib/relativeTime'
 import { useUnits } from '../../app/units'
 import { convertDistance, distanceUnitLabel } from '../../lib/units'
 import { LiveHeartRateCard } from './LiveHeartRateCard'
@@ -74,7 +76,9 @@ export function TodayPage() {
   if (!data) {
     return (
       <div className="flex flex-col gap-6">
-        <LiveHeartRateCard />
+        <SyncBar />
+
+      <LiveHeartRateCard />
         <Card className="text-center text-[var(--text-secondary)]">
           {hasGarmin
             ? 'No daily data found yet in your garmin.db.'
@@ -280,6 +284,27 @@ function TodaySkeleton() {
         ))}
       </div>
       <Skeleton className="h-28 w-full" />
+    </div>
+  )
+}
+
+/** One-tap "pull from Garmin now", shown only with cloud sync. */
+function SyncBar() {
+  const { cloudConfigured, lastSynced, pullFromGarmin, garminPull, cloudStatus } = useData()
+  if (!cloudConfigured) return null
+  const running = garminPull.status === 'running'
+  return (
+    <div className="-mt-2 flex items-center justify-between gap-3 text-sm">
+      <span className={garminPull.status === 'error' ? 'text-rose-400' : 'text-[var(--text-tertiary)]'}>
+        {running
+          ? 'Downloading from Garmin… about 2 minutes'
+          : garminPull.status === 'error'
+            ? garminPull.message
+            : `Synced ${formatRelativeTime(lastSynced)}`}
+      </span>
+      <Button variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
+        {running ? 'Syncing…' : 'Sync now'}
+      </Button>
     </div>
   )
 }

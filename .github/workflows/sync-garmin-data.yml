@@ -12,10 +12,10 @@ name: Sync Garmin data
 
 on:
   schedule:
-    # Every hour. Garmin Connect can flag accounts that log in too often —
-    # don't go much tighter than this. Public repos get unlimited free
-    # Actions minutes, so the cost here is Garmin's tolerance, not GitHub's.
-    - cron: '17 * * * *'
+    # Every 30 minutes (the app's "Sync now" button covers anything sooner).
+    # Garmin Connect can flag accounts that log in too often — don't go much
+    # tighter than this. GitHub may also delay or skip scheduled runs when busy.
+    - cron: '17,47 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -80,9 +80,16 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Cache pip downloads
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-garmindb-${{ runner.os }}
+
       - name: Install garmindb
         if: steps.check.outputs.ready == 'true'
-        run: pip install garmindb
+        run: pip install --disable-pip-version-check garmindb
 
       # Checked before logging in to Garmin, so a bad key doesn't spend a Garmin login attempt.
       - name: Verify R2 access
