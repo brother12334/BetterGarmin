@@ -19,7 +19,7 @@ export interface WidgetSlot {
 }
 
 export type BackgroundMode = 'daily' | 'photo' | 'custom' | 'gradient'
-export type CardStyle = 'glass' | 'solid' | 'outline'
+export type CardStyle = 'glass' | 'liquid' | 'solid' | 'outline'
 export type Radius = 'sharp' | 'rounded' | 'round'
 export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
 export type Density = 'compact' | 'comfortable' | 'spacious'
@@ -56,6 +56,10 @@ export const PHOTOS = [
 ]
 
 export const GRADIENTS: Record<string, { label: string; css: string }> = {
+  liquid: {
+    label: 'Liquid',
+    css: 'radial-gradient(60% 40% at 15% 55%, rgba(37,99,235,0.95) 0%, rgba(37,99,235,0) 70%), radial-gradient(55% 35% at 85% 40%, rgba(59,130,246,0.85) 0%, rgba(59,130,246,0) 70%), radial-gradient(70% 50% at 50% 100%, rgba(147,197,253,0.9) 0%, rgba(147,197,253,0) 70%), linear-gradient(165deg, #0b1a4a 0%, #1e3a8a 45%, #93c5fd 100%)',
+  },
   aurora: { label: 'Aurora', css: 'linear-gradient(135deg, #0f2027 0%, #134e5e 45%, #71b280 100%)' },
   nebula: { label: 'Nebula', css: 'linear-gradient(135deg, #1a0533 0%, #4c1d95 50%, #db2777 100%)' },
   ocean: { label: 'Ocean', css: 'linear-gradient(160deg, #020617 0%, #0c4a6e 55%, #22d3ee 100%)' },
@@ -82,6 +86,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
 }
 
 export const PRESETS: { name: string; patch: Partial<Appearance> }[] = [
+  { name: 'Liquid Glass', patch: { accent: '#60a5fa', cardStyle: 'liquid', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquid', fullPage: true, dim: 0, blur: 0 } },
   { name: 'Glacier', patch: { accent: '#38bdf8', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'daily', fullPage: false } },
   { name: 'Neon', patch: { accent: '#a855f7', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'gradient', gradient: 'nebula', fullPage: true, dim: 35, blur: 0 } },
   { name: 'Forest', patch: { accent: '#34d399', cardStyle: 'glass', radius: 'rounded', font: 'manrope', backgroundMode: 'photo', photo: 'backgrounds/misty-forest.jpg', fullPage: true, dim: 55, blur: 8 } },

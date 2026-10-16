@@ -320,7 +320,7 @@ function StyleSection() {
         <Field label="Cards">
           <Segmented
             value={a.cardStyle}
-            options={[['glass', 'Glass'], ['solid', 'Solid'], ['outline', 'Outline']]}
+            options={[['glass', 'Glass'], ['liquid', 'Liquid'], ['solid', 'Solid'], ['outline', 'Outline']]}
             onChange={(cardStyle) => updateAppearance({ cardStyle })}
           />
         </Field>
