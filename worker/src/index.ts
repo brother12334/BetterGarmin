@@ -63,7 +63,7 @@ async function startGarminSync(env: Env, headers: Record<string, string>): Promi
     body: JSON.stringify({ ref: env.GITHUB_REF }),
   })
   if (!res.ok) {
-    const detail = ((await res.json().catch(() => null)) || {}).message || ''
+    const detail = ((await res.json().catch(() => null)) as { message?: string } | null)?.message ?? ''
     const hint = res.status === 422 ? "Check the Worker's GITHUB_REF (the branch name)." : "Check the Worker's GITHUB_TOKEN."
     return new Response(`GitHub refused to start the sync (${res.status}${detail ? `: ${detail}` : ''}). ${hint}`, { status: 502, headers })
   }
