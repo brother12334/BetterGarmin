@@ -227,7 +227,7 @@ function ReadinessHero({
   const fullPage = usesFullBackdrop(useAppearance())
 
   return (
-    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-6 rounded-b-[2rem]' : 'rounded-[2rem]')}>
+    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-[calc(1.5rem+env(safe-area-inset-top))] rounded-b-[2rem] pt-[env(safe-area-inset-top)]' : 'rounded-[2rem]')}>
       {!fullPage && (
         <div className="absolute inset-0">
           <MountainBackdrop height={320} />
