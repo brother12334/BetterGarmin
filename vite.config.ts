@@ -65,6 +65,14 @@ export default defineConfig(({ command }) => ({
         // jpg: the Today hero's daily backdrop photos — small enough to precache for offline use.
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2,wasm}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // Keep the Manrope font available offline too.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'google-fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+          },
+        ],
       },
     }),
   ],

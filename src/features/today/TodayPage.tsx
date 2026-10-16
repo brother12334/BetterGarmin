@@ -280,19 +280,21 @@ function TodaySkeleton() {
 
 /** One-tap "pull from Garmin now", shown only with cloud sync. */
 function SyncBar() {
-  const { cloudConfigured, lastSynced, pullFromGarmin, garminPull, cloudStatus } = useData()
+  const { cloudConfigured, lastSynced, pullFromGarmin, garminPull, cloudStatus, online } = useData()
   if (!cloudConfigured) return null
   const running = garminPull.status === 'running'
   return (
     <div className="-mt-2 flex items-center justify-between gap-3 text-sm">
       <span className={garminPull.status === 'error' ? 'text-rose-400' : 'text-[var(--text-tertiary)]'}>
-        {running
+        {!online
+          ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
+          : running
           ? 'Downloading from Garmin… about 2 minutes'
           : garminPull.status === 'error'
             ? garminPull.message
             : `Synced ${formatRelativeTime(lastSynced)}`}
       </span>
-      <Button variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
+      <Button variant="secondary" onClick={() => pullFromGarmin()} disabled={!online || running || cloudStatus === 'syncing'} className="shrink-0">
         {running ? 'Syncing…' : 'Sync now'}
       </Button>
     </div>

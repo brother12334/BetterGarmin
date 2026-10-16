@@ -32,6 +32,8 @@ interface DataContextValue {
   /** Runs the Garmin download now (not just a re-check of storage), then loads the result. */
   pullFromGarmin: () => Promise<void>
   garminPull: GarminPullState
+  /** Whether the device currently has a connection. */
+  online: boolean
 }
 
 export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date } | { status: 'error'; message: string }
@@ -41,6 +43,7 @@ const SOURCE_KEY = 'bettergarmin:dataSource'
 const CLOUD_CONFIG_KEY = 'bettergarmin:cloudConfig'
 const CLOUD_MANIFEST_KEY = 'bettergarmin:cloudManifest'
 const CLOUD_POLL_INTERVAL_MS = 5 * 60 * 1000
+const LAST_SYNCED_KEY = 'bettergarmin:lastSynced'
 const PULL_POLL_MS = 5000
 const PULL_TIMEOUT_MS = 6 * 60 * 1000
 
@@ -87,10 +90,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [cloudConfigured, setCloudConfigured] = useState(() => readCloudConfig() != null)
   const [cloudStatus, setCloudStatus] = useState<CloudSyncStatus>('idle')
   const [cloudError, setCloudError] = useState<string | null>(null)
-  const [lastSynced, setLastSynced] = useState<Date | null>(null)
+  // Remembered across launches so an offline start can still say how fresh the saved data is.
+  const [lastSynced, setLastSynced] = useState<Date | null>(() => {
+    try {
+      const v = localStorage.getItem(LAST_SYNCED_KEY)
+      return v ? new Date(v) : null
+    } catch {
+      return null
+    }
+  })
+  const [online, setOnline] = useState(() => navigator.onLine)
+  useEffect(() => {
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => {
+      window.removeEventListener('online', up)
+      window.removeEventListener('offline', down)
+    }
+  }, [])
   const cloudConfigRef = useRef<CloudConfig | null>(null)
 
   const syncFromCloud = useCallback(async (config: CloudConfig, opts: { force?: boolean } = {}) => {
+    // Offline, the saved copy is all there is: keep showing it instead of reporting an error.
+    if (!navigator.onLine) {
+      setCloudStatus('idle')
+      return
+    }
     setCloudStatus('syncing')
     setCloudError(null)
     try {
@@ -115,7 +142,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (newlyLoaded.length > 0) {
         setLoadedKinds((prev) => Array.from(new Set([...prev, ...newlyLoaded])))
       }
-      setLastSynced(new Date())
+      const now = new Date()
+      setLastSynced(now)
+      try {
+        localStorage.setItem(LAST_SYNCED_KEY, now.toISOString())
+      } catch {
+        // fine to lose
+      }
       setCloudStatus('idle')
     } catch (err) {
       setCloudStatus('error')
@@ -213,9 +246,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === 'visible') tick()
     }
     document.addEventListener('visibilitychange', onVisible)
+    // Back online: catch up straight away.
+    window.addEventListener('online', tick)
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', tick)
     }
   }, [source, syncFromCloud])
 
@@ -334,6 +370,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const pullFromGarmin = useCallback(async () => {
     const config = cloudConfigRef.current
     if (!config) return
+    if (!navigator.onLine) {
+      setGarminPull({ status: 'error', message: "You're offline. Showing the data saved on this device." })
+      return
+    }
     try {
       const startedAt = await startCloudSync(config)
       setGarminPull({ status: 'running', startedAt })
@@ -376,6 +416,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       syncNow,
       pullFromGarmin,
       garminPull,
+      online,
     }),
     [
       status,
@@ -393,6 +434,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       syncNow,
       pullFromGarmin,
       garminPull,
+      online,
     ],
   )
 
