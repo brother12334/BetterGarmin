@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
+import { setSleepTimesUtc } from '../features/training/matchGarminActivity'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig, startCloudSync } from '../db/cloudSync'
 import { deleteWorkout, getAllWorkoutsWithSets, hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
@@ -111,6 +112,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
   const cloudConfigRef = useRef<CloudConfig | null>(null)
+  // Must be set before children render, so it is applied during render rather than in an effect.
+  setSleepTimesUtc(source !== 'demo')
 
   const syncFromCloud = useCallback(async (config: CloudConfig, opts: { force?: boolean } = {}) => {
     // Offline, the saved copy is all there is: keep showing it instead of reporting an error.

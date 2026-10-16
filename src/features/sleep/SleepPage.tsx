@@ -9,6 +9,7 @@ import type { SleepEventRow, SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
 import { statusForScore, STATUS_COLORS } from '../../lib/statusWords'
+import { parseSleepTimestamp } from '../training/matchGarminActivity'
 
 const HISTORY_DAYS = 21
 const SLEEP_TARGET_MIN = 480 // 8h
@@ -150,7 +151,7 @@ export function SleepPage() {
 
 function Hypnogram({ events }: { events: SleepEventRow[] }) {
   const sorted = [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-  const toMs = (ts: string) => new Date(ts.replace(' ', 'T')).getTime()
+  const toMs = (ts: string) => parseSleepTimestamp(ts) ?? NaN
   const start = toMs(sorted[0].timestamp)
   const end = sorted.reduce((max, e) => Math.max(max, toMs(e.timestamp) + hmsToMinutes(e.duration)! * 60000), start)
   const totalMs = Math.max(1, end - start)
@@ -216,7 +217,7 @@ function SleepBreakdown({ sleep }: { sleep: SleepRow }) {
 }
 
 function hourValue(iso: string, wraparound: boolean): number {
-  const d = new Date(iso.replace(' ', 'T'))
+  const d = new Date(parseSleepTimestamp(iso) ?? NaN)
   let h = d.getHours() + d.getMinutes() / 60
   if (wraparound && h < 12) h += 24
   return h

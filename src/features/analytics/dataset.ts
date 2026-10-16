@@ -10,7 +10,7 @@ import {
 import type { DbKind } from '../../db/types'
 import { addDays, enumerateDays, normalizeDay } from '../../lib/dateRange'
 import { hmsToMinutes } from '../../lib/duration'
-import { parseGarminTimestamp } from '../training/matchGarminActivity'
+import { parseSleepTimestamp } from '../training/matchGarminActivity'
 import { loadWorkoutAnalysis, type WorkoutAnalysis } from '../training/loadWorkoutAnalysis'
 import { buildSessions, indexExercises, type AnalyticsDataset, type DayRecord } from './model'
 
@@ -26,7 +26,7 @@ function today(): string {
 }
 
 function bedtimeHours(start: string | null): number | null {
-  const t = parseGarminTimestamp(start)
+  const t = parseSleepTimestamp(start)
   if (t == null) return null
   const d = new Date(t)
   const h = d.getHours() + d.getMinutes() / 60

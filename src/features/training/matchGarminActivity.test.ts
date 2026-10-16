@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ActivityRow } from '../../db/types'
-import { suggestClockOffset } from './matchGarminActivity'
+import { parseSleepTimestamp, setSleepTimesUtc, suggestClockOffset } from './matchGarminActivity'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const naive = (ms: number) => {
@@ -36,5 +36,16 @@ describe('suggestClockOffset', () => {
 
   it('refuses weak overlaps', () => {
     expect(suggestClockOffset(workout, [act('a', T + 2 * H, 20)])).toBeNull()
+  })
+})
+
+describe('parseSleepTimestamp', () => {
+  it('reads GarminDB sleep times as UTC', () => {
+    expect(parseSleepTimestamp('2026-10-16 11:11:00.000000')).toBe(Date.UTC(2026, 9, 16, 11, 11))
+  })
+  it('reads demo sleep times as local when switched off', () => {
+    setSleepTimesUtc(false)
+    expect(parseSleepTimestamp('2026-10-16 11:11:00')).toBe(new Date(2026, 9, 16, 11, 11).getTime())
+    setSleepTimesUtc(true)
   })
 })

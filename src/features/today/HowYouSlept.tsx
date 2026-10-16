@@ -5,7 +5,7 @@ import { getSleepEventsForDay, getSleepRange } from '../../db/queries'
 import type { SleepEventRow, SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
-import { parseGarminTimestamp } from '../training/matchGarminActivity'
+import { parseSleepTimestamp } from '../training/matchGarminActivity'
 
 /**
  * Last night's sleep: total, bed and wake times, a stage-by-stage timeline (when Garmin recorded stage events)
@@ -36,7 +36,7 @@ function nightLabel(day: string): string {
 }
 
 function clock(ts: string | null): string | null {
-  const ms = parseGarminTimestamp(ts)
+  const ms = parseSleepTimestamp(ts)
   return ms == null ? null : new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
@@ -151,7 +151,7 @@ function StackedBar({ parts, total }: { parts: { key: Stage; color: string; min:
 function StageTimeline({ events }: { events: SleepEventRow[] }) {
   const blocks = events
     .map((e) => {
-      const start = parseGarminTimestamp(e.timestamp)
+      const start = parseSleepTimestamp(e.timestamp)
       const dur = (hmsToMinutes(e.duration) ?? 0) * 60000
       const stage = EVENT_STAGE[e.event]
       return start != null && stage && dur > 0 ? { start, end: start + dur, stage } : null

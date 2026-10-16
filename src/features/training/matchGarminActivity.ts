@@ -7,6 +7,24 @@ export function parseGarminTimestamp(ts: string | null | undefined): number | nu
   return Number.isFinite(t) ? t : null
 }
 
+/**
+ * GarminDB stores sleep start/end and sleep-stage timestamps in UTC (Garmin's "GMT" fields), unlike activity and
+ * monitoring times, which are local. The bundled demo data writes them as local times, so this is switched off
+ * in demo mode.
+ */
+let sleepTimesUtc = true
+export function setSleepTimesUtc(utc: boolean) {
+  sleepTimesUtc = utc
+}
+
+/** Parses a sleep start/end or sleep-event timestamp to epoch ms. */
+export function parseSleepTimestamp(ts: string | null | undefined): number | null {
+  if (!ts) return null
+  if (!sleepTimesUtc) return parseGarminTimestamp(ts)
+  const t = new Date(`${ts.trim().replace(' ', 'T')}Z`).getTime()
+  return Number.isFinite(t) ? t : parseGarminTimestamp(ts)
+}
+
 /** How far apart two windows' edges can be and still count as "probably the same workout" — covers clock drift and a few minutes of lag starting/stopping either app. */
 const MATCH_TOLERANCE_MS = 15 * 60 * 1000
 
