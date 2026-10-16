@@ -238,10 +238,19 @@ export function HealthPage() {
           title="Steps"
           hint="line = 7-day average"
           option={{
-            grid: { ...detailGrid, top: 34, right: 34 },
+            grid: { ...detailGrid, top: 34, right: 34, bottom: steps.length > 21 ? 26 : 8 },
             legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8a92a3', fontSize: 10 }, data: ['Steps', '7-day average'] },
-            dataZoom: [{ type: 'inside', start: startPct(steps.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(steps.length, 21), end: 100, right: 46 }],
-            xAxis: timeAxis('day'),
+            dataZoom:
+              steps.length > 21
+                ? [{ type: 'inside', start: startPct(steps.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(steps.length, 21), end: 100, bottom: 2, right: 46 }]
+                : [],
+            xAxis: {
+              type: 'category',
+              data: steps.map(([t]) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
+              axisLine: { lineStyle: { color: 'rgba(140,150,170,0.25)' } },
+              axisTick: { show: false },
+              axisLabel: { color: '#8a92a3', fontSize: 10, hideOverlap: true },
+            },
             yAxis: valueAxis(),
             series: [
               {
@@ -249,8 +258,8 @@ export function HealthPage() {
                 name: 'Steps',
                 color: ENERGY,
                 barWidth: '62%',
-                label: { show: steps.length <= 21, position: 'top', color: '#8a92a3', fontSize: 9, formatter: (p: unknown) => `${((p as { value: [number, number] }).value[1] / 1000).toFixed(1)}k` },
-                data: steps.map(([t, v]) => ({ value: [t, v], itemStyle: { borderRadius: [5, 5, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.45) } })),
+                label: { show: steps.length <= 21, position: 'top', color: '#8a92a3', fontSize: 9, formatter: (p: unknown) => `${((p as { value: number }).value / 1000).toFixed(1)}k` },
+                data: steps.map(([, v]) => ({ value: v, itemStyle: { borderRadius: [5, 5, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.45) } })),
                 markLine: stepGoal
                   ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', position: 'end', color: ENERGY, fontSize: 10 }, data: [{ yAxis: stepGoal }] }
                   : undefined,
@@ -261,7 +270,7 @@ export function HealthPage() {
                 color: '#e8eaf0',
                 smooth: true,
                 showSymbol: false,
-                data: steps.map(([t], i) => [t, Math.round(steps.slice(Math.max(0, i - 6), i + 1).reduce((sum, [, v]) => sum + v, 0) / Math.min(7, i + 1))]),
+                data: steps.map((_, i) => Math.round(steps.slice(Math.max(0, i - 6), i + 1).reduce((sum, [, v]) => sum + v, 0) / Math.min(7, i + 1))),
                 lineStyle: { color: '#e8eaf0', width: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.5)' },
                 z: 5,
               },
