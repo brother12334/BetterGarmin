@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { BigStat, DetailChart, Dial } from '../../components/charts/HealthCharts'
-import { detailGrid, fade, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
+import { detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
 import { getLatestDay, getSleepRange } from '../../db/queries'
@@ -119,6 +119,13 @@ export function SleepPage() {
   const wake = series((r) => nightHour(r.end))
   const avgBed = bed.length ? bed.slice(-7).reduce((a, [, v]) => a + v, 0) / Math.min(7, bed.length) : null
   const totalMin = mins(lastNight.total_sleep)
+  const median = (p: Point[]) => {
+    if (!p.length) return null
+    const v = p.map(([, y]) => y).sort((x, y) => x - y)
+    return v[Math.floor(v.length / 2)]
+  }
+  const usualBed = median(bed)
+  const usualWake = median(wake)
 
   const debtSeries: Point[] = nights.map((r, i) => [
     dayMs(r.day),
@@ -155,57 +162,63 @@ export function SleepPage() {
       </div>
 
       <DetailChart
-        title="Stages each night"
-        hint="pinch or drag to zoom"
+        title="Last night vs your average"
+        hint={`average of ${nights.length} nights`}
+        height={220}
         option={{
-          grid: { ...detailGrid, top: 30 },
+          grid: { left: 8, right: 44, top: 30, bottom: 8, containLabel: true },
           legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8a92a3', fontSize: 10 } },
-          dataZoom: zoom(startPct(nights.length, 21)),
-          xAxis: timeAxis('day'),
-          yAxis: valueAxis({ axisLabel: { color: '#8a92a3', fontSize: 10, formatter: (v: number) => `${Math.round(v / 60)}h` } }),
           tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => `${v} min` },
-          series: STAGES.map((s) => ({
-            name: s.label,
-            type: 'bar',
-            stack: 'night',
-            barWidth: '60%',
-            data: nights.map((r) => [dayMs(r.day), Math.round(mins(r[s.key]))]),
-            itemStyle: { color: s.color },
-          })),
+          xAxis: { type: 'value', axisLabel: { color: '#8a92a3', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(140,150,170,0.15)', type: 'dashed' } } },
+          yAxis: { type: 'category', inverse: true, data: STAGES.map((st) => st.label), axisLabel: { color: '#8a92a3' }, axisLine: { show: false }, axisTick: { show: false } },
+          series: [
+            {
+              name: 'Your average',
+              type: 'bar',
+              data: STAGES.map((st) => Math.round(nights.reduce((sum, r) => sum + mins(r[st.key]), 0) / nights.length)),
+              itemStyle: { color: 'rgba(140,150,170,0.45)', borderRadius: 4 },
+            },
+            {
+              name: 'Last night',
+              type: 'bar',
+              data: STAGES.map((st) => ({ value: Math.round(mins(lastNight[st.key])), itemStyle: { color: st.color, borderRadius: 4 } })),
+              label: { show: true, position: 'right', color: '#8a92a3', fontSize: 10, formatter: '{c}m' },
+            },
+          ],
         }}
       />
 
       {bed.length > 0 && wake.length > 0 && (
         <DetailChart
-          title="When you slept"
-          hint="each bar is one night"
+          title="Bedtime and wake time"
+          hint="shaded = your usual ±30 min"
           option={{
-            grid: detailGrid,
+            grid: { ...detailGrid, top: 30 },
+            legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8a92a3', fontSize: 10 } },
             dataZoom: zoom(startPct(nights.length, 21)),
             xAxis: timeAxis('day'),
             yAxis: valueAxis({ inverse: true, min: 20, max: 34, interval: 2, axisLabel: { color: '#8a92a3', fontSize: 10, formatter: (v: number) => clockLabel(v) } }),
-            tooltip: {
-              trigger: 'axis',
-              formatter: (p: unknown) => {
-                const i = (p as { dataIndex: number }[])[0]?.dataIndex ?? 0
-                const r = nights[i]
-                const b = nightHour(r.start)
-                const w = nightHour(r.end)
-                return b != null && w != null ? `${clockLabel(b)} → ${clockLabel(w)}` : ''
-              },
-            },
+            tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => (typeof v === 'number' ? clockLabel(v) : '') },
             series: [
-              { type: 'bar', stack: 'w', silent: true, itemStyle: { color: 'transparent' }, data: nights.map((r) => [dayMs(r.day), nightHour(r.start)]) },
               {
-                type: 'bar',
-                stack: 'w',
-                barWidth: '55%',
-                itemStyle: { color: SLEEP, borderRadius: 6 },
-                data: nights.map((r) => {
-                  const b = nightHour(r.start)
-                  const w = nightHour(r.end)
-                  return [dayMs(r.day), b != null && w != null ? +(w - b).toFixed(2) : null]
-                }),
+                name: 'Bedtime',
+                type: 'line',
+                smooth: true,
+                symbolSize: 6,
+                data: bed,
+                lineStyle: { color: SLEEP, width: 2.5 },
+                itemStyle: { color: SLEEP },
+                markArea: usualBed == null ? undefined : { silent: true, itemStyle: { color: rgba(SLEEP, 0.1) }, data: [[{ yAxis: usualBed - 0.5 }, { yAxis: usualBed + 0.5 }]] as never },
+              },
+              {
+                name: 'Wake',
+                type: 'line',
+                smooth: true,
+                symbolSize: 6,
+                data: wake,
+                lineStyle: { color: '#f5a623', width: 2.5 },
+                itemStyle: { color: '#f5a623' },
+                markArea: usualWake == null ? undefined : { silent: true, itemStyle: { color: rgba('#f5a623', 0.1) }, data: [[{ yAxis: usualWake - 0.5 }, { yAxis: usualWake + 0.5 }]] as never },
               },
             ],
           }}

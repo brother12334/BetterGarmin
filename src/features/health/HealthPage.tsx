@@ -145,10 +145,6 @@ export function HealthPage() {
     return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null
   })
   const base = data.rhrBaseline
-  const normalBand = base
-    ? { silent: true, itemStyle: { color: rgba(HEART, 0.08) }, data: [[{ yAxis: Math.round(base.mean - base.stdDev) }, { yAxis: Math.round(base.mean + base.stdDev) }]] as never }
-    : undefined
-
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Health</h1>
@@ -240,7 +236,7 @@ export function HealthPage() {
       {steps.length > 1 && (
         <DetailChart
           title="Steps"
-          hint="pinch or drag to zoom"
+          hint="line = 7-day average"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct(steps.length, 21)),
@@ -255,6 +251,14 @@ export function HealthPage() {
                   ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', color: '#8a92a3', fontSize: 10 }, data: [{ yAxis: stepGoal }] }
                   : undefined,
               },
+              {
+                type: 'line',
+                name: '7-day average',
+                smooth: true,
+                showSymbol: false,
+                data: steps.map(([t], i) => [t, Math.round(steps.slice(Math.max(0, i - 6), i + 1).reduce((sum, [, v]) => sum + v, 0) / Math.min(7, i + 1))]),
+                lineStyle: { color: '#e8eaf0', width: 2 },
+              },
             ],
           }}
         />
@@ -263,13 +267,16 @@ export function HealthPage() {
       {data.rhr.length > 1 && (
         <DetailChart
           title="Resting heart rate"
-          hint="shaded = your normal"
+          hint="cooler = lower, warmer = higher"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct(data.rhr.length, 30)),
             xAxis: timeAxis('day'),
             yAxis: valueAxis({ scale: true }),
-            series: [{ type: 'line', data: data.rhr, smooth: true, symbolSize: 5, lineStyle: { color: HEART, width: 2 }, itemStyle: { color: HEART }, markArea: normalBand }],
+            visualMap: base
+              ? { show: false, dimension: 1, min: Math.round(base.mean - 2 * base.stdDev), max: Math.round(base.mean + 2 * base.stdDev), inRange: { color: ['#38bdf8', '#34d399', '#f5a623', HEART] } }
+              : undefined,
+            series: [{ type: 'line', data: data.rhr, smooth: true, showSymbol: false, lineStyle: { width: 3, color: base ? undefined : HEART }, areaStyle: { opacity: 0.2 } }],
           }}
         />
       )}
