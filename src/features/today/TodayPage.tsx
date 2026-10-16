@@ -130,7 +130,7 @@ export function TodayPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />
         <StatCard label="Floors" value={summary?.floors_up ?? 0} suffix=" fl" />
-        <StatCard label="Calories" value={summary?.calories_total ?? 0} />
+        <StatCard label="Active calories" value={summary?.calories_active ?? 0} />
         <StatCard
           label="Distance"
           value={convertDistance(summary?.distance ?? 0, units)}
