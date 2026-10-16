@@ -180,6 +180,9 @@ jobs:
           echo "Monitoring files (name, size, type):"
           find ~/HealthData/FitFiles/Monitoring -type f -printf '%f %s\n' | head -20 || true
           find ~/HealthData/FitFiles/Monitoring -type f | head -3 | xargs -r file || true
+          echo "Sleep rows (day, has total/deep/rem/light/awake, value type+length — no values):"
+          sqlite3 "$DB_DIR/garmin.db" "SELECT substr(day,1,10), total_sleep IS NOT NULL, deep_sleep IS NOT NULL, rem_sleep IS NOT NULL, light_sleep IS NOT NULL, awake IS NOT NULL, typeof(total_sleep), length(total_sleep) FROM sleep ORDER BY day" 2>/dev/null || true
+          echo "Sleep events: $(sqlite3 "$DB_DIR/garmin.db" "SELECT COUNT(*) FROM sleep_events" 2>/dev/null || echo missing)"
           echo "Daily summary sample (steps, rhr per day):"
           sqlite3 "$DB_DIR/garmin.db" "SELECT day, steps IS NOT NULL, rhr IS NOT NULL, hr_max IS NOT NULL FROM daily_summary" 2>/dev/null || true
           for t in garmin.db:daily_summary garmin.db:sleep garmin.db:resting_hr garmin_monitoring.db:monitoring_hr garmin_monitoring.db:monitoring garmin_activities.db:activities; do
