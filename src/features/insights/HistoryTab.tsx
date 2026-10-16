@@ -55,7 +55,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
     const idx = new Map(dataset.days.map((d, i) => [d.day, i]))
     const panelCount = PANELS.length + 1
     const gap = 6
-    const h = (100 - 6 - gap * panelCount) / panelCount
+    const h = (100 - 12 - gap * panelCount) / panelCount
     const grids = Array.from({ length: panelCount }, (_, i) => ({ left: 44, right: 12, top: `${4 + i * (h + gap)}%`, height: `${h}%` }))
     const x = (d: string) => `${d}T00:00:00`
 
@@ -99,7 +99,10 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
           trigger: 'axis' as const,
           valueFormatter: (v: unknown) => (v == null ? 'no data' : String(v)),
         },
-        dataZoom: [{ type: 'inside', xAxisIndex: PANELS.map((_, i) => i).concat(vi) }],
+        dataZoom: [
+          { type: 'inside', xAxisIndex: PANELS.map((_, i) => i).concat(vi) },
+          { type: 'slider', xAxisIndex: PANELS.map((_, i) => i).concat(vi), bottom: 0, height: 16, borderColor: 'transparent', fillerColor: 'rgba(140,150,170,0.18)', showDetail: false },
+        ],
         series,
       } as EChartsOption,
     }
@@ -114,7 +117,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
             <InfoButton title="History">
               Each metric has its own panel and scale on a shared time axis — lines moving together is not evidence that they're related
               (see Findings for analyses that test that). The shaded band is your usual range: the median of the previous 28 days ± 1.5 MAD,
-              drawn only once 14 days of history exist. Gaps are days with no data. Tap a volume bar to open that workout.
+              drawn only once 14 days of history exist. Gaps are days with no data. Pinch, scroll or drag the handle at the bottom to zoom all panels together. Tap a volume bar to open that workout.
             </InfoButton>
           </div>
           <div className="flex gap-1 text-xs">

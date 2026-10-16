@@ -13,6 +13,8 @@ import { FindingsTab } from './FindingsTab'
 import { HistoryTab } from './HistoryTab'
 import { ExperimentsCard } from './ExperimentsCard'
 import { AskTab } from './AskTab'
+import { BigStat, Dial } from '../../components/charts/HealthCharts'
+import { zoom, type Point } from '../../components/charts/chartKit'
 
 const TABS = [
   { key: 'findings', label: 'Findings' },
@@ -42,7 +44,7 @@ function dayAxis() {
     type: 'time' as const,
     splitNumber: 3,
     axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-    axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short' }) },
+    axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
   }
 }
 
@@ -104,27 +106,25 @@ function WeeklyRecap({ data }: { data: DailyMetrics[] }) {
     const vals = lastWeek.map((d) => d[key]).filter((v): v is number => v != null)
     return vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null
   }
+  const trend = (key: MetricKey): Point[] =>
+    data.slice(-28).flatMap((d) => (d[key] == null ? [] : [[new Date(`${d.day}T00:00:00`).getTime(), d[key] as number] as Point]))
   const totalSteps = lastWeek.reduce((s, d) => s + (d.steps ?? 0), 0)
+  const sleepH = avg('sleepMinutes')
+  const r = (v: number | null) => (v == null ? null : Math.round(v))
 
   return (
-    <Card>
-      <p className="mb-3 font-semibold">This week</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <RecapStat label="Total steps" value={totalSteps.toLocaleString()} />
-        <RecapStat label="Avg resting HR" value={avg('restingHr') != null ? `${Math.round(avg('restingHr')!)} bpm` : '—'} />
-        <RecapStat label="Avg sleep score" value={avg('sleepScore') != null ? Math.round(avg('sleepScore')!).toString() : '—'} />
-        <RecapStat label="Avg stress" value={avg('stressAvg') != null ? Math.round(avg('stressAvg')!).toString() : '—'} />
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <Dial label="Avg sleep score" value={r(avg('sleepScore'))} color="#8b7bf6" caption="this week" />
+        <Dial label="Avg stress" value={r(avg('stressAvg'))} color="#f5a623" caption="this week" />
       </div>
-    </Card>
-  )
-}
-
-function RecapStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-[var(--bg-panel)] p-3">
-      <p className="text-xs text-[var(--text-tertiary)]">{label}</p>
-      <p className="mt-1 text-lg font-bold">{value}</p>
-    </div>
+      <div className="grid grid-cols-2 gap-3">
+        <BigStat label="Steps" value={totalSteps.toLocaleString()} sub="this week" color="#34d399" trend={trend('steps')} />
+        <BigStat label="Resting HR" value={r(avg('restingHr'))} unit="bpm" sub="weekly average" color="#fb4a59" trend={trend('restingHr')} />
+        <BigStat label="Sleep" value={sleepH == null ? null : `${Math.floor(sleepH / 60)}h ${Math.round(sleepH % 60)}m`} sub="nightly average" color="#8b7bf6" trend={trend('sleepMinutes')} />
+        <BigStat label="Calories" value={r(avg('calories'))?.toLocaleString() ?? null} sub="daily average" color="#38bdf8" trend={trend('calories')} />
+      </div>
+    </>
   )
 }
 
@@ -156,6 +156,8 @@ function TrendExplorer({ data }: { data: DailyMetrics[] }) {
       </div>
       <Chart
         option={{
+          grid: { left: 8, right: 10, top: 30, bottom: 34, containLabel: true },
+          dataZoom: zoom(),
           xAxis: dayAxis(),
           yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
           legend: { data: ['Daily', '7-day avg', '30-day avg'], textStyle: { color: 'var(--text-tertiary)' }, top: 0 },
@@ -228,6 +230,7 @@ function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
 
       <Chart
         option={{
+          dataZoom: [{ type: 'inside', xAxisIndex: 0 }, { type: 'inside', yAxisIndex: 0 }],
           xAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
           yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
           series: [{ type: 'scatter', data: points, symbolSize: 7, itemStyle: { color: 'rgba(56,189,248,0.7)' } }],

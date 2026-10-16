@@ -11,6 +11,7 @@ import type { ActivityRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { hmsToMinutes } from '../../lib/duration'
 import { TrainingIcon } from '../../app/icons'
+import { TrainingOverview } from './TrainingOverview'
 
 const PAGE_DAYS = 90
 
@@ -131,6 +132,7 @@ export function TrainingFeedPage() {
       <h1 className="text-2xl font-bold">Training</h1>
 
       {strengthLink}
+      {latestDay && <TrainingOverview activities={activities} latestDay={latestDay} />}
 
       {records && records.length > 0 && (
         <Card>

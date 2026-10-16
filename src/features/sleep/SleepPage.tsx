@@ -1,45 +1,51 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
-import { Chart } from '../../components/ui/Chart'
-import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { BigStat, DetailChart, Dial } from '../../components/charts/HealthCharts'
+import { detailGrid, fade, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
+import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
-import { getLatestDay, getSleepEventsForDay, getSleepRange } from '../../db/queries'
-import type { SleepEventRow, SleepRow } from '../../db/types'
+import { getLatestDay, getSleepRange } from '../../db/queries'
+import type { SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
-import { hmsToMinutes, formatHoursMinutes } from '../../lib/duration'
-import { statusForScore, STATUS_COLORS } from '../../lib/statusWords'
+import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { parseSleepTimestamp } from '../training/matchGarminActivity'
+import { HowYouSlept } from '../today/HowYouSlept'
 
-const HISTORY_DAYS = 21
-const SLEEP_TARGET_MIN = 480 // 8h
+const HISTORY_DAYS = 60
+const TARGET_MIN = 480 // 8h
+const SLEEP = METRIC_COLORS.sleep.solid
+const STAGES = [
+  { key: 'deep_sleep', label: 'Deep', color: '#4338ca' },
+  { key: 'light_sleep', label: 'Light', color: '#60a5fa' },
+  { key: 'rem_sleep', label: 'REM', color: '#8b7bf6' },
+  { key: 'awake', label: 'Awake', color: '#f59e8b' },
+] as const
 
-const STAGE_COLORS: Record<string, string> = {
-  deep_sleep: '#6d5bd0',
-  rem_sleep: '#8b7bf6',
-  light_sleep: '#c2b6ff',
-  awake: '#3a3d4a',
-  wake_time: '#3a3d4a',
+const dayMs = (day: string) => new Date(`${day.slice(0, 10)}T00:00:00`).getTime()
+const mins = (v: string | null) => hmsToMinutes(v) ?? 0
+const startPct = (n: number, show: number) => (n > show ? Math.round((1 - show / n) * 100) : 0)
+
+/** Clock hours for plotting a night: evening times stay as-is, after-midnight times continue past 24. */
+function nightHour(ts: string | null): number | null {
+  const ms = parseSleepTimestamp(ts)
+  if (ms == null) return null
+  const d = new Date(ms)
+  const h = d.getHours() + d.getMinutes() / 60
+  return h < 15 ? h + 24 : h
 }
-const STAGE_LABELS: Record<string, string> = {
-  deep_sleep: 'Deep',
-  rem_sleep: 'REM',
-  light_sleep: 'Light',
-  awake: 'Awake',
-  wake_time: 'Awake',
-}
 
-interface SleepData {
-  day: string
-  latest: SleepRow | null
-  events: SleepEventRow[]
-  history: SleepRow[]
+function clockLabel(h: number): string {
+  const n = ((h % 24) + 24) % 24
+  const hh = Math.floor(n)
+  const mm = Math.round((n - hh) * 60)
+  return `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`
 }
 
 export function SleepPage() {
   const { loadedKinds, lastSynced } = useData()
   const hasGarmin = loadedKinds.includes('garmin')
-  const [data, setData] = useState<SleepData | null>(null)
+  const [data, setData] = useState<{ day: string; nights: SleepRow[] } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -61,14 +67,10 @@ export function SleepPage() {
         }
         return
       }
-      const startDay = addDays(day, -HISTORY_DAYS)
-      const [latest, events, history] = await Promise.all([
-        getSleepRange(day, day).then((r) => r[0] ?? null),
-        getSleepEventsForDay(addDays(day, -1)),
-        getSleepRange(startDay, day),
-      ])
+      const rows = await getSleepRange(addDays(day, -HISTORY_DAYS), day)
       if (!cancelled) {
-        setData({ day, latest, events, history })
+        // Days the watch wasn't worn come back as all-zero rows; leave them out.
+        setData({ day, nights: rows.filter((r) => mins(r.total_sleep) > 0) })
         setLoading(false)
       }
     }
@@ -82,219 +84,171 @@ export function SleepPage() {
     return (
       <div className="flex flex-col gap-4">
         <Skeleton className="h-8 w-32" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-48 w-full" />
-        ))}
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-44" />
+          <Skeleton className="h-44" />
+        </div>
+        <Skeleton className="h-72 w-full" />
       </div>
     )
   }
 
-  if (!data || !data.latest) {
+  if (!data || data.nights.length === 0) {
     return (
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-bold">Sleep</h1>
-        <Card className="text-center text-[var(--text-secondary)]">No sleep data loaded yet.</Card>
+        <Card className="text-center text-[var(--text-secondary)]">
+          No sleep recorded yet. Wear your watch to bed; the night appears after it syncs the next morning.
+        </Card>
       </div>
     )
   }
 
-  const { latest, events, history } = data
-  const sleepScoreStatus = statusForScore(latest.score, [50, 70, 85])
+  const { nights } = data
+  const lastNight = nights[nights.length - 1]
+  const series = (f: (r: SleepRow) => number | null): Point[] =>
+    nights.flatMap((r) => {
+      const v = f(r)
+      return v == null ? [] : [[dayMs(r.day), v] as Point]
+    })
+  const totalH = series((r) => +(mins(r.total_sleep) / 60).toFixed(2))
+  const deep = series((r) => Math.round(mins(r.deep_sleep)))
+  const rem = series((r) => Math.round(mins(r.rem_sleep)))
+  const scores = series((r) => r.score)
+  const bed = series((r) => nightHour(r.start))
+  const wake = series((r) => nightHour(r.end))
+  const avgBed = bed.length ? bed.slice(-7).reduce((a, [, v]) => a + v, 0) / Math.min(7, bed.length) : null
+  const totalMin = mins(lastNight.total_sleep)
+
+  const debtSeries: Point[] = nights.map((r, i) => [
+    dayMs(r.day),
+    +(nights.slice(0, i + 1).reduce((d, n) => d + TARGET_MIN - mins(n.total_sleep), 0) / 60).toFixed(1),
+  ])
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Sleep</h1>
 
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-semibold">Last night</p>
-            <p className="text-xs text-[var(--text-tertiary)]">{formatHoursMinutes(hmsToMinutes(latest.total_sleep))} total</p>
-          </div>
-          <div className="text-right">
-            <p
-              className="text-3xl font-bold tabular-nums"
-              style={{ color: sleepScoreStatus ? STATUS_COLORS[sleepScoreStatus] : 'var(--text-primary)' }}
-            >
-              {latest.score ?? '—'}
-            </p>
-            <p className="text-xs capitalize text-[var(--text-tertiary)]">{latest.qualifier ?? ''}</p>
-          </div>
-        </div>
-        {events.length > 0 && <Hypnogram events={events} />}
-        <SleepBreakdown sleep={latest} />
-      </Card>
-
-      <Card>
-        <div className="mb-2 flex items-center gap-1.5">
-          <p className="font-semibold">Bedtime &amp; wake consistency</p>
-          <InfoButton title="Consistency">
-            Going to bed and waking up around the same time each day helps your circadian rhythm — and your sleep
-            score.
-          </InfoButton>
-        </div>
-        <ConsistencyChart history={history} />
-      </Card>
-
-      <Card>
-        <div className="mb-2 flex items-center gap-1.5">
-          <p className="font-semibold">Sleep debt</p>
-          <InfoButton title="Sleep debt">
-            {`Cumulative shortfall against an 8-hour target over the last ${HISTORY_DAYS} nights. Rising means you've been under-sleeping; falling means you've been catching up.`}
-          </InfoButton>
-        </div>
-        <SleepDebtChart history={history} />
-      </Card>
-    </div>
-  )
-}
-
-function Hypnogram({ events }: { events: SleepEventRow[] }) {
-  const sorted = [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-  const toMs = (ts: string) => parseSleepTimestamp(ts) ?? NaN
-  const start = toMs(sorted[0].timestamp)
-  const end = sorted.reduce((max, e) => Math.max(max, toMs(e.timestamp) + hmsToMinutes(e.duration)! * 60000), start)
-  const totalMs = Math.max(1, end - start)
-
-  return (
-    <div className="mt-4">
-      <div className="relative h-8 w-full overflow-hidden rounded-lg bg-[var(--ring-track)]">
-        {sorted.map((event, i) => {
-          const eventStart = toMs(event.timestamp)
-          const durationMs = (hmsToMinutes(event.duration) ?? 0) * 60000
-          const left = ((eventStart - start) / totalMs) * 100
-          const width = (durationMs / totalMs) * 100
-          return (
-            <div
-              key={i}
-              className="absolute top-0 h-full"
-              style={{ left: `${left}%`, width: `${width}%`, backgroundColor: STAGE_COLORS[event.event] ?? '#555' }}
-              title={`${STAGE_LABELS[event.event] ?? event.event} · ${Math.round(durationMs / 60000)}m`}
-            />
-          )
-        })}
+      <div className="grid grid-cols-2 gap-3">
+        <Dial label="Sleep score" value={lastNight.score} color={SLEEP} caption={lastNight.qualifier?.toLowerCase() ?? 'last night'} />
+        <Dial
+          label="Of your 8 hours"
+          value={Math.round((totalMin / TARGET_MIN) * 100)}
+          color="#60a5fa"
+          caption={`${formatHoursMinutes(totalMin)} asleep`}
+        />
       </div>
-      <div className="mt-2 flex gap-4 text-xs text-[var(--text-tertiary)]">
-        {(['deep_sleep', 'rem_sleep', 'light_sleep', 'awake'] as const).map((stage) => (
-          <span key={stage} className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: STAGE_COLORS[stage] }} />
-            {STAGE_LABELS[stage]}
-          </span>
-        ))}
+
+      <HowYouSlept day={data.day} />
+
+      <div className="grid grid-cols-2 gap-3">
+        <BigStat label="Total sleep" value={formatHoursMinutes(totalMin)} color={SLEEP} trend={totalH.slice(-14)} />
+        <BigStat label="Deep" value={Math.round(mins(lastNight.deep_sleep))} unit="min" color="#4338ca" trend={deep.slice(-14)} />
+        <BigStat label="REM" value={Math.round(mins(lastNight.rem_sleep))} unit="min" color="#8b7bf6" trend={rem.slice(-14)} />
+        <BigStat
+          label="Usual bedtime"
+          value={avgBed == null ? null : clockLabel(avgBed)}
+          sub="average of the last week"
+          color="#f59e8b"
+          trend={bed.slice(-14)}
+        />
       </div>
-    </div>
-  )
-}
 
-function SleepBreakdown({ sleep }: { sleep: SleepRow }) {
-  const total = hmsToMinutes(sleep.total_sleep) ?? 0
-  const deep = hmsToMinutes(sleep.deep_sleep) ?? 0
-  const rem = hmsToMinutes(sleep.rem_sleep) ?? 0
-  const durationNote =
-    total >= 420 && total <= 540
-      ? 'Duration was in a solid range.'
-      : total < 420
-        ? 'Duration was on the short side.'
-        : 'Duration was longer than typical.'
-  const deepPct = total > 0 ? (deep / total) * 100 : 0
-  const remPct = total > 0 ? (rem / total) * 100 : 0
-  const stageNote =
-    deepPct >= 13 && remPct >= 18
-      ? 'Deep and REM proportions both look healthy.'
-      : deepPct < 13
-        ? 'Deep sleep was a smaller share than usual — often tied to late nights or alcohol/caffeine.'
-        : 'REM sleep was a smaller share than usual.'
+      <DetailChart
+        title="Stages each night"
+        hint="pinch or drag to zoom"
+        option={{
+          grid: { ...detailGrid, top: 30 },
+          legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8a92a3', fontSize: 10 } },
+          dataZoom: zoom(startPct(nights.length, 21)),
+          xAxis: timeAxis('day'),
+          yAxis: valueAxis({ axisLabel: { color: '#8a92a3', fontSize: 10, formatter: (v: number) => `${Math.round(v / 60)}h` } }),
+          tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => `${v} min` },
+          series: STAGES.map((s) => ({
+            name: s.label,
+            type: 'bar',
+            stack: 'night',
+            barWidth: '60%',
+            data: nights.map((r) => [dayMs(r.day), Math.round(mins(r[s.key]))]),
+            itemStyle: { color: s.color },
+          })),
+        }}
+      />
 
-  return (
-    <ul className="mt-3 flex flex-col gap-1.5 border-t border-[var(--border-panel)] pt-3 text-sm text-[var(--text-secondary)]">
-      <li>• {durationNote}</li>
-      <li>• {stageNote}</li>
-      {sleep.avg_stress != null && (
-        <li>• Overnight stress averaged {Math.round(sleep.avg_stress)}, {sleep.avg_stress < 25 ? 'nice and calm' : 'a bit elevated'}.</li>
+      {bed.length > 0 && wake.length > 0 && (
+        <DetailChart
+          title="When you slept"
+          hint="each bar is one night"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(startPct(nights.length, 21)),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis({ inverse: true, min: 20, max: 34, interval: 2, axisLabel: { color: '#8a92a3', fontSize: 10, formatter: (v: number) => clockLabel(v) } }),
+            tooltip: {
+              trigger: 'axis',
+              formatter: (p: unknown) => {
+                const i = (p as { dataIndex: number }[])[0]?.dataIndex ?? 0
+                const r = nights[i]
+                const b = nightHour(r.start)
+                const w = nightHour(r.end)
+                return b != null && w != null ? `${clockLabel(b)} → ${clockLabel(w)}` : ''
+              },
+            },
+            series: [
+              { type: 'bar', stack: 'w', silent: true, itemStyle: { color: 'transparent' }, data: nights.map((r) => [dayMs(r.day), nightHour(r.start)]) },
+              {
+                type: 'bar',
+                stack: 'w',
+                barWidth: '55%',
+                itemStyle: { color: SLEEP, borderRadius: 6 },
+                data: nights.map((r) => {
+                  const b = nightHour(r.start)
+                  const w = nightHour(r.end)
+                  return [dayMs(r.day), b != null && w != null ? +(w - b).toFixed(2) : null]
+                }),
+              },
+            ],
+          }}
+        />
       )}
-    </ul>
-  )
-}
 
-function hourValue(iso: string, wraparound: boolean): number {
-  const d = new Date(parseSleepTimestamp(iso) ?? NaN)
-  let h = d.getHours() + d.getMinutes() / 60
-  if (wraparound && h < 12) h += 24
-  return h
-}
+      {scores.length > 1 && (
+        <DetailChart
+          title="Sleep score"
+          hint="pinch or drag to zoom"
+          option={{
+            grid: detailGrid,
+            dataZoom: zoom(startPct(scores.length, 21)),
+            xAxis: timeAxis('day'),
+            yAxis: valueAxis({ min: 0, max: 100 }),
+            series: [
+              { type: 'bar', barWidth: 2, data: scores, itemStyle: { color: 'rgba(140,150,170,0.4)' }, silent: true },
+              {
+                type: 'scatter',
+                symbolSize: 12,
+                data: scores.map(([t, v]) => ({ value: [t, v], itemStyle: { color: v >= 80 ? '#34d399' : v >= 60 ? SLEEP : '#f5a623' } })),
+              },
+            ],
+          }}
+        />
+      )}
 
-function formatHourAxis(h: number): string {
-  const normalized = ((h % 24) + 24) % 24
-  const hour = Math.floor(normalized)
-  const ampm = hour >= 12 ? 'PM' : 'AM'
-  const hour12 = hour % 12 === 0 ? 12 : hour % 12
-  return `${hour12}${ampm}`
-}
+      <DetailChart
+        title="Sleep debt"
+        hint="against 8 hours a night"
+        info={`Running total of how far short of 8 hours you've slept over the last ${HISTORY_DAYS} days. Going down means you're catching up.`}
+        option={{
+          grid: detailGrid,
+          dataZoom: zoom(),
+          xAxis: timeAxis('day'),
+          yAxis: valueAxis({ axisLabel: { color: '#8a92a3', fontSize: 10, formatter: '{value}h' } }),
+          series: [{ type: 'line', data: debtSeries, smooth: true, showSymbol: false, lineStyle: { color: '#f5a623', width: 2 }, areaStyle: { color: fade('#f5a623', 0.2) } }],
+        }}
+      />
 
-function ConsistencyChart({ history }: { history: SleepRow[] }) {
-  const bedtimes = history.filter((h) => h.start).map((h) => [`${h.day}T00:00:00`, hourValue(h.start as string, true)])
-  const waketimes = history.filter((h) => h.end).map((h) => [`${h.day}T00:00:00`, hourValue(h.end as string, false)])
-
-  return (
-    <Chart
-      option={{
-        xAxis: {
-          type: 'time',
-          splitNumber: 4,
-          axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-          axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
-        },
-        yAxis: {
-          type: 'value',
-          min: 18,
-          max: 32,
-          splitLine: { lineStyle: { color: 'var(--border-panel)' } },
-          axisLabel: { color: 'var(--text-tertiary)', formatter: (v: number) => formatHourAxis(v) },
-        },
-        legend: { data: ['Bedtime', 'Wake'], textStyle: { color: 'var(--text-tertiary)' }, top: 0 },
-        series: [
-          { name: 'Bedtime', type: 'scatter', data: bedtimes, symbolSize: 7, itemStyle: { color: '#8b7bf6' } },
-          { name: 'Wake', type: 'scatter', data: waketimes, symbolSize: 7, itemStyle: { color: '#f5a623' } },
-        ],
-      }}
-    />
-  )
-}
-
-function SleepDebtChart({ history }: { history: SleepRow[] }) {
-  const points: (string | number)[][] = []
-  history.reduce((cumulative, h) => {
-    const minutes = hmsToMinutes(h.total_sleep) ?? SLEEP_TARGET_MIN
-    const next = cumulative + (SLEEP_TARGET_MIN - minutes)
-    points.push([`${h.day}T00:00:00`, Math.round((next / 60) * 10) / 10])
-    return next
-  }, 0)
-
-  return (
-    <Chart
-      option={{
-        xAxis: {
-          type: 'time',
-          splitNumber: 4,
-          axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-          axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: { lineStyle: { color: 'var(--border-panel)' } },
-          axisLabel: { color: 'var(--text-tertiary)', formatter: '{value}h' },
-        },
-        series: [
-          {
-            type: 'line',
-            data: points,
-            smooth: true,
-            symbol: 'none',
-            lineStyle: { color: '#f5a623', width: 2 },
-            areaStyle: { color: 'rgba(245, 166, 35, 0.12)' },
-          },
-        ],
-      }}
-    />
+      <p className="text-center text-[11px] text-[var(--text-tertiary)]">
+        Stages and scores are Garmin's estimates.
+      </p>
+    </div>
   )
 }
