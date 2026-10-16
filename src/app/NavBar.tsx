@@ -11,9 +11,9 @@ interface Props {
   layoutKey: string
 }
 
-function Icon({ i, className }: { i: number; className?: string }) {
+function Icon({ i, className, size = 20 }: { i: number; className?: string; size?: number }) {
   const C = TABS[i].icon
-  return <C width={20} height={20} className={cn('relative z-10 transition-colors duration-200', className)} />
+  return <C width={size} height={size} className={cn('relative z-10 transition-colors duration-200', className)} />
 }
 
 const spring = { type: 'spring', stiffness: 420, damping: 34 } as const
@@ -178,7 +178,7 @@ export function NavBar({ variant, active, onSelect, layoutKey }: Props) {
       }[variant]
       const dark = variant === 'glassFrost'
       return (
-        <div className={cn('flex h-14 items-center gap-1 rounded-full border p-1.5', shell)}>
+        <div className={cn('flex h-[76px] w-full max-w-md items-center gap-1 rounded-full border p-2', shell)}>
           {TABS.map((_, i) =>
             item(
               i,
@@ -188,7 +188,7 @@ export function NavBar({ variant, active, onSelect, layoutKey }: Props) {
                     <motion.span
                       layoutId={`${layoutKey}-gd`}
                       transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                      className="absolute h-10 w-10 rounded-full bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,0.95),color-mix(in_srgb,var(--accent)_70%,transparent)_45%,color-mix(in_srgb,var(--accent)_90%,black)_100%)] shadow-[0_4px_12px_color-mix(in_srgb,var(--accent)_45%,transparent),inset_0_-2px_4px_rgba(0,0,0,0.25)]"
+                      className="absolute h-14 w-14 rounded-full bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,0.95),color-mix(in_srgb,var(--accent)_70%,transparent)_45%,color-mix(in_srgb,var(--accent)_90%,black)_100%)] shadow-[0_4px_12px_color-mix(in_srgb,var(--accent)_45%,transparent),inset_0_-2px_4px_rgba(0,0,0,0.25)]"
                     />
                   ) : (
                     <motion.span
@@ -206,6 +206,7 @@ export function NavBar({ variant, active, onSelect, layoutKey }: Props) {
                   ))}
                 <Icon
                   i={i}
+                  size={27}
                   className={
                     dark
                       ? on(i) ? 'text-black/85' : 'text-black/55'
@@ -213,7 +214,7 @@ export function NavBar({ variant, active, onSelect, layoutKey }: Props) {
                   }
                 />
               </>,
-              'h-full w-11 flex-none',
+              'h-full min-w-0 flex-1',
             ),
           )}
         </div>
