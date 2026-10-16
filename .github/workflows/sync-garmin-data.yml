@@ -91,6 +91,20 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: pip install --disable-pip-version-check garmindb
 
+      # GarminDB's --latest downloads up to *yesterday*, so last night's sleep (dated today) and today's
+      # summary never arrive until tomorrow. Make the range include today. Recent days are re-downloaded on
+      # every run anyway, so today's partial data is refreshed as the day goes on.
+      - name: Include today in GarminDB's download range
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          f=$(command -v garmindb_cli.py)
+          if grep -q "days = (datetime.date.today() - date).days$" "$f"; then
+            sed -i 's/days = (datetime.date.today() - date).days$/days = (datetime.date.today() - date).days + 1/' "$f"
+            echo "Patched $f"
+          else
+            echo "::warning::GarminDB changed; couldn't extend the download range to include today."
+          fi
+
       # Checked before logging in to Garmin, so a bad key doesn't spend a Garmin login attempt.
       - name: Verify R2 access
         if: steps.check.outputs.ready == 'true'
