@@ -329,6 +329,15 @@ function StyleSection() {
             onChange={(cardStyle) => updateAppearance({ cardStyle })}
           />
         </Field>
+        {a.cardStyle === 'liquid' && (
+          <Field label="Glass">
+            <Segmented
+              value={a.glassTint}
+              options={[['clear', 'Clear'], ['dark', 'Dark']]}
+              onChange={(glassTint) => updateAppearance({ glassTint })}
+            />
+          </Field>
+        )}
         <Field label="Corners">
           <Segmented
             value={a.radius}
