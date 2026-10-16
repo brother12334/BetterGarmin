@@ -130,6 +130,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const newlyLoaded: DbKind[] = []
 
       for (const file of files) {
+        // The bucket also holds non-database exports (e.g. sleep.json for other apps).
+        if (!file.name.endsWith('.db')) continue
         const unchanged = !opts.force && known[file.name] === file.lastModified
         if (unchanged) continue
         const buffer = await fetchCloudFile(config, file.name)

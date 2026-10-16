@@ -195,6 +195,41 @@ jobs:
           set -o pipefail
           garmindb_cli.py --sleep --download --import 2>&1 | tail -n 20
 
+      # A small JSON summary of recent nights for other apps (e.g. Element 26), served by the Worker at
+      # /files/sleep.json. Times are UTC ISO-8601; durations are minutes. Written next to the .db files so the
+      # upload step publishes it; it is never printed to the log.
+      - name: Export recent sleep as JSON
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          python - <<'PY'
+          import json, sqlite3, os, datetime
+          db = sqlite3.connect(os.path.join(os.environ["DB_DIR"], "garmin.db"))
+          def mins(v):
+              if not v: return None
+              try:
+                  h, m, s = (float(x) for x in str(v).split(":"))
+              except ValueError:
+                  return None
+              return round(h * 60 + m + s / 60)
+          def iso(v):
+              return str(v).replace(" ", "T").split(".")[0] + "Z" if v else None
+          nights = []
+          for day, start, end, total, deep, light, rem, awake, score, q in db.execute(
+              "SELECT substr(day,1,10), start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score, qualifier "
+              "FROM sleep ORDER BY day DESC LIMIT 30"):
+              if not mins(total): continue
+              events = [{"stage": e, "start": iso(t), "minutes": mins(d)} for t, e, d in db.execute(
+                  "SELECT timestamp, event, duration FROM sleep_events WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp",
+                  (start, end))] if start and end else []
+              nights.append({"date": day, "start": iso(start), "end": iso(end), "asleepMinutes": mins(total),
+                  "deepMinutes": mins(deep), "lightMinutes": mins(light), "remMinutes": mins(rem), "awakeMinutes": mins(awake),
+                  "score": score, "qualifier": q, "stages": events})
+          out = {"generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), "nights": nights}
+          with open(os.path.join(os.environ["DB_DIR"], "sleep.json"), "w") as f:
+              json.dump(out, f)
+          print(f"Exported {len(nights)} nights")
+          PY
+
       # Counts only, no health values: shows whether Garmin actually returned data.
       - name: Summarise downloaded data
         if: steps.check.outputs.ready == 'true'

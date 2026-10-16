@@ -23,9 +23,18 @@ export interface Env {
 
 const DB_PREFIX = 'DBs/'
 
-function corsHeaders(env: Env): Record<string, string> {
+// ALLOWED_ORIGIN may list several origins, comma-separated (e.g. BetterGarmin and Element 26). Unset means any.
+function allowedOrigin(env: Env, request: Request): string {
+  const list = (env.ALLOWED_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean)
+  if (list.length === 0) return '*'
+  const origin = request.headers.get('Origin') || ''
+  return list.includes(origin) ? origin : list[0]
+}
+
+function corsHeaders(env: Env, request: Request): Record<string, string> {
   return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
+    'Access-Control-Allow-Origin': allowedOrigin(env, request),
+    Vary: 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization',
     'Access-Control-Max-Age': '86400',
@@ -75,7 +84,7 @@ async function startGarminSync(env: Env, headers: Record<string, string>): Promi
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const headers = corsHeaders(env)
+    const headers = corsHeaders(env, request)
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers })
@@ -120,7 +129,7 @@ export default {
       return new Response(object.body, {
         headers: {
           ...headers,
-          'Content-Type': 'application/octet-stream',
+          'Content-Type': name.endsWith('.json') ? 'application/json' : 'application/octet-stream',
           'Content-Length': String(object.size),
           'Last-Modified': object.uploaded.toUTCString(),
           'Cache-Control': 'no-cache',
