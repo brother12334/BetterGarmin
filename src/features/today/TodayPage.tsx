@@ -145,7 +145,7 @@ export function TodayPage() {
         />
       </div>
     ),
-    lastNight: sleep ? <HowYouSlept sleep={sleep} day={data.day} /> : null,
+    lastNight: <HowYouSlept day={data.day} />,
     insights: (
       <>
       {insights.length > 0 && (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
-import { getSleepEventsForDay } from '../../db/queries'
+import { getSleepEventsForDay, getSleepRange } from '../../db/queries'
 import type { SleepEventRow, SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
@@ -21,6 +21,8 @@ const STAGES: { key: Stage; label: string; color: string; column: keyof SleepRow
   { key: 'deep', label: 'Deep', color: '#4338ca', column: 'deep_sleep', typical: 'typically 13–23%' },
 ]
 
+const LOOKBACK_DAYS = 3
+
 const EVENT_STAGE: Record<string, Stage> = {
   deep_sleep: 'deep',
   light_sleep: 'light',
@@ -29,27 +31,56 @@ const EVENT_STAGE: Record<string, Stage> = {
   wake_time: 'awake',
 }
 
+function nightLabel(day: string): string {
+  return new Date(`${day.slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 function clock(ts: string | null): string | null {
   const ms = parseGarminTimestamp(ts)
   return ms == null ? null : new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
-export function HowYouSlept({ sleep, day }: { sleep: SleepRow; day: string }) {
-  const [events, setEvents] = useState<SleepEventRow[]>([])
+function stageMinutes(row: SleepRow): number {
+  return STAGES.reduce((sum, s) => sum + (hmsToMinutes(row[s.column] as string | null) ?? 0), 0)
+}
+
+/** Finds the most recent night (up to a few days back) that actually has stage data, then shows it. */
+export function HowYouSlept({ day }: { day: string }) {
+  const [night, setNight] = useState<{ sleep: SleepRow; events: SleepEventRow[] } | null | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
-    getSleepEventsForDay(addDays(day, -1))
-      .then((rows) => {
-        if (!cancelled) setEvents(rows)
-      })
-      .catch(() => {
-        // the timeline is optional; the stage totals still show
-      })
+    ;(async () => {
+      try {
+        const rows = await getSleepRange(addDays(day, -LOOKBACK_DAYS), day)
+        const latest = [...rows].reverse().find((r) => stageMinutes(r) > 0) ?? null
+        const events = latest ? await getSleepEventsForDay(addDays(latest.day.slice(0, 10), -1)).catch(() => []) : []
+        if (!cancelled) setNight(latest ? { sleep: latest, events } : null)
+      } catch {
+        if (!cancelled) setNight(null)
+      }
+    })()
     return () => {
       cancelled = true
     }
   }, [day])
+
+  if (night === undefined) return null
+  if (night === null) {
+    return (
+      <Card>
+        <p className="font-semibold">How you slept</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          No sleep recorded in the last few nights yet. Wear your watch to bed; the breakdown appears after it syncs
+          the next morning.
+        </p>
+      </Card>
+    )
+  }
+  return <NightCard sleep={night.sleep} events={night.events} isLastNight={night.sleep.day.slice(0, 10) === day} />
+}
+
+function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: SleepEventRow[]; isLastNight: boolean }) {
 
   const minutes = STAGES.map((s) => ({ ...s, min: hmsToMinutes(sleep[s.column] as string | null) ?? 0 }))
   const inBed = minutes.reduce((sum, s) => sum + s.min, 0)
@@ -57,14 +88,12 @@ export function HowYouSlept({ sleep, day }: { sleep: SleepRow; day: string }) {
   const bed = clock(sleep.start)
   const wake = clock(sleep.end)
 
-  if (inBed === 0) return null
-
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">
-            <p className="font-semibold">How you slept</p>
+            <p className="font-semibold">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
             <InfoButton title="Sleep stages">
               Stages are Garmin's estimates from heart rate, heart-rate variability and movement. The typical ranges are
               general adult guidance, not targets. Stage mix varies from night to night and between people.
