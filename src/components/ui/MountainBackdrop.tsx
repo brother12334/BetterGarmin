@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { getTodayPhoto } from '../../lib/dailyBackdrop'
-import { GRADIENTS, useAppearance, useCustomPhoto } from '../../app/appearance'
+import { GRADIENTS, useAppearance, useCustomPhoto, usesFullBackdrop } from '../../app/appearance'
 
 interface MountainBackdropProps {
   height?: number
@@ -53,7 +53,7 @@ export function MountainBackdrop({ height = 220, className }: MountainBackdropPr
 /** Fixed full-screen backdrop behind every screen, when "Use on every screen" is on. */
 export function PageBackdrop() {
   const a = useAppearance()
-  if (!a.fullPage) return null
+  if (!usesFullBackdrop(a)) return null
   return (
     <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
       <MountainBackdrop height={0} />

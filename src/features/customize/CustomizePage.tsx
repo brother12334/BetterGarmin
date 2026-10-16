@@ -17,6 +17,7 @@ import {
   updateAppearance,
   useAppearance,
   useCustomPhoto,
+  usesFullBackdrop,
   type Appearance,
   type WidgetSlot,
 } from '../../app/appearance'
@@ -222,8 +223,12 @@ function BackgroundSection() {
         <Slider label="Blur" value={a.blur} min={0} max={24} unit="px" onChange={(blur) => updateAppearance({ blur })} />
         <Toggle
           label="Use on every screen"
-          hint="Puts the background behind the whole app, not just the top of Today."
-          checked={a.fullPage}
+          hint={
+            a.cardStyle === 'liquid'
+              ? 'Always on with Liquid cards — glass needs something behind it.'
+              : 'Puts the background behind the whole app, not just the top of Today.'
+          }
+          checked={usesFullBackdrop(a)}
           onChange={(fullPage) => updateAppearance({ fullPage })}
         />
       </div>

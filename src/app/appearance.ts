@@ -174,6 +174,11 @@ export async function setCustomPhoto(file: File): Promise<void> {
   }
 }
 
+/** Liquid glass is only visible over something, so it always puts the background behind every screen. */
+export function usesFullBackdrop(a: Appearance): boolean {
+  return a.fullPage || a.cardStyle === 'liquid'
+}
+
 function subscribe(l: () => void) {
   listeners.add(l)
   return () => listeners.delete(l)
@@ -211,6 +216,6 @@ export function useApplyAppearance() {
     root.style.setProperty('--radius-control', RADII[a.radius].control)
     root.style.fontSize = ROOT_FONT_SIZE[a.density]
     root.dataset.card = a.cardStyle
-    root.dataset.fullBackdrop = a.fullPage ? 'on' : 'off'
-  }, [a.accent, a.font, a.radius, a.density, a.cardStyle, a.fullPage])
+    root.dataset.fullBackdrop = usesFullBackdrop(a) ? 'on' : 'off'
+  }, [a])
 }

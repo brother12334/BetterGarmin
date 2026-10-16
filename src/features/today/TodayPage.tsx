@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '../../lib/cn'
-import { useAppearance, type WidgetId } from '../../app/appearance'
+import { useAppearance, usesFullBackdrop, type WidgetId } from '../../app/appearance'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
 import { Ring } from '../../components/ui/Ring'
@@ -224,7 +224,7 @@ function ReadinessHero({
   const status = statusForScore(score)
   const color = status ? STATUS_COLORS[status] : METRIC_COLORS.readiness.solid
   // With a full-screen backdrop the page itself already shows it, so the hero stays transparent.
-  const fullPage = useAppearance().fullPage
+  const fullPage = usesFullBackdrop(useAppearance())
 
   return (
     <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-6 rounded-b-[2rem]' : 'rounded-[2rem]')}>
