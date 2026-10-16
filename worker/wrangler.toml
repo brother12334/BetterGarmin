@@ -13,7 +13,6 @@ bucket_name = "bettergarmin-data"
 # Defaults to "*" (any origin) if left unset, which is fine since every
 # request still needs the bearer token — this just adds one more layer.
 [vars]
-# Comma-separated list; add other apps (e.g. Element 26) that should be able to read your data.
 ALLOWED_ORIGIN = "https://brother12334.github.io"
 # For the app's "Sync now" button (also set the GITHUB_TOKEN secret, see docs/cloud-sync.md).
 GITHUB_REPO = "brother12334/BetterGarmin"
