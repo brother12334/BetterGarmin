@@ -1,15 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export type LiveHrStatus = 'unsupported' | 'disconnected' | 'connecting' | 'connected'
 
-export interface LiveHrReading {
-  t: number
-  bpm: number
-}
-
 const HEART_RATE_SERVICE = 'heart_rate'
 const HEART_RATE_MEASUREMENT = 'heart_rate_measurement'
-const MAX_HISTORY = 60
 
 /** Parses a BLE GATT Heart Rate Measurement value (Bluetooth SIG spec). */
 function parseHeartRateMeasurement(value: DataView): number {
@@ -18,90 +12,88 @@ function parseHeartRateMeasurement(value: DataView): number {
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
-export function useLiveHeartRate() {
-  const [status, setStatus] = useState<LiveHrStatus>(() =>
-    typeof navigator !== 'undefined' && navigator.bluetooth ? 'disconnected' : 'unsupported',
-  )
-  const [bpm, setBpm] = useState<number | null>(null)
-  const [history, setHistory] = useState<LiveHrReading[]>([])
-  const [deviceName, setDeviceName] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+interface LiveHrState {
+  status: LiveHrStatus
+  bpm: number | null
+  deviceName: string | null
+  error: string | null
+}
 
-  const deviceRef = useRef<BluetoothDevice | null>(null)
-  const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null)
+// The connection lives at module level, not in a component, so it survives navigating between pages.
+let state: LiveHrState = {
+  status: typeof navigator !== 'undefined' && navigator.bluetooth ? 'disconnected' : 'unsupported',
+  bpm: null,
+  deviceName: null,
+  error: null,
+}
+const listeners = new Set<() => void>()
+let device: BluetoothDevice | null = null
+let characteristic: BluetoothRemoteGATTCharacteristic | null = null
 
-  const handleValueChanged = useCallback((ev: Event) => {
-    const target = ev.target as BluetoothRemoteGATTCharacteristic
-    if (!target.value) return
-    const nextBpm = parseHeartRateMeasurement(target.value)
-    setBpm(nextBpm)
-    setHistory((prev) => {
-      const next = [...prev, { t: Date.now(), bpm: nextBpm }]
-      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
+function set(patch: Partial<LiveHrState>) {
+  state = { ...state, ...patch }
+  listeners.forEach((l) => l())
+}
+
+function handleValueChanged(ev: Event) {
+  const target = ev.target as BluetoothRemoteGATTCharacteristic
+  if (target.value) set({ bpm: parseHeartRateMeasurement(target.value) })
+}
+
+function cleanup() {
+  try {
+    characteristic?.removeEventListener('characteristicvaluechanged', handleValueChanged)
+    characteristic?.stopNotifications().catch(() => {})
+  } catch {
+    // device may already be gone
+  }
+  characteristic = null
+  try {
+    if (device?.gatt?.connected) device.gatt.disconnect()
+  } catch {
+    // already disconnected
+  }
+  device = null
+}
+
+function disconnect() {
+  cleanup()
+  set({ status: 'disconnected', bpm: null, deviceName: null })
+}
+
+async function connect() {
+  if (!navigator.bluetooth) {
+    set({ status: 'unsupported' })
+    return
+  }
+  set({ status: 'connecting', error: null })
+  try {
+    const picked = await navigator.bluetooth.requestDevice({ filters: [{ services: [HEART_RATE_SERVICE] }] })
+    device = picked
+    picked.addEventListener('gattserverdisconnected', () => {
+      if (device === picked) set({ status: 'disconnected', bpm: null })
     })
-  }, [])
-
-  const cleanup = useCallback(() => {
-    try {
-      characteristicRef.current?.removeEventListener('characteristicvaluechanged', handleValueChanged)
-      characteristicRef.current?.stopNotifications().catch(() => {})
-    } catch {
-      // device may already be gone
-    }
-    characteristicRef.current = null
-    try {
-      if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
-    } catch {
-      // already disconnected
-    }
-    deviceRef.current = null
-  }, [handleValueChanged])
-
-  const disconnect = useCallback(() => {
+    if (!picked.gatt) throw new Error('This device does not support a GATT connection.')
+    const server = await picked.gatt.connect()
+    const service = await server.getPrimaryService(HEART_RATE_SERVICE)
+    characteristic = await service.getCharacteristic(HEART_RATE_MEASUREMENT)
+    characteristic.addEventListener('characteristicvaluechanged', handleValueChanged)
+    await characteristic.startNotifications()
+    set({ status: 'connected', deviceName: picked.name || 'Heart rate monitor' })
+  } catch (err) {
     cleanup()
-    setStatus('disconnected')
-    setBpm(null)
-    setHistory([])
-    setDeviceName(null)
-  }, [cleanup])
+    const message = err instanceof Error ? err.message : String(err)
+    // the user closing the browser's device picker isn't a real error
+    set({ status: 'disconnected', error: /cancelled|user gesture/i.test(message) ? null : message })
+  }
+}
 
-  const connect = useCallback(async () => {
-    if (!navigator.bluetooth) {
-      setStatus('unsupported')
-      return
-    }
-    setStatus('connecting')
-    setError(null)
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [HEART_RATE_SERVICE] }],
-      })
-      deviceRef.current = device
-      device.addEventListener('gattserverdisconnected', () => {
-        setStatus('disconnected')
-        setBpm(null)
-      })
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
 
-      if (!device.gatt) throw new Error('This device does not support a GATT connection.')
-      const server = await device.gatt.connect()
-      const service = await server.getPrimaryService(HEART_RATE_SERVICE)
-      const characteristic = await service.getCharacteristic(HEART_RATE_MEASUREMENT)
-      characteristicRef.current = characteristic
-      characteristic.addEventListener('characteristicvaluechanged', handleValueChanged)
-      await characteristic.startNotifications()
-
-      setDeviceName(device.name || 'Heart rate monitor')
-      setStatus('connected')
-    } catch (err) {
-      cleanup()
-      setStatus('disconnected')
-      const message = err instanceof Error ? err.message : String(err)
-      // the user closing the browser's device picker isn't a real error
-      if (!/cancelled|user gesture/i.test(message)) setError(message)
-    }
-  }, [cleanup, handleValueChanged])
-
-  useEffect(() => cleanup, [cleanup])
-
-  return { status, bpm, history, deviceName, error, connect, disconnect }
+export function useLiveHeartRate() {
+  const s = useSyncExternalStore(subscribe, () => state)
+  return { ...s, connect, disconnect }
 }

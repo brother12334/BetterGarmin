@@ -1,33 +1,10 @@
 import { useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { HealthIcon } from '../../app/icons'
 import { useLiveHeartRate } from './useLiveHeartRate'
 import { useLatestHeartRate } from './useLatestHeartRate'
 import { formatRelativeTime } from '../../lib/relativeTime'
-
-const SPARK_WIDTH = 220
-const SPARK_HEIGHT = 44
-
-function Sparkline({ values }: { values: number[] }) {
-  if (values.length < 2) return <div style={{ width: SPARK_WIDTH, height: SPARK_HEIGHT }} />
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = Math.max(1, max - min)
-  const points = values
-    .map((v, i) => {
-      const x = (i / (values.length - 1)) * SPARK_WIDTH
-      const y = SPARK_HEIGHT - ((v - min) / range) * (SPARK_HEIGHT - 6) - 3
-      return `${x.toFixed(1)},${y.toFixed(1)}`
-    })
-    .join(' ')
-  return (
-    <svg width={SPARK_WIDTH} height={SPARK_HEIGHT} viewBox={`0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`}>
-      <polyline points={points} fill="none" stroke="#fb4a59" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function LiveHeartRateCard() {
   const live = useLiveHeartRate()
@@ -39,15 +16,11 @@ export function LiveHeartRateCard() {
       <Card>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <motion.div
-              key={live.history.length}
-              initial={{ scale: 0.72 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 9 }}
+            <div
               className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400"
             >
               <HealthIcon width={22} height={22} />
-            </motion.div>
+            </div>
             <div>
               <p className="text-xs font-medium text-[var(--text-tertiary)]">Live heart rate · {live.deviceName}</p>
               <p className="text-3xl font-bold tabular-nums text-[var(--text-primary)]">
@@ -55,7 +28,6 @@ export function LiveHeartRateCard() {
               </p>
             </div>
           </div>
-          <Sparkline values={live.history.map((h) => h.bpm)} />
         </div>
         <Button variant="ghost" className="mt-3" onClick={live.disconnect}>
           Disconnect
