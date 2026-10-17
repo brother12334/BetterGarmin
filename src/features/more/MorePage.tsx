@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
+import { setClockFormat, useClockFormat } from '../../lib/clock'
 import { useData } from '../../app/DataProvider'
 import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
@@ -16,6 +17,7 @@ import { SqlConsole } from './SqlConsole'
 export function MorePage() {
   const { theme, setTheme } = useTheme()
   const { units, setUnits } = useUnits()
+  const clock = useClockFormat()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } =
     useData()
   const [confirming, setConfirming] = useState(false)
@@ -67,6 +69,17 @@ export function MorePage() {
               className="flex-1 capitalize"
             >
               {u === 'metric' ? 'Metric (km, kg)' : 'Imperial (mi, lb)'}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <p className="mb-3 font-semibold">Clock</p>
+        <div className="flex gap-2">
+          {(['12h', '24h'] as const).map((c) => (
+            <Button key={c} variant={clock === c ? 'primary' : 'secondary'} onClick={() => setClockFormat(c)} className="flex-1">
+              {c === '12h' ? '12-hour (7:20 PM)' : '24-hour (19:20)'}
             </Button>
           ))}
         </div>

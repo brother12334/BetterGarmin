@@ -6,6 +6,7 @@ import type { SleepEventRow, SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { parseSleepTimestamp } from '../training/matchGarminActivity'
+import { formatTime } from '../../lib/clock'
 
 /**
  * Last night's sleep: total, bed and wake times, a stage-by-stage timeline (when Garmin recorded stage events)
@@ -37,7 +38,7 @@ function nightLabel(day: string): string {
 
 function clock(ts: string | null): string | null {
   const ms = parseSleepTimestamp(ts)
-  return ms == null ? null : new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  return ms == null ? null : formatTime(ms)
 }
 
 function stageMinutes(row: SleepRow): number {

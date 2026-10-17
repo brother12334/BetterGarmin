@@ -2,13 +2,10 @@ import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Chart } from '../../components/ui/Chart'
 import type { EnergyPoint, EnergySegment } from '../../scores/energyReserve'
+import { formatHour, formatTime as formatClockTime } from '../../lib/clock'
 
 function formatTime(ts: string): string {
-  return new Date(ts.replace(' ', 'T')).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-}
-
-function formatHour(epochMs: number): string {
-  return new Date(epochMs).toLocaleTimeString(undefined, { hour: 'numeric' })
+  return formatClockTime(new Date(ts.replace(' ', 'T')))
 }
 
 export function EnergyReserveCard({

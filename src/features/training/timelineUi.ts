@@ -1,4 +1,5 @@
 import type { SegmentType } from './workoutTimeline'
+import { formatTime } from '../../lib/clock'
 
 export const SEGMENT_COLORS: Record<SegmentType, string> = {
   warmup: 'rgba(245, 166, 35, 0.18)',
@@ -11,8 +12,8 @@ export const SELECTED_COLOR = 'rgba(251, 74, 89, 0.55)'
 export const GAP_COLOR = 'rgba(148, 163, 184, 0.28)'
 export const SEGMENT_LABELS: Record<SegmentType, string> = { warmup: 'Warm-up', set: 'Set', rest: 'Rest', transition: 'Transition', cooldown: 'Cool-down' }
 
-export const clock = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })
-export const clockShort = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+export const clock = (ms: number) => formatTime(ms, { seconds: true })
+export const clockShort = (ms: number) => formatTime(ms)
 
 export function duration(ms: number): string {
   const total = Math.round(ms / 1000)

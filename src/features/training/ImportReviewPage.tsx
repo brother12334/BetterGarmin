@@ -22,6 +22,7 @@ import {
 } from '../../db/strengthLog'
 import { applyCorrections, findLikelyDuplicates, workoutSettings, type EffectiveSet, type SetFieldEdits } from '../../db/applyCorrections'
 import { parseElement26Export } from './element26Import'
+import { formatTime } from '../../lib/clock'
 
 const LB_TO_KG = 0.45359237
 
@@ -221,7 +222,7 @@ export function ImportReviewPage() {
                   <tr key={s.id} className={`border-t border-[var(--border-panel)] ${e.excluded ? 'opacity-40' : ''} ${duplicates.has(s.id) ? 'bg-amber-500/5' : ''}`}>
                     <td className="py-1.5 pr-2">
                       {e.exercise}
-                      {s.atEpochMs != null && <span className="block text-[10px] text-[var(--text-tertiary)]">{new Date(s.atEpochMs).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</span>}
+                      {s.atEpochMs != null && <span className="block text-[10px] text-[var(--text-tertiary)]">{formatTime(s.atEpochMs, { seconds: true })}</span>}
                     </td>
                     <td className="py-1.5 pr-2">
                       <NumberCell

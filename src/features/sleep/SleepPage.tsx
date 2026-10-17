@@ -11,6 +11,7 @@ import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { parseSleepTimestamp } from '../training/matchGarminActivity'
 import { HowYouSlept } from '../today/HowYouSlept'
+import { formatClockHours } from '../../lib/clock'
 
 const HISTORY_DAYS = 60
 const TARGET_MIN = 480 // 8h
@@ -35,12 +36,7 @@ function nightHour(ts: string | null): number | null {
   return h < 15 ? h + 24 : h
 }
 
-function clockLabel(h: number): string {
-  const n = ((h % 24) + 24) % 24
-  const hh = Math.floor(n)
-  const mm = Math.round((n - hh) * 60)
-  return `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`
-}
+const clockLabel = formatClockHours
 
 export function SleepPage() {
   const { loadedKinds, lastSynced } = useData()

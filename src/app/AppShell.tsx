@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { NavBar } from './NavBar'
-import { TABS, isEdgeStyle } from './navConfig'
-import { useAppearance } from './appearance'
+import { TABS } from './navConfig'
 import { cn } from '../lib/cn'
 import { PageBackdrop } from '../components/ui/MountainBackdrop'
 import { Logo } from './icons'
@@ -54,17 +53,9 @@ function activeIndex(pathname: string): number {
 function PhoneNav() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { navStyle } = useAppearance()
-  const edge = isEdgeStyle(navStyle)
   return (
-    <nav
-      aria-label="Main"
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-30 flex justify-center md:hidden',
-        edge ? 'pb-[env(safe-area-inset-bottom)] [&>div]:pb-0' : 'px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]',
-      )}
-    >
-      <NavBar variant={navStyle} active={activeIndex(pathname)} onSelect={(i) => navigate(TABS[i].to)} layoutKey="main" />
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden">
+      <NavBar active={activeIndex(pathname)} onSelect={(i) => navigate(TABS[i].to)} layoutKey="main" />
     </nav>
   )
 }

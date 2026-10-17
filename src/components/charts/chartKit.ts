@@ -1,4 +1,5 @@
 import type { EChartsOption } from 'echarts'
+import { formatTime } from '../../lib/clock'
 
 export type Point = [number, number]
 
@@ -58,7 +59,7 @@ export function timeAxis(kind: 'hour' | 'day'): EChartsOption['xAxis'] {
     axisLine: { lineStyle: { color: GRID_LINE } },
     axisTick: { show: false },
     splitLine: { show: false },
-    axisLabel: { color: AXIS_TEXT, fontSize: 10, hideOverlap: true, formatter: kind === 'hour' ? '{HH}:{mm}' : '{MMM} {d}' },
+    axisLabel: { color: AXIS_TEXT, fontSize: 10, hideOverlap: true, formatter: kind === 'hour' ? (v: number) => formatTime(v) : '{MMM} {d}' },
   }
 }
 

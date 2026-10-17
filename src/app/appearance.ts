@@ -23,7 +23,6 @@ export type CardStyle = 'glass' | 'liquid' | 'solid' | 'outline'
 export type Radius = 'sharp' | 'rounded' | 'round'
 export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
-export type NavStyle = 'pill' | 'expand' | 'dock' | 'classic' | 'bubbles' | 'notch' | 'line' | 'glass' | 'center' | 'minimal' | 'glassFrost' | 'glassSmoke' | 'glassTint' | 'glassLabel' | 'glassBubbles' | 'glassDrop' | 'glassBar' | 'glassThick'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 
 export interface Appearance {
@@ -45,8 +44,6 @@ export interface Appearance {
   radius: Radius
   font: FontChoice
   density: Density
-  /** Phone tab bar style. */
-  navStyle: NavStyle
   todayLayout: WidgetSlot[]
 }
 
@@ -94,24 +91,24 @@ export const DEFAULT_APPEARANCE: Appearance = {
   radius: 'round',
   font: 'manrope',
   density: 'comfortable',
-  navStyle: 'glassSmoke',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 
+/** Complete looks: one tap sets the background, cards, accent and font together. */
 export const PRESETS: { name: string; patch: Partial<Appearance> }[] = [
+  { name: 'Glacier', patch: { accent: '#38bdf8', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'daily', dim: 25, blur: 0, fullPage: false } },
   { name: 'Liquid Glass', patch: { accent: '#60a5fa', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquid', dim: 0, blur: 0 } },
-  { name: 'Liquid Midnight', patch: { accent: '#7dd3fc', cardStyle: 'liquid', glassTint: 'dark', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidMidnight', dim: 0, blur: 0 } },
-  { name: 'Liquid Violet', patch: { accent: '#c084fc', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidViolet', dim: 0, blur: 0 } },
-  { name: 'Liquid Mint', patch: { accent: '#2dd4bf', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidMint', dim: 0, blur: 0 } },
-  { name: 'Liquid Rose', patch: { accent: '#fb7185', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidRose', dim: 0, blur: 0 } },
-  { name: 'Liquid Amber', patch: { accent: '#fbbf24', cardStyle: 'liquid', glassTint: 'dark', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidAmber', dim: 0, blur: 0 } },
-  { name: 'Glacier', patch: { accent: '#38bdf8', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'daily', fullPage: false } },
-  { name: 'Neon', patch: { accent: '#a855f7', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'gradient', gradient: 'nebula', fullPage: true, dim: 35, blur: 0 } },
+  { name: 'Midnight', patch: { accent: '#7dd3fc', cardStyle: 'liquid', glassTint: 'dark', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidMidnight', dim: 0, blur: 0 } },
+  { name: 'Aurora', patch: { accent: '#34d399', cardStyle: 'liquid', glassTint: 'dark', radius: 'round', font: 'system', backgroundMode: 'photo', photo: 'backgrounds/aurora.jpg', dim: 30, blur: 0 } },
   { name: 'Forest', patch: { accent: '#34d399', cardStyle: 'glass', radius: 'rounded', font: 'manrope', backgroundMode: 'photo', photo: 'backgrounds/misty-forest.jpg', fullPage: true, dim: 55, blur: 8 } },
-  { name: 'Sunset', patch: { accent: '#fb923c', cardStyle: 'solid', radius: 'rounded', font: 'system', backgroundMode: 'gradient', gradient: 'sunset', fullPage: false } },
-  { name: 'Terminal', patch: { accent: '#e5e7eb', cardStyle: 'outline', radius: 'sharp', font: 'mono', backgroundMode: 'gradient', gradient: 'graphite', fullPage: true, dim: 0, blur: 0 } },
-  { name: 'Editorial', patch: { accent: '#f43f5e', cardStyle: 'solid', radius: 'sharp', font: 'serif', backgroundMode: 'photo', photo: 'backgrounds/foggy-valley.jpg', fullPage: false } },
+  { name: 'Violet', patch: { accent: '#c084fc', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidViolet', dim: 0, blur: 0 } },
+  { name: 'Sunset', patch: { accent: '#fb923c', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'gradient', gradient: 'sunset', fullPage: true, dim: 20, blur: 0 } },
+  { name: 'Minimal', patch: { accent: '#e5e7eb', cardStyle: 'solid', radius: 'rounded', font: 'system', backgroundMode: 'gradient', gradient: 'graphite', fullPage: true, dim: 0, blur: 0 } },
 ]
+
+/** The backgrounds offered in Customize (the full lists stay available to presets and saved settings). */
+export const BACKGROUND_PHOTOS = ['backgrounds/aurora.jpg', 'backgrounds/misty-forest.jpg', 'backgrounds/matterhorn.jpg', 'backgrounds/dolomites-lake.jpg']
+export const BACKGROUND_GRADIENTS = ['liquid', 'liquidMidnight', 'liquidViolet', 'sunset']
 
 const STORAGE_KEY = 'bettergarmin:appearance'
 const CUSTOM_PHOTO_KEY = 'bettergarmin:customBackground'

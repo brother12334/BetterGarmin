@@ -5,10 +5,11 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
 import { cn } from '../../lib/cn'
-import { NavStylePicker } from './NavStylePicker'
 import { useTheme } from '../../app/theme'
 import {
   ACCENTS,
+  BACKGROUND_GRADIENTS,
+  BACKGROUND_PHOTOS,
   GRADIENTS,
   PHOTOS,
   PRESETS,
@@ -18,7 +19,6 @@ import {
   updateAppearance,
   useAppearance,
   useCustomPhoto,
-  usesFullBackdrop,
   type Appearance,
   type WidgetSlot,
 } from '../../app/appearance'
@@ -41,23 +41,21 @@ export function CustomizePage() {
 
       <LivePreview />
 
-      <Section title="Themes" hint="One tap sets accent, cards, corners, font and background together.">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <Section title="Presets" hint="Pick a look. You can still change the background below.">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRESETS.map((p) => (
-            <PresetTile key={p.name} name={p.name} patch={p.patch} />
+            <PresetTile key={p.name} name={p.name} patch={p.patch} active={matchesPreset(a, p.patch)} />
           ))}
         </div>
       </Section>
 
-      <NavStylePicker />
-
       <BackgroundSection />
+
+      <StyleSection />
 
       <Section title="Today layout" hint="Drag the handle to reorder. Switch off anything you don't want to see.">
         <LayoutEditor layout={a.todayLayout} />
       </Section>
-
-      <StyleSection />
 
       <Card>
         {confirmReset ? (
@@ -115,7 +113,11 @@ function LivePreview() {
   )
 }
 
-function PresetTile({ name, patch }: { name: string; patch: Partial<Appearance> }) {
+function matchesPreset(a: Appearance, patch: Partial<Appearance>): boolean {
+  return (Object.keys(patch) as (keyof Appearance)[]).every((k) => a[k] === patch[k])
+}
+
+function PresetTile({ name, patch, active }: { name: string; patch: Partial<Appearance>; active: boolean }) {
   const bg =
     patch.backgroundMode === 'gradient'
       ? GRADIENTS[patch.gradient ?? 'aurora'].css
@@ -125,7 +127,10 @@ function PresetTile({ name, patch }: { name: string; patch: Partial<Appearance> 
   return (
     <button
       onClick={() => updateAppearance(patch)}
-      className="group relative h-20 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border-panel)] text-left transition-transform active:scale-[0.97]"
+      className={cn(
+        'group relative h-24 overflow-hidden rounded-[var(--radius-control)] border-2 text-left transition-transform active:scale-[0.97]',
+        active ? 'border-[var(--accent)]' : 'border-transparent',
+      )}
       style={{ background: bg }}
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -137,63 +142,69 @@ function PresetTile({ name, patch }: { name: string; patch: Partial<Appearance> 
   )
 }
 
+const DARKNESS: [string, number][] = [
+  ['Light', 10],
+  ['Medium', 30],
+  ['Dark', 55],
+]
+
 function BackgroundSection() {
   const a = useAppearance()
   const custom = useCustomPhoto()
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const base = import.meta.env.BASE_URL
+  const darkness = DARKNESS.reduce((best, d) => (Math.abs(d[1] - a.dim) < Math.abs(best[1] - a.dim) ? d : best))[0]
 
   const tile = (active: boolean) =>
     cn(
-      'relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)] border-2 transition-transform active:scale-[0.97]',
+      'relative aspect-square overflow-hidden rounded-[var(--radius-control)] border-2 transition-transform active:scale-[0.97]',
       active ? 'border-[var(--accent)]' : 'border-transparent',
     )
 
   return (
     <Section title="Background">
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-        <button className={tile(a.backgroundMode === 'daily')} onClick={() => updateAppearance({ backgroundMode: 'daily' })}>
+      <div className="grid grid-cols-5 gap-2">
+        <button className={tile(a.backgroundMode === 'daily')} onClick={() => updateAppearance({ backgroundMode: 'daily' })} aria-label="Changes daily">
           <div className="grid h-full w-full grid-cols-2">
             {PHOTOS.slice(0, 4).map((p) => (
               <img key={p.src} src={`${base}${p.src}`} alt="" className="h-full w-full object-cover" />
             ))}
           </div>
-          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white">Changes daily</span>
+          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-0.5 text-[9px] font-semibold text-white">Daily</span>
         </button>
 
-        {PHOTOS.map((p) => (
+        {BACKGROUND_PHOTOS.map((src) => (
           <button
-            key={p.src}
-            className={tile(a.backgroundMode === 'photo' && a.photo === p.src)}
-            onClick={() => updateAppearance({ backgroundMode: 'photo', photo: p.src })}
-            aria-label={p.label}
+            key={src}
+            className={tile(a.backgroundMode === 'photo' && a.photo === src)}
+            onClick={() => updateAppearance({ backgroundMode: 'photo', photo: src })}
+            aria-label={PHOTOS.find((p) => p.src === src)?.label}
           >
-            <img src={`${base}${p.src}`} alt="" className="h-full w-full object-cover" />
+            <img src={`${base}${src}`} alt="" className="h-full w-full object-cover" />
           </button>
         ))}
 
-        {Object.entries(GRADIENTS).map(([key, g]) => (
+        {BACKGROUND_GRADIENTS.map((key) => (
           <button
             key={key}
             className={tile(a.backgroundMode === 'gradient' && a.gradient === key)}
             onClick={() => updateAppearance({ backgroundMode: 'gradient', gradient: key })}
-            style={{ background: g.css }}
-          >
-            <span className="absolute bottom-1 left-1.5 text-[11px] font-semibold text-white/90">{g.label}</span>
-          </button>
+            style={{ background: GRADIENTS[key].css }}
+            aria-label={GRADIENTS[key].label}
+          />
         ))}
 
         <button
           className={cn(tile(a.backgroundMode === 'custom'), 'flex items-center justify-center bg-[var(--bg-panel)]')}
           onClick={() => (custom && a.backgroundMode !== 'custom' ? updateAppearance({ backgroundMode: 'custom' }) : fileRef.current?.click())}
+          aria-label="Your photo"
         >
           {custom ? (
             <img src={custom} alt="" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <span className="text-2xl text-[var(--text-tertiary)]">+</span>
           )}
-          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white">Your photo</span>
         </button>
       </div>
 
@@ -222,18 +233,26 @@ function BackgroundSection() {
       {error && <p className="mt-2 text-sm text-rose-400">{error}</p>}
 
       <div className="mt-5 flex flex-col gap-4">
-        <Slider label="Dim" value={a.dim} min={0} max={80} unit="%" onChange={(dim) => updateAppearance({ dim })} />
-        <Slider label="Blur" value={a.blur} min={0} max={24} unit="px" onChange={(blur) => updateAppearance({ blur })} />
-        <Toggle
-          label="Use on every screen"
-          hint={
-            a.cardStyle === 'liquid'
-              ? 'Always on with Liquid cards — glass needs something behind it.'
-              : 'Puts the background behind the whole app, not just the top of Today.'
-          }
-          checked={usesFullBackdrop(a)}
-          onChange={(fullPage) => updateAppearance({ fullPage })}
-        />
+        <Field label="Darkness">
+          <Segmented
+            value={darkness}
+            options={DARKNESS.map(([l]) => [l, l] as [string, string])}
+            onChange={(l) =>
+              updateAppearance({
+                dim: DARKNESS.find((d) => d[0] === l)![1],
+                blur: 0,
+              })
+            }
+          />
+        </Field>
+        {a.cardStyle !== 'liquid' && (
+          <Toggle
+            label="Use on every screen"
+            hint="Otherwise it only shows at the top of Today."
+            checked={a.fullPage}
+            onChange={(fullPage) => updateAppearance({ fullPage })}
+          />
+        )}
       </div>
     </Section>
   )
@@ -287,7 +306,11 @@ function LayoutRow({ slot, layout }: { slot: WidgetSlot; layout: WidgetSlot[] })
       </button>
       <Switch
         checked={slot.visible}
-        onChange={(visible) => updateAppearance({ todayLayout: layout.map((s) => (s.id === slot.id ? { ...s, visible } : s)) })}
+        onChange={(visible) =>
+          updateAppearance({
+            todayLayout: layout.map((s) => (s.id === slot.id ? { ...s, visible } : s)),
+          })
+        }
         label={`Show ${label}`}
       />
     </Reorder.Item>
@@ -298,72 +321,110 @@ function StyleSection() {
   const a = useAppearance()
   const { theme, setTheme } = useTheme()
   return (
-    <Section title="Style">
-      <div className="flex flex-col gap-5">
-        <Field label="Accent colour">
-          <div className="flex flex-wrap items-center gap-2">
-            {ACCENTS.map((c) => (
-              <button
-                key={c}
-                aria-label={`Accent ${c}`}
-                onClick={() => updateAppearance({ accent: c })}
-                className={cn('h-8 w-8 rounded-full border-2 transition-transform active:scale-90', a.accent === c ? 'border-[var(--text-primary)]' : 'border-transparent')}
-                style={{ background: c }}
-              />
-            ))}
-            <label className="relative h-8 w-8 overflow-hidden rounded-full border border-dashed border-[var(--text-tertiary)]" title="Custom colour">
-              <input
-                type="color"
-                value={a.accent}
-                onChange={(e) => updateAppearance({ accent: e.target.value })}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-              <span className="flex h-full items-center justify-center text-xs text-[var(--text-tertiary)]">+</span>
-            </label>
-          </div>
-        </Field>
-        <Field label="Theme">
-          <Segmented value={theme} options={[['dark', 'Dark'], ['light', 'Light'], ['system', 'Auto']]} onChange={setTheme} />
-        </Field>
-        <Field label="Cards">
-          <Segmented
-            value={a.cardStyle}
-            options={[['glass', 'Glass'], ['liquid', 'Liquid'], ['solid', 'Solid'], ['outline', 'Outline']]}
-            onChange={(cardStyle) => updateAppearance({ cardStyle })}
-          />
-        </Field>
-        {a.cardStyle === 'liquid' && (
-          <Field label="Glass">
+    <Card>
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
+          More style options
+          <span className="text-[var(--text-tertiary)] transition-transform group-open:rotate-90">›</span>
+        </summary>
+        <div className="mt-4 flex flex-col gap-5">
+          <Field label="Accent colour">
+            <div className="flex flex-wrap items-center gap-2">
+              {ACCENTS.map((c) => (
+                <button
+                  key={c}
+                  aria-label={`Accent ${c}`}
+                  onClick={() => updateAppearance({ accent: c })}
+                  className={cn(
+                    'h-8 w-8 rounded-full border-2 transition-transform active:scale-90',
+                    a.accent === c ? 'border-[var(--text-primary)]' : 'border-transparent',
+                  )}
+                  style={{ background: c }}
+                />
+              ))}
+              <label className="relative h-8 w-8 overflow-hidden rounded-full border border-dashed border-[var(--text-tertiary)]" title="Custom colour">
+                <input
+                  type="color"
+                  value={a.accent}
+                  onChange={(e) => updateAppearance({ accent: e.target.value })}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+                <span className="flex h-full items-center justify-center text-xs text-[var(--text-tertiary)]">+</span>
+              </label>
+            </div>
+          </Field>
+          <Field label="Theme">
             <Segmented
-              value={a.glassTint}
-              options={[['clear', 'Clear'], ['dark', 'Dark']]}
-              onChange={(glassTint) => updateAppearance({ glassTint })}
+              value={theme}
+              options={[
+                ['dark', 'Dark'],
+                ['light', 'Light'],
+                ['system', 'Auto'],
+              ]}
+              onChange={setTheme}
             />
           </Field>
-        )}
-        <Field label="Corners">
-          <Segmented
-            value={a.radius}
-            options={[['sharp', 'Sharp'], ['rounded', 'Rounded'], ['round', 'Round']]}
-            onChange={(radius) => updateAppearance({ radius })}
-          />
-        </Field>
-        <Field label="Font">
-          <Segmented
-            value={a.font}
-            options={[['manrope', 'Manrope'], ['system', 'System'], ['serif', 'Serif'], ['mono', 'Mono']]}
-            onChange={(font) => updateAppearance({ font })}
-          />
-        </Field>
-        <Field label="Density">
-          <Segmented
-            value={a.density}
-            options={[['compact', 'Compact'], ['comfortable', 'Normal'], ['spacious', 'Large']]}
-            onChange={(density) => updateAppearance({ density })}
-          />
-        </Field>
-      </div>
-    </Section>
+          <Field label="Cards">
+            <Segmented
+              value={a.cardStyle}
+              options={[
+                ['glass', 'Glass'],
+                ['liquid', 'Liquid'],
+                ['solid', 'Solid'],
+                ['outline', 'Outline'],
+              ]}
+              onChange={(cardStyle) => updateAppearance({ cardStyle })}
+            />
+          </Field>
+          {a.cardStyle === 'liquid' && (
+            <Field label="Glass">
+              <Segmented
+                value={a.glassTint}
+                options={[
+                  ['clear', 'Clear'],
+                  ['dark', 'Dark'],
+                ]}
+                onChange={(glassTint) => updateAppearance({ glassTint })}
+              />
+            </Field>
+          )}
+          <Field label="Corners">
+            <Segmented
+              value={a.radius}
+              options={[
+                ['sharp', 'Sharp'],
+                ['rounded', 'Rounded'],
+                ['round', 'Round'],
+              ]}
+              onChange={(radius) => updateAppearance({ radius })}
+            />
+          </Field>
+          <Field label="Font">
+            <Segmented
+              value={a.font}
+              options={[
+                ['manrope', 'Manrope'],
+                ['system', 'System'],
+                ['serif', 'Serif'],
+                ['mono', 'Mono'],
+              ]}
+              onChange={(font) => updateAppearance({ font })}
+            />
+          </Field>
+          <Field label="Density">
+            <Segmented
+              value={a.density}
+              options={[
+                ['compact', 'Compact'],
+                ['comfortable', 'Normal'],
+                ['spacious', 'Large'],
+              ]}
+              onChange={(density) => updateAppearance({ density })}
+            />
+          </Field>
+        </div>
+      </details>
+    </Card>
   )
 }
 
@@ -392,21 +453,6 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
         </button>
       ))}
     </div>
-  )
-}
-
-function Slider({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (v: number) => void }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="flex justify-between text-xs font-medium text-[var(--text-secondary)]">
-        {label}
-        <span className="tabular-nums text-[var(--text-tertiary)]">
-          {value}
-          {unit}
-        </span>
-      </span>
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[var(--accent)]" />
-    </label>
   )
 }
 
