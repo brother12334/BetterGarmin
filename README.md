@@ -105,16 +105,27 @@ Connect for a moment and then leave again:
    - **Wait** → 20 seconds
    - **Go to Home Screen**, or **Open App** → the app you were in
 
-Triggers that work well:
+Recommended setup (covers the whole day):
 
-- **Alarm → When stopped**: syncs last night's sleep as soon as you wake up.
-- **App → Is Opened**: pick an app you use often (end with **Open App** →
-  that app so you bounce straight back).
-- **Charger → Connected**: syncs whenever you plug in.
+- **Alarm → When stopped**: syncs last night's sleep the moment you wake up.
+  This is the most important one.
+- **App → Is Opened**: pick one or two apps you open a few times a day, like
+  Instagram or Messages, and end with **Open App** → that app so you bounce
+  straight back. Avoid an app you open constantly, or Garmin Connect will
+  keep popping up.
+- **Charger → Connected**: catches the end of the day when you plug in at
+  night.
 
-Time-of-day triggers are skipped while the phone is locked, so the triggers
-above are more reliable. Also keep Background App Refresh on for Garmin
-Connect, and don't swipe the app closed.
+Optional backup times (**Time of Day**): 7:30 AM, 12:30 PM, 5:00 PM and
+9:30 PM. These only run if the phone is unlocked at that exact minute, so
+treat them as extras; the triggers above do the real work.
+
+BetterGarmin's cloud sync pulls from Garmin every 30 minutes, so new data
+shows up within about half an hour of Garmin Connect syncing. Tap
+**Sync now** to get it right away.
+
+Also keep Background App Refresh on for Garmin Connect, and don't swipe the
+app closed.
 
 > Yes, it's annoying to set up, but it's the only option available at the
 > moment. Garmin doesn't let other apps pull data from the watch or tell
