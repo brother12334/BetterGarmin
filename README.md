@@ -102,7 +102,7 @@ Connect for a moment and then leave again:
 2. Pick **Run Immediately** and turn off **Notify When Run**.
 3. Add these actions:
    - **Open App** → Connect
-   - **Wait** → 20 seconds
+   - **Wait** → 5 seconds (a sync takes about 3 seconds; the extra time is a buffer)
    - **Go to Home Screen**, or **Open App** → the app you were in
 
 Recommended setup (covers the whole day):
