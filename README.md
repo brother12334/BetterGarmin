@@ -89,6 +89,37 @@ secret), so the doc explains exactly what changes before you turn it on.
 The in-app onboarding flow walks through the same steps with copy-to-clipboard
 buttons.
 
+### Keeping your watch synced (iPhone)
+
+BetterGarmin reads your data from Garmin's servers, and only the official
+**Garmin Connect** app can move it there from your watch. If Garmin Connect
+hasn't run in a while, "Sync now" in BetterGarmin has nothing new to fetch.
+
+To make it hands-off, add a few iOS Shortcuts automations that open Garmin
+Connect for a moment and then leave again:
+
+1. Open **Shortcuts → Automation → +** and choose a trigger (see below).
+2. Pick **Run Immediately** and turn off **Notify When Run**.
+3. Add these actions:
+   - **Open App** → Connect
+   - **Wait** → 20 seconds
+   - **Go to Home Screen**, or **Open App** → the app you were in
+
+Triggers that work well:
+
+- **Alarm → When stopped**: syncs last night's sleep as soon as you wake up.
+- **App → Is Opened**: pick an app you use often (end with **Open App** →
+  that app so you bounce straight back).
+- **Charger → Connected**: syncs whenever you plug in.
+
+Time-of-day triggers are skipped while the phone is locked, so the triggers
+above are more reliable. Also keep Background App Refresh on for Garmin
+Connect, and don't swipe the app closed.
+
+> Yes, it's annoying to set up, but it's the only option available at the
+> moment. Garmin doesn't let other apps pull data from the watch or tell
+> Garmin Connect to sync.
+
 ## Privacy
 
 By default (manual file loading, demo mode):
