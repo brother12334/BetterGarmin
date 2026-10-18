@@ -114,29 +114,74 @@ This one Shortcut opens Garmin Connect so your watch uploads, then tells
 BetterGarmin's cloud sync to run **straight away**, so new data shows up in
 about 2–3 minutes instead of waiting for the 30-minute schedule.
 
-In the **Shortcuts** app, tap **+**, name it exactly **BetterGarmin Sync**,
-and add these actions:
+In the **Shortcuts** app, tap **+** and rename it exactly
+**BetterGarmin Sync** (the button looks for that name). Then:
 
-1. **Open App** → Connect
-2. **Wait** → 5 seconds (a sync takes about 3 seconds; the rest is a buffer)
-3. **Get Contents of URL**
-   - URL: your Worker URL followed by `/sync`
-     (for example `https://bettergarmin-sync.yourname.workers.dev/sync`)
+1. **Let it accept input:** tap **ⓘ** at the bottom, turn on **Show in Share
+   Sheet**, and tap **Done**. A **Receive … input from Share Sheet** block
+   appears at the top. Tap its blue type word and choose **Text** only.
+2. **Open App** → **Connect**
+3. **Wait** → **5** seconds (a sync takes about 3 seconds; the rest is a buffer)
+4. **Get Contents of URL**
+   - URL: your Worker address followed by `/sync`, for example
+     `https://bettergarmin-sync.yourname.workers.dev/sync`
+   - Tap **›** (Show More) on the action
    - Method: **POST**
-   - Headers: add `Authorization` with the value `Bearer YOUR_ACCESS_TOKEN`
-     (the same access token you entered in BetterGarmin)
-4. **If** → *Shortcut Input* **is** `app`
-   - **Open App** → Bluefy (or whichever browser you use for BetterGarmin)
-   - **Otherwise:** **Go to Home Screen**
-   - **End If**
+   - Headers → **Add new header**: key `Authorization`, value
+     `Bearer YOUR_ACCESS_TOKEN` (the word Bearer, a space, then your token)
+5. **If** → tap *Condition* → **Shortcut Input** → **is** → type `app`
+   (if Shortcut Input isn't listed, tap **Select Variable** and tap the
+   Receive block at the top)
+   - Inside the If: **Open App** → **Bluefy** (or the browser you use)
+   - Under **Otherwise**: **Go to Home Screen**
+6. Tap **Done**.
 
-Your access token stays inside the Shortcut on your phone. Don't share the
-Shortcut with anyone once it contains your token.
+The finished Shortcut reads:
 
-Then, in BetterGarmin, go to **More → Cloud sync** and turn on **Sync through
-iPhone Shortcut**. Now **Sync now** runs the Shortcut for you: Garmin
+```
+Receive Text input from Share Sheet
+Open App  Connect
+Wait  5 seconds
+Get Contents of URL  https://…workers.dev/sync  (POST, Authorization: Bearer …)
+If  Shortcut Input  is  app
+    Open App  Bluefy
+Otherwise
+    Go to Home Screen
+End If
+```
+
+**Where to find your Worker info**
+
+- **Worker address:** Cloudflare dashboard → **Workers & Pages** → your
+  worker. It ends in `.workers.dev`, and it's the same address you entered in
+  BetterGarmin.
+- **Access token:** the `ACCESS_TOKEN` secret you saved in Cloudflare (and
+  typed into BetterGarmin). Cloudflare hides secrets after saving, so if you
+  forgot it, set a new one under your worker → **Settings → Variables and
+  Secrets**, then enter the new value in BetterGarmin (More → Cloud sync →
+  Disconnect, connect again) and in the Shortcut.
+
+Your token stays inside the Shortcut on your phone. Don't share the Shortcut,
+and crop the header row out of any screenshots.
+
+**Turn it on in BetterGarmin:** go to **More → Cloud sync** and switch on
+**Sync through iPhone Shortcut**. Sync now will then run the Shortcut: Garmin
 Connect flashes open, your watch uploads, you land back in BetterGarmin, and
-the new data appears a couple of minutes later.
+the new data appears a couple of minutes later. The first time, iOS asks for
+permission to open Connect and Bluefy and to run the Shortcut; choose
+**Always Allow**.
+
+**Check that it worked**
+
+- **Quick check:** temporarily add a **Show Result** action right after
+  *Get Contents of URL* and run the Shortcut. `{"started":"…"}` means the
+  cloud sync was started. `Unauthorized` means the token or the `Bearer `
+  part is wrong; a "server not found" error means the address is wrong.
+  Remove Show Result afterwards.
+- **On GitHub:** open your repository → **Actions** → **Sync Garmin data**.
+  A new run should appear within seconds of running the Shortcut.
+- **In BetterGarmin:** about 2–3 minutes later, **Last synced** on the More
+  page updates and your newest data shows up.
 
 #### 3. Run it automatically
 
