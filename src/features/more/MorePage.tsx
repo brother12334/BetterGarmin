@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
 import { setClockFormat, useClockFormat } from '../../lib/clock'
+import { setFullscreenPref, useFullscreenPref } from '../../lib/fullscreen'
 import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import { useData } from '../../app/DataProvider'
 import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
@@ -19,6 +20,7 @@ export function MorePage() {
   const { theme, setTheme } = useTheme()
   const { units, setUnits } = useUnits()
   const clock = useClockFormat()
+  const fullscreen = useFullscreenPref()
   const shortcutSync = useShortcutSync()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } =
     useData()
@@ -74,6 +76,16 @@ export function MorePage() {
             </Button>
           ))}
         </div>
+      </Card>
+
+      <Card>
+        <label className="flex items-center justify-between gap-4">
+          <span>
+            <span className="block font-semibold">Fullscreen</span>
+            <span className="block text-xs text-[var(--text-tertiary)]">Hides the browser's toolbars. If they come back, tap anywhere to hide them again.</span>
+          </span>
+          <input type="checkbox" checked={fullscreen} onChange={(e) => setFullscreenPref(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+        </label>
       </Card>
 
       <Card>

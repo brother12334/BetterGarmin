@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { installFullscreenRestore } from '../lib/shortcutSync'
+import { installAutoFullscreen } from '../lib/fullscreen'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { NavBar } from './NavBar'
 import { TABS } from './navConfig'
@@ -9,7 +9,7 @@ import { Logo } from './icons'
 
 
 export function AppShell() {
-  useEffect(() => installFullscreenRestore(), [])
+  useEffect(() => installAutoFullscreen(), [])
   return (
     <div className="flex min-h-screen w-full">
       <PageBackdrop />
