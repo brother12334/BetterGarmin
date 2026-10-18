@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { installAutoFullscreen } from '../lib/fullscreen'
+import { useToolbarTint } from './toolbarTint'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { NavBar } from './NavBar'
 import { TABS } from './navConfig'
@@ -10,6 +11,7 @@ import { Logo } from './icons'
 
 export function AppShell() {
   useEffect(() => installAutoFullscreen(), [])
+  useToolbarTint()
   return (
     <div className="flex min-h-screen w-full">
       <PageBackdrop />

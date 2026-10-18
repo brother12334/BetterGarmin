@@ -365,11 +365,11 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
         Opened</b> (an app you use a few times a day), and optionally <b>Charger → Connected</b>.
       </P>
       <P>
-        <b>4. Where to open BetterGarmin.</b> ⭐ Recommended: Safari → <b>Share → Add to Home Screen</b>, so it's always full screen. For live heart
-        rate over Bluetooth, add the <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio Safari extension</Ext> and allow it only on
-        this site. Extensions don't run inside Home Screen apps, so the heart rate card there has an <b>Open in Safari</b> button that takes you to a
-        Safari tab where it works. The Home Screen app has its own storage,
-        so connect cloud sync once more inside it.
+        <b>4. Where to open BetterGarmin.</b> ⭐ Recommended: a <b>Safari tab</b> with the{' '}
+        <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio extension</Ext> (allowed only on this site) for live heart rate. Set
+        Settings → Apps → Safari → Tabs → <b>Compact</b> so the address bar shrinks when you scroll; BetterGarmin tints Safari's bars to match the app.
+        Prefer always-fullscreen? <b>Share → Add to Home Screen</b> works too, but extensions don't run there, so live heart rate needs its{' '}
+        <b>Open in Safari</b> button. Each one keeps its own storage, so connect cloud sync in each.
       </P>
       <P>The README has the full guide, with more trigger ideas and how to check it worked.</P>
       <Button variant="secondary" onClick={onDone}>
