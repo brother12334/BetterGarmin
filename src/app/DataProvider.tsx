@@ -48,6 +48,32 @@ const CLOUD_POLL_INTERVAL_MS = 5 * 60 * 1000
 const LAST_SYNCED_KEY = 'bettergarmin:lastSynced'
 const PULL_POLL_MS = 5000
 const PULL_TIMEOUT_MS = 6 * 60 * 1000
+const PENDING_PULL_KEY = 'bettergarmin:pendingPull'
+
+function savePendingPull(startedAt: Date) {
+  try {
+    localStorage.setItem(PENDING_PULL_KEY, startedAt.toISOString())
+  } catch {
+    // without storage we just can't resume after a reload
+  }
+}
+
+function readPendingPull(): Date | null {
+  try {
+    const v = localStorage.getItem(PENDING_PULL_KEY)
+    return v ? new Date(v) : null
+  } catch {
+    return null
+  }
+}
+
+function clearPendingPull() {
+  try {
+    localStorage.removeItem(PENDING_PULL_KEY)
+  } catch {
+    // fine
+  }
+}
 
 const DEMO_FILES: { fileName: string; kind: DbKind }[] = [
   { fileName: 'garmin.db', kind: 'garmin' },
@@ -374,6 +400,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Set synchronously on tap, so a double tap can't start two GitHub runs before the button re-renders as disabled.
   const pullInFlight = useRef(false)
 
+  /** Polls storage until the cloud job has uploaded something newer than `startedAt`, then loads it. */
+  const watchForPull = useCallback(
+    async (config: CloudConfig, startedAt: Date) => {
+      setGarminPull({ status: 'running', startedAt })
+      // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
+      const deadline = startedAt.getTime() + PULL_TIMEOUT_MS
+      while (Date.now() < deadline) {
+        if (cloudConfigRef.current !== config) return
+        const files = await fetchManifest(config)
+        if (files.some((f) => new Date(f.lastModified).getTime() > startedAt.getTime())) {
+          await syncFromCloud(config)
+          clearPendingPull()
+          setGarminPull({ status: 'idle' })
+          return
+        }
+        await new Promise((r) => setTimeout(r, PULL_POLL_MS))
+      }
+      clearPendingPull()
+      setGarminPull({ status: 'error', message: "The sync is taking longer than usual. It will show up automatically when it's done." })
+    },
+    [syncFromCloud],
+  )
+
   const pullFromGarmin = useCallback(async () => {
     const config = cloudConfigRef.current
     if (!config || pullInFlight.current) return
@@ -385,28 +434,54 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       let startedAt = new Date()
       setGarminPull({ status: 'running', startedAt })
-      // With the Shortcut on, it opens Garmin Connect first and starts the cloud sync itself; we just watch for the result.
-      if (getShortcutSync()) runSyncShortcut()
-      else startedAt = await startCloudSync(config)
-      // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
-      const deadline = Date.now() + PULL_TIMEOUT_MS
-      while (Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, PULL_POLL_MS))
-        if (cloudConfigRef.current !== config) return
-        const files = await fetchManifest(config)
-        if (files.some((f) => new Date(f.lastModified).getTime() > startedAt.getTime())) {
-          await syncFromCloud(config)
-          setGarminPull({ status: 'idle' })
-          return
-        }
+      if (getShortcutSync()) {
+        // The Shortcut opens Garmin Connect and starts the cloud sync itself. iOS often unloads this page while it
+        // runs, so remember the pull and pick it back up when the page returns.
+        savePendingPull(startedAt)
+        runSyncShortcut()
+      } else {
+        startedAt = await startCloudSync(config)
       }
-      setGarminPull({ status: 'error', message: "The sync is taking longer than usual. It will show up automatically when it's done." })
+      await watchForPull(config, startedAt)
     } catch (err) {
       setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
     } finally {
       pullInFlight.current = false
     }
-  }, [syncFromCloud])
+  }, [watchForPull])
+
+  // Coming back from the Shortcut (or a reload mid-sync): resume watching for the pending pull.
+  useEffect(() => {
+    // Wait for the saved data to load first, so the resumed sync doesn't race the startup restore.
+    if (!cloudConfigured || status !== 'ready') return
+    const resume = async () => {
+      const config = cloudConfigRef.current
+      const startedAt = readPendingPull()
+      if (!config || !startedAt || pullInFlight.current) return
+      if (Date.now() - startedAt.getTime() > PULL_TIMEOUT_MS) {
+        clearPendingPull()
+        return
+      }
+      pullInFlight.current = true
+      try {
+        await watchForPull(config, startedAt)
+      } catch (err) {
+        setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
+      } finally {
+        pullInFlight.current = false
+      }
+    }
+    resume()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') resume()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('pageshow', resume)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pageshow', resume)
+    }
+  }, [cloudConfigured, status, watchForPull])
 
   const syncNow = useCallback(async () => {
     if (cloudConfigRef.current) await syncFromCloud(cloudConfigRef.current, { force: true })
