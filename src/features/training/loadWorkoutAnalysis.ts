@@ -62,10 +62,20 @@ export async function loadWorkoutAnalysis(workout: WorkoutWithSets, loadedKinds:
       if (hrSamples.length > 0) hrSource = 'activity'
     }
   }
-  if (hrSource === 'none' && loadedKinds.includes('monitoring')) {
+  if (loadedKinds.includes('monitoring')) {
     const rows = await getMonitoringHrForDay(localDay(start + clockOffsetMs))
-    hrSamples = toSamples(rows.map((r) => ({ timestamp: r.timestamp, v: r.heart_rate })))
-    if (hrSamples.length > 0) hrSource = 'monitoring'
+    const allDay = toSamples(rows.map((r) => ({ timestamp: r.timestamp, v: r.heart_rate })))
+    if (hrSource === 'none') {
+      hrSamples = allDay
+      if (hrSamples.length > 0) hrSource = 'monitoring'
+    } else if (hrSamples.length > 0) {
+      // Sets done before the Garmin activity was started (or after it was stopped) only have all-day heart rate.
+      // Fill in outside the recorded activity; inside it, the dense activity trace wins.
+      const first = hrSamples[0].t
+      const last = hrSamples[hrSamples.length - 1].t
+      const outside = allDay.filter((s) => s.t < first || s.t > last)
+      if (outside.length > 0) hrSamples = [...hrSamples, ...outside].sort((x, y) => x.t - y.t)
+    }
   }
 
   const timeline = buildWorkoutTimeline({ startedAtEpochMs: start, finishedAtEpochMs: end, sets: workout.sets, hrSamples, corrections, clockOffsetMs })
