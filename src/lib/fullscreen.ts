@@ -20,6 +20,12 @@ type FullscreenDoc = Document & {
 }
 type FullscreenEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }
 
+/** False in browsers that don't let pages go fullscreen (Bluefy and Safari on iPhone report this). */
+export function fullscreenSupported(): boolean {
+  const doc = document as FullscreenDoc & { webkitFullscreenEnabled?: boolean }
+  return !!(doc.fullscreenEnabled || doc.webkitFullscreenEnabled)
+}
+
 function isFullscreen(): boolean {
   const doc = document as FullscreenDoc
   return !!(doc.fullscreenElement || doc.webkitFullscreenElement)
