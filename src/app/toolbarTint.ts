@@ -72,9 +72,9 @@ function setThemeColor(color: string) {
     meta.name = 'theme-color'
     document.head.appendChild(meta)
   }
+  // Only the meta tag: painting <html> too stops the body's background from filling the canvas, so the photo's
+  // sky colour showed through below the first screen.
   meta.content = color
-  // Also shows in the overscroll area above and below the page.
-  document.documentElement.style.backgroundColor = color
 }
 
 export function useToolbarTint() {
