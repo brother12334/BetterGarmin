@@ -108,6 +108,12 @@ export async function getMonitoringHrForDay(
   )
 }
 
+/** The first day with any all-day heart rate, i.e. how far back heart-rate history goes. */
+export async function getFirstHeartRateDay(): Promise<string | null> {
+  const rows = await sqliteClient.query<{ day: string | null }>('monitoring', 'SELECT substr(MIN(timestamp), 1, 10) as day FROM monitoring_hr WHERE heart_rate > 0')
+  return rows[0]?.day ?? null
+}
+
 /** The single most recent all-day heart-rate sample GarminDB has recorded. */
 export async function getLatestHeartRate(): Promise<{ timestamp: string; heart_rate: number } | null> {
   const rows = await sqliteClient.query<{ timestamp: string; heart_rate: number }>(

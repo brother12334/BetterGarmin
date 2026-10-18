@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getAllWorkoutsWithSets, type WorkoutWithSets } from '../../db/strengthLog'
+import { useData } from '../../app/DataProvider'
+import { getFirstHeartRateDay } from '../../db/queries'
 import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -31,6 +33,33 @@ const CONFIDENCE_STYLE: Record<Confidence, { label: string; className: string }>
   medium: { label: 'Medium confidence', className: 'bg-sky-500/15 text-sky-400' },
   low: { label: 'Low confidence', className: 'bg-amber-500/15 text-amber-400' },
   none: { label: 'No HR data', className: 'bg-slate-500/20 text-slate-400' },
+}
+
+/** Explains empty heart-rate panels: usually the workout predates the synced history. */
+function NoHeartRateNote({ day }: { day: string }) {
+  const { loadedKinds } = useData()
+  const [firstDay, setFirstDay] = useState<string | null>(null)
+  useEffect(() => {
+    if (!loadedKinds.includes('monitoring')) return
+    getFirstHeartRateDay().then(setFirstDay).catch(() => {})
+  }, [loadedKinds])
+  const fmt = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+  const before = firstDay != null && day.slice(0, 10) < firstDay
+  return (
+    <Card className="border-amber-400/30 text-sm text-[var(--text-secondary)]">
+      {before ? (
+        <>
+          <b className="text-[var(--text-primary)]">No heart rate for this workout.</b> It was on {fmt(day.slice(0, 10))}, but your heart-rate history starts on{' '}
+          {fmt(firstDay)}, the first day your watch synced. Sets, loads and rest times are all still here.
+        </>
+      ) : (
+        <>
+          <b className="text-[var(--text-primary)]">No heart rate found for this workout.</b> Your watch may not have been worn, or that day hasn't synced yet.
+          Try Sync now, or check the workout's start and end times.
+        </>
+      )}
+    </Card>
+  )
 }
 
 export function WorkoutTimelinePage() {
@@ -107,6 +136,8 @@ export function WorkoutTimelinePage() {
           )}
         </div>
       </Card>
+
+      {hrSource === 'none' && <NoHeartRateNote day={workout.day} />}
 
       {data.offsetSuggestion && (
         <Card className="border-amber-400/30 text-sm">
