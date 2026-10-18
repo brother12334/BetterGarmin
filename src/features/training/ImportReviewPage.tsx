@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { SyncFirstCard } from './SyncFirstCard'
 import { useUnits } from '../../app/units'
 import { convertWeight, formatWeight, weightUnitLabel } from '../../lib/units'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, type MuscleGroup } from '../../lib/strength'
@@ -117,6 +118,8 @@ export function ImportReviewPage() {
           </p>
         )}
       </div>
+
+      <SyncFirstCard />
 
       <Card>
         <div className="mb-2 flex items-center gap-1.5">

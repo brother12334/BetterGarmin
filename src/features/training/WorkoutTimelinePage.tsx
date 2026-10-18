@@ -11,6 +11,7 @@ import { formatWeight } from '../../lib/units'
 import { SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useWorkoutTimeline, type HrSource, type PreviousExerciseSession } from './useWorkoutTimeline'
 import { TimelineCard } from './TimelineCard'
+import { SyncFirstCard } from './SyncFirstCard'
 import { bpm, clock, duration } from './timelineUi'
 import {
   PRE_SET_WINDOW_MS,
@@ -138,6 +139,7 @@ export function WorkoutTimelinePage() {
       </Card>
 
       {hrSource === 'none' && <NoHeartRateNote day={workout.day} />}
+      {hrSource === 'none' && <SyncFirstCard />}
 
       {data.offsetSuggestion && (
         <Card className="border-amber-400/30 text-sm">

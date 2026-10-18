@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { parseElement26Export } from './element26Import'
 import { saveImportedWorkout } from '../../db/strengthLog'
+import { SyncFirstCard } from './SyncFirstCard'
 
 interface ImportElement26ButtonProps {
   onImported: () => Promise<void>
@@ -64,6 +65,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
       <Button variant="secondary" onClick={() => inputRef.current?.click()} disabled={importing}>
         {importing ? 'Importing…' : 'Import Element 26 workout'}
       </Button>
+      {!summary && <p className="text-xs text-[var(--text-tertiary)]">Tip: sync your watch right after your workout so each set gets its heart rate.</p>}
       {error && <p className="text-sm text-rose-400">{error}</p>}
       {summary && (
         <div className="flex flex-col gap-1 text-xs">
@@ -85,6 +87,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
           )}
         </div>
       )}
+      {summary && <SyncFirstCard />}
     </div>
   )
 }
