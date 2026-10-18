@@ -11,6 +11,7 @@ import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { parseSleepTimestamp } from '../training/matchGarminActivity'
 import { HowYouSlept } from '../today/HowYouSlept'
+import { SleepCoach } from './SleepCoach'
 import { formatClockHours } from '../../lib/clock'
 
 const HISTORY_DAYS = 60
@@ -143,6 +144,8 @@ export function SleepPage() {
       </div>
 
       <HowYouSlept day={data.day} />
+
+      <SleepCoach nights={nights} usualWake={usualWake} />
 
       <div className="grid grid-cols-2 gap-3">
         <BigStat label="Total sleep" value={formatHoursMinutes(totalMin)} color={SLEEP} trend={totalH.slice(-14)} />
