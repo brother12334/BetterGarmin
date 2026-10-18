@@ -16,10 +16,21 @@ import type {
  * GarminDB data is static until the user re-syncs, so "today" means the most
  * recent day present in the database rather than the calendar date.
  */
+/**
+ * The newest day worth showing: not after today on this device, and with something recorded. The cloud sync runs
+ * in UTC, so in the evening it can already hold an empty row for "tomorrow".
+ */
 export async function getLatestDay(): Promise<string | null> {
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const rows = await sqliteClient.query<{ day: string | null }>(
     'garmin',
-    'SELECT MAX(day) as day FROM daily_summary',
+    `SELECT COALESCE(
+       (SELECT MAX(day) FROM daily_summary WHERE day <= ? AND (steps > 0 OR stress_avg IS NOT NULL OR bb_charged IS NOT NULL)),
+       (SELECT MAX(day) FROM daily_summary WHERE day <= ?),
+       (SELECT MAX(day) FROM daily_summary)
+     ) as day`,
+    [today, today],
   )
   return rows[0]?.day ?? null
 }
