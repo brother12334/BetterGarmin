@@ -93,43 +93,71 @@ buttons.
 
 BetterGarmin reads your data from Garmin's servers, and only the official
 **Garmin Connect** app can move it there from your watch. If Garmin Connect
-hasn't run in a while, "Sync now" in BetterGarmin has nothing new to fetch.
+hasn't run in a while, BetterGarmin has nothing new to fetch. These three
+steps make syncing as hands-off as an iPhone allows.
 
-To make it hands-off, add a few iOS Shortcuts automations that open Garmin
-Connect for a moment and then leave again:
+#### 1. Turn on every Garmin notification
 
-1. Open **Shortcuts → Automation → +** and choose a trigger (see below).
-2. Pick **Run Immediately** and turn off **Notify When Run**.
-3. Add these actions:
-   - **Open App** → Connect
-   - **Wait** → 5 seconds (a sync takes about 3 seconds; the extra time is a buffer)
-   - **Go to Home Screen**, or **Open App** → the app you were in
+In Garmin Connect, open your device → **Notifications & Alerts** and switch
+**all of them on**:
 
-Recommended setup (covers the whole day):
+<img src="docs/screenshots/garmin-notifications.png" alt="Garmin Connect Notifications & Alerts with every toggle on" width="280">
 
-- **Alarm → When stopped**: syncs last night's sleep the moment you wake up.
-  This is the most important one.
-- **App → Is Opened**: pick one or two apps you open a few times a day, like
-  Instagram or Messages, and end with **Open App** → that app so you bounce
-  straight back. Avoid an app you open constantly, or Garmin Connect will
-  keep popping up.
-- **Charger → Connected**: catches the end of the day when you plug in at
-  night.
+A watch that gets alerts keeps a live Bluetooth link to your phone, and iOS
+wakes Garmin Connect more often to serve it, so it syncs in the background
+far more often. Also keep Background App Refresh on for Garmin Connect, keep
+Low Power Mode off, and don't swipe the app closed.
 
-Optional backup times (**Time of Day**): 7:30 AM, 12:30 PM, 5:00 PM and
-9:30 PM. These only run if the phone is unlocked at that exact minute, so
-treat them as extras; the triggers above do the real work.
+#### 2. Create the "BetterGarmin Sync" Shortcut
 
-BetterGarmin's cloud sync pulls from Garmin every 30 minutes, so new data
-shows up within about half an hour of Garmin Connect syncing. Tap
-**Sync now** to get it right away.
+This one Shortcut opens Garmin Connect so your watch uploads, then tells
+BetterGarmin's cloud sync to run **straight away**, so new data shows up in
+about 2–3 minutes instead of waiting for the 30-minute schedule.
 
-Also keep Background App Refresh on for Garmin Connect, and don't swipe the
-app closed.
+In the **Shortcuts** app, tap **+**, name it exactly **BetterGarmin Sync**,
+and add these actions:
+
+1. **Open App** → Connect
+2. **Wait** → 5 seconds (a sync takes about 3 seconds; the rest is a buffer)
+3. **Get Contents of URL**
+   - URL: your Worker URL followed by `/sync`
+     (for example `https://bettergarmin-sync.yourname.workers.dev/sync`)
+   - Method: **POST**
+   - Headers: add `Authorization` with the value `Bearer YOUR_ACCESS_TOKEN`
+     (the same access token you entered in BetterGarmin)
+4. **If** → *Shortcut Input* **is** `app`
+   - **Open App** → Bluefy (or whichever browser you use for BetterGarmin)
+   - **Otherwise:** **Go to Home Screen**
+   - **End If**
+
+Your access token stays inside the Shortcut on your phone. Don't share the
+Shortcut with anyone once it contains your token.
+
+Then, in BetterGarmin, go to **More → Cloud sync** and turn on **Sync through
+iPhone Shortcut**. Now **Sync now** runs the Shortcut for you: Garmin
+Connect flashes open, your watch uploads, you land back in BetterGarmin, and
+the new data appears a couple of minutes later.
+
+#### 3. Run it automatically
+
+In **Shortcuts → Automation → +**, pick a trigger, choose **Run
+Immediately**, turn off **Notify When Run**, and add one action: **Run
+Shortcut** → BetterGarmin Sync. Good triggers:
+
+- **Sleep → Wake Up** (or **Alarm → When stopped**): syncs last night's sleep
+  as soon as you get up. This is the most important one.
+- **App → Is Opened**: pick an app you open a few times a day, like
+  Instagram or Messages. Avoid one you open constantly.
+- **Charger → Connected**: catches the end of the day when you plug in.
+- **NFC**: stick a cheap NFC tag on your nightstand or desk and tap your
+  phone on it.
+- Optional backup **Time of Day** runs at 7:30 AM, 12:30 PM, 5:00 PM and
+  9:30 PM. These only run if the phone is unlocked at that minute.
 
 > Yes, it's annoying to set up, but it's the only option available at the
 > moment. Garmin doesn't let other apps pull data from the watch or tell
-> Garmin Connect to sync.
+> Garmin Connect to sync, and bands without Wi-Fi (like the CIRQA) can only
+> upload through the phone app.
 
 ## Privacy
 

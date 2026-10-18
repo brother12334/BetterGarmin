@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
 import { setClockFormat, useClockFormat } from '../../lib/clock'
+import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import { useData } from '../../app/DataProvider'
 import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
@@ -18,6 +19,7 @@ export function MorePage() {
   const { theme, setTheme } = useTheme()
   const { units, setUnits } = useUnits()
   const clock = useClockFormat()
+  const shortcutSync = useShortcutSync()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } =
     useData()
   const [confirming, setConfirming] = useState(false)
@@ -165,6 +167,15 @@ export function MorePage() {
                 Disconnect
               </Button>
             </div>
+            <label className="flex items-start justify-between gap-4 border-t border-[var(--border-panel)] pt-3">
+              <span>
+                <span className="block text-sm">Sync through iPhone Shortcut</span>
+                <span className="block text-xs text-[var(--text-tertiary)]">
+                  Sync now runs your "{SHORTCUT_NAME}" Shortcut, which opens Garmin Connect so your watch uploads first. Set it up using the README.
+                </span>
+              </span>
+              <input type="checkbox" checked={shortcutSync} onChange={(e) => setShortcutSync(e.target.checked)} className="mt-1 h-5 w-5 accent-[var(--accent)]" />
+            </label>
           </div>
         ) : showConnectForm ? (
           <div className="flex flex-col gap-3">

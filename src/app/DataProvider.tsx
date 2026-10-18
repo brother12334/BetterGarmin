@@ -3,6 +3,7 @@ import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { setSleepTimesUtc } from '../features/training/matchGarminActivity'
+import { getShortcutSync, runSyncShortcut } from '../lib/shortcutSync'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig, startCloudSync } from '../db/cloudSync'
 import { deleteWorkout, getAllWorkoutsWithSets, hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
@@ -378,7 +379,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return
     }
     try {
-      const startedAt = await startCloudSync(config)
+      // With the Shortcut on, it opens Garmin Connect first and starts the cloud sync itself; we just watch for the result.
+      let startedAt: Date
+      if (getShortcutSync()) {
+        startedAt = new Date()
+        runSyncShortcut()
+      } else {
+        startedAt = await startCloudSync(config)
+      }
       setGarminPull({ status: 'running', startedAt })
       // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
       const deadline = Date.now() + PULL_TIMEOUT_MS
