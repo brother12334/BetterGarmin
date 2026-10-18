@@ -128,9 +128,18 @@ body {
 }
 :root:not([data-theme="light"])[data-card="liquid"] {
   /* The grey secondary text disappears against blue glass; lift it toward white. */
-  --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-tertiary: rgba(255, 255, 255, 0.68);
+  --text-secondary: rgba(255, 255, 255, 0.92);
+  --text-tertiary: rgba(255, 255, 255, 0.78);
   --border-panel: rgba(255, 255, 255, 0.22);
+}
+/* Clear glass over a bright photo (fog, sky, snow) leaves white text with nothing dark behind it.
+   A light smoky base keeps every label readable without losing the glass look. */
+:root:not([data-theme="light"])[data-card="liquid"]:not([data-glass="dark"]) .glass-panel {
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    linear-gradient(rgba(12, 18, 34, 0.3), rgba(12, 18, 34, 0.3));
+  text-shadow: 0 1px 3px rgba(0, 10, 30, 0.55);
 }
 :root[data-card="liquid"][data-glass="dark"] .glass-panel {
   background:
