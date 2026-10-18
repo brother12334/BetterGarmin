@@ -329,12 +329,12 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
         Your watch only uploads through the <b>Garmin Connect</b> app. Until it runs, there's nothing new to sync. Do these on your iPhone:
       </P>
       <P>
-        <b>1. Notifications.</b> In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
+        <b>1. Notifications</b> ⭐. In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
         alerts stays connected, so Garmin Connect syncs in the background much more often. Also keep Background App Refresh on, Low Power Mode off, and
         don't swipe the app closed.
       </P>
       <P>
-        <b>2. The Shortcut.</b> In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
+        <b>2. The Shortcut</b> ⭐. In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
       </P>
       <ol className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
         <li>
@@ -353,16 +353,22 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
       <SecretRow name="URL" value={syncUrl} copy={workerUrl ? syncUrl : undefined} />
       <ol start={5} className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
         <li>
-          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> Bluefy; <b>Otherwise</b> → <b>Go to Home Screen</b>
+          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> your browser (Safari or Bluefy); <b>Otherwise</b> → <b>Go to Home Screen</b>
         </li>
       </ol>
       <label className="flex items-center justify-between gap-3 text-sm">
-        Make Sync now run this Shortcut
+        Make Sync now run this Shortcut ⭐ recommended
         <input type="checkbox" checked={shortcutOn} onChange={(e) => setShortcutSync(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
       </label>
       <P>
-        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: <b>Sleep → Wake Up</b>, <b>App → Is
-        Opened</b> (an app you use a few times a day), and <b>Charger → Connected</b>.
+        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: ⭐ <b>Sleep → Wake Up</b>, ⭐ <b>App → Is
+        Opened</b> (an app you use a few times a day), and optionally <b>Charger → Connected</b>.
+      </P>
+      <P>
+        <b>4. Where to open BetterGarmin.</b> ⭐ Recommended: Safari → <b>Share → Add to Home Screen</b>, so it's always full screen. For live heart
+        rate over Bluetooth, add the <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio Safari extension</Ext> and allow it only on
+        this site. If it doesn't work inside the Home Screen app, use <b>Bluefy</b> just for live heart rate. The Home Screen app has its own storage,
+        so connect cloud sync once more inside it.
       </P>
       <P>The README has the full guide, with more trigger ideas and how to check it worked.</P>
       <Button variant="secondary" onClick={onDone}>

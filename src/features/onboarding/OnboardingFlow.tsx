@@ -79,7 +79,7 @@ export function OnboardingFlow() {
                   Try demo mode first
                 </Button>
                 <Button variant="ghost" onClick={() => setStep('cloud')}>
-                  Set up automatic sync (guided, ~15 min)
+                  ⭐ Set up automatic sync (recommended, guided, ~15 min)
                 </Button>
               </div>
               {demoError && <p className="text-sm text-rose-400">Couldn't load the demo data. Please try again.</p>}

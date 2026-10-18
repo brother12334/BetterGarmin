@@ -21,7 +21,7 @@ Not affiliated with Garmin. Not medical advice.
 - **Health, Sleep, Training**: trends, records and activity details, including maps.
 - **Strength training**: log workouts, or import them from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
 - **Insights**: findings that link training with sleep, resting HR and HRV, with sample sizes and evidence levels instead of overconfident claims. Also history charts, personal experiments, and an optional Gemini assistant that uses your own API key.
-- **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge, or Bluefy on iPhone).
+- **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge; on iPhone, Safari with the beacio extension or Bluefy).
 - **Automatic sync** (optional): a scheduled job pulls from Garmin every 30 minutes, and **Sync now** pulls on demand.
 - **Power tools**: units, goals, CSV export and an SQL console.
 
@@ -33,6 +33,58 @@ Not affiliated with Garmin. Not medical advice.
 | Use my data privately | Run GarminDB on your computer and drop the `.db` files in. See [Getting your data](#getting-your-data). |
 | Have it update itself | [Fork it and host your own copy](docs/self-hosting.md), then set up [cloud sync](docs/cloud-sync.md). |
 | Fix a problem | See [troubleshooting](docs/troubleshooting.md). |
+
+## Recommended setup (iPhone)
+
+Not sure what to pick? Do these and you're done. Each one links to the
+details and the alternatives.
+
+| Choice | ⭐ Recommended | Alternatives |
+| --- | --- | --- |
+| **How to open the app** | Safari → **Add to Home Screen** (always full screen) | [Bluefy or WebBLE](#choosing-a-browser-iphone) |
+| **Live heart rate over Bluetooth** | The **beacio** Safari extension | [Bluefy](#choosing-a-browser-iphone) just for live heart rate |
+| **Getting your data in** | [Cloud sync](docs/cloud-sync.md): updates itself every 30 min | [Drop in GarminDB files](#getting-your-data) by hand |
+| **Watch → Garmin** | [Every Garmin notification on](#1-turn-on-every-garmin-notification) + the [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | [Other options](#other-options) |
+| **Automatic syncs** | [Sleep → Wake Up](#3-run-it-automatically) and **App → Is Opened** automations | Charger, NFC tag, backup times |
+| **Sync now button** | **Sync through iPhone Shortcut** on (More → Cloud sync) | Off: starts the cloud sync only |
+| **Look** | The **Glacier** preset (default) | 7 other presets in Customize |
+| **Clock and units** | Whatever your phone uses (default) | More → Clock / Units |
+
+### Choosing a browser (iPhone)
+
+Live heart rate needs Web Bluetooth, which Safari, Chrome and Edge on iPhone
+don't have. Everything else (cloud sync, charts, Sync now) works in any browser.
+
+| Option | Full screen | Live heart rate | Notes |
+| --- | --- | --- | --- |
+| ⭐ **Safari Home Screen app + beacio extension** | ✅ Always | ✅ if the extension runs in Home Screen apps; otherwise in Safari tabs | Best overall. Test step 4 below. |
+| **Bluefy** | Only from Bluefy's own menu (the app can't turn it on) | ✅ | Easiest if you want live heart rate everywhere |
+| **WebBLE** | Not confirmed | ✅ | Similar to Bluefy |
+| **Safari Home Screen app on its own** | ✅ Always | ❌ | Shows your latest synced heart rate instead |
+
+**Setting up Safari + beacio (recommended)**
+
+1. Install **[beacio](https://apps.apple.com/tt/app/ioswebble/id6761301368)**
+   (listed as "iOSWebBLE", "Web Bluetooth for Safari") from the App Store and
+   open it once. It's from an independent developer, so only allow it on
+   BetterGarmin's site.
+2. **Settings → Apps → Safari → Extensions → beacio**: turn it on and allow
+   it only on your BetterGarmin address (for example
+   `yourname.github.io`), not All Websites.
+3. Open BetterGarmin in a normal Safari tab and tap **Connect** on the heart
+   rate card (turn on Broadcast Heart Rate on the watch first). If your watch
+   connects, the extension works.
+4. Tap **Share → Add to Home Screen**, open BetterGarmin from the new icon
+   (it's full screen), and try **Connect** again.
+   - Connects: you have full screen and Bluetooth together.
+   - "Bluetooth isn't supported": extensions don't run in Home Screen apps on
+     your iOS version. Use the Home Screen app every day and Bluefy only for
+     live heart rate.
+
+The Home Screen app keeps its own storage, so connect cloud sync once more
+inside it (Worker address and access token). In your Shortcut, set the last
+**Open App** to the browser you opened BetterGarmin from. If the Home Screen
+app isn't in the Open App list, use Safari.
 
 ## How it works
 
@@ -100,9 +152,9 @@ steps make syncing as hands-off as an iPhone allows.
 
 | Method | Effort | What it covers |
 | --- | --- | --- |
-| [Garmin notifications on](#1-turn-on-every-garmin-notification) | One-time, 1 min | More frequent background syncs all day |
-| [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | One-time, 5 min | One tap: watch uploads **and** cloud sync starts right away |
-| [Shortcut automations](#3-run-it-automatically) | One-time, 2 min each | Syncs on wake-up, when you open an app, when you charge, or with an NFC tap |
+| ⭐ [Garmin notifications on](#1-turn-on-every-garmin-notification) | One-time, 1 min | More frequent background syncs all day |
+| ⭐ [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | One-time, 5 min | One tap: watch uploads **and** cloud sync starts right away |
+| ⭐ [Shortcut automations](#3-run-it-automatically) | One-time, 2 min each | Syncs on wake-up, when you open an app, when you charge, or with an NFC tap |
 | [Garmin Connect widget](#other-options) | One-time | Gives the app extra chances to sync |
 | [Garmin Express while charging](#other-options) | Plug in at a computer | Full sync every time you charge there |
 | [Wi-Fi upload](#other-options) | Watches with Wi-Fi only | Uploads activities without the phone |
@@ -110,7 +162,7 @@ steps make syncing as hands-off as an iPhone allows.
 | Cloud sync schedule | Automatic | BetterGarmin pulls from Garmin every 30 minutes |
 
 The in-app setup (**More → Cloud sync → Set up**) walks through the first
-three as its last step.
+three as its last step. ⭐ = recommended.
 
 #### 1. Turn on every Garmin notification
 
@@ -148,7 +200,8 @@ In the **Shortcuts** app, tap **+** and rename it exactly
 5. **If** → tap *Condition* → **Shortcut Input** → **is** → type `app`
    (if Shortcut Input isn't listed, tap **Select Variable** and tap the
    Receive block at the top)
-   - Inside the If: **Open App** → **Bluefy** (or the browser you use)
+   - Inside the If: **Open App** → the browser you use BetterGarmin in
+     (Safari for the Home Screen app, or Bluefy)
    - Under **Otherwise**: **Go to Home Screen**
 6. Tap **Done**.
 
@@ -160,7 +213,7 @@ Open App  Connect
 Wait  5 seconds
 Get Contents of URL  https://…workers.dev/sync  (POST, Authorization: Bearer …)
 If  Shortcut Input  is  app
-    Open App  Bluefy
+    Open App  Safari (or Bluefy)
 Otherwise
     Go to Home Screen
 End If
@@ -184,7 +237,7 @@ and crop the header row out of any screenshots.
 **Sync through iPhone Shortcut**. Sync now will then run the Shortcut: Garmin
 Connect flashes open, your watch uploads, you land back in BetterGarmin, and
 the new data appears a couple of minutes later. The first time, iOS asks for
-permission to open Connect and Bluefy and to run the Shortcut; choose
+permission to open Connect and your browser and to run the Shortcut; choose
 **Always Allow**.
 
 **Check that it worked**
@@ -205,9 +258,9 @@ In **Shortcuts → Automation → +**, pick a trigger, choose **Run
 Immediately**, turn off **Notify When Run**, and add one action: **Run
 Shortcut** → BetterGarmin Sync. Good triggers:
 
-- **Sleep → Wake Up** (or **Alarm → When stopped**): syncs last night's sleep
+- ⭐ **Sleep → Wake Up** (or **Alarm → When stopped**): syncs last night's sleep
   as soon as you get up. This is the most important one.
-- **App → Is Opened**: pick an app you open a few times a day, like
+- ⭐ **App → Is Opened**: pick an app you open a few times a day, like
   Instagram or Messages. Avoid one you open constantly.
 - **Charger → Connected**: catches the end of the day when you plug in.
 - **NFC**: stick a cheap NFC tag on your nightstand or desk and tap your
