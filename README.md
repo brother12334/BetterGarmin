@@ -42,7 +42,7 @@ details and the alternatives.
 | Choice | ⭐ Recommended | Alternatives |
 | --- | --- | --- |
 | **How to open the app** | Safari → **Add to Home Screen** (always full screen) | [Bluefy or WebBLE](#choosing-a-browser-iphone) |
-| **Live heart rate over Bluetooth** | The **beacio** Safari extension | [Bluefy](#choosing-a-browser-iphone) just for live heart rate |
+| **Live heart rate over Bluetooth** | The **beacio** Safari extension, in a Safari tab (the Home Screen app's **Open in Safari** button takes you there) | [Bluefy](#choosing-a-browser-iphone) |
 | **Getting your data in** | [Cloud sync](docs/cloud-sync.md): updates itself every 30 min | [Drop in GarminDB files](#getting-your-data) by hand |
 | **Watch → Garmin** | [Every Garmin notification on](#1-turn-on-every-garmin-notification) + the [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | [Other options](#other-options) |
 | **Automatic syncs** | [Sleep → Wake Up](#3-run-it-automatically) and **App → Is Opened** automations | Charger, NFC tag, backup times |
@@ -57,7 +57,7 @@ don't have. Everything else (cloud sync, charts, Sync now) works in any browser.
 
 | Option | Full screen | Live heart rate | Notes |
 | --- | --- | --- | --- |
-| ⭐ **Safari Home Screen app + beacio extension** | ✅ Always | ✅ if the extension runs in Home Screen apps; otherwise in Safari tabs | Best overall. Test step 4 below. |
+| ⭐ **Safari Home Screen app + beacio extension** | ✅ Always (Home Screen app) | ✅ in a Safari tab; the Home Screen app has an **Open in Safari** button for it | Best overall. iOS doesn't run extensions inside Home Screen apps. |
 | **Bluefy** | Only from Bluefy's own menu (the app can't turn it on) | ✅ | Easiest if you want live heart rate everywhere |
 | **WebBLE** | Not confirmed | ✅ | Similar to Bluefy |
 | **Safari Home Screen app on its own** | ✅ Always | ❌ | Shows your latest synced heart rate instead |
@@ -74,12 +74,11 @@ don't have. Everything else (cloud sync, charts, Sync now) works in any browser.
 3. Open BetterGarmin in a normal Safari tab and tap **Connect** on the heart
    rate card (turn on Broadcast Heart Rate on the watch first). If your watch
    connects, the extension works.
-4. Tap **Share → Add to Home Screen**, open BetterGarmin from the new icon
-   (it's full screen), and try **Connect** again.
-   - Connects: you have full screen and Bluetooth together.
-   - "Bluetooth isn't supported": extensions don't run in Home Screen apps on
-     your iOS version. Use the Home Screen app every day and Bluefy only for
-     live heart rate.
+4. Tap **Share → Add to Home Screen** and use the new icon every day: it's
+   always full screen. iOS doesn't run Safari extensions inside Home Screen
+   apps, so for live heart rate tap **Open in Safari** on the heart rate card.
+   It opens BetterGarmin in a Safari tab, where beacio works and **Connect**
+   appears.
 
 The Home Screen app keeps its own storage, so connect cloud sync once more
 inside it (Worker address and access token). In your Shortcut, set the last

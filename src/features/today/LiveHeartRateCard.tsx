@@ -40,7 +40,16 @@ export function LiveHeartRateCard() {
     <Card>
       <LatestReading latest={latest} />
 
-      {live.status === 'unsupported' ? (
+      {live.status === 'unsupported' && isIosHomeScreenApp() ? (
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--border-panel)] pt-3">
+          <p className="text-xs text-[var(--text-tertiary)]">
+            Home Screen apps can't use Bluetooth extensions. Open BetterGarmin in a Safari tab (with the beacio extension) to connect your watch live.
+          </p>
+          <Button variant="secondary" onClick={openInSafari} className="shrink-0">
+            Open in Safari
+          </Button>
+        </div>
+      ) : live.status === 'unsupported' ? (
         <p className="mt-3 text-xs text-[var(--text-tertiary)]">
           For live, second-by-second updates, your browser needs Web Bluetooth: Chrome or Edge, or on iPhone Safari with the beacio extension
           (allowed on this site) or Bluefy.
@@ -59,6 +68,16 @@ export function LiveHeartRateCard() {
       {live.error && <p className="mt-2 text-sm text-rose-400">{live.error}</p>}
     </Card>
   )
+}
+
+/** Running from the iPhone Home Screen, where Safari extensions (and so Web Bluetooth add-ons) don't run. */
+function isIosHomeScreenApp(): boolean {
+  return (navigator as Navigator & { standalone?: boolean }).standalone === true
+}
+
+/** iOS 17+ opens x-safari-https:// links in a real Safari tab, where extensions run. */
+function openInSafari() {
+  window.location.href = `x-safari-${window.location.href}`
 }
 
 function LatestReading({ latest }: { latest: ReturnType<typeof useLatestHeartRate> }) {
