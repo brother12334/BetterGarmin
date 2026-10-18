@@ -41,7 +41,7 @@ details and the alternatives.
 
 | Choice | ⭐ Recommended | Alternatives |
 | --- | --- | --- |
-| **How to open the app** | A **Safari tab** with the beacio extension and the [Compact tab layout](#making-safari-look-like-an-app): live heart rate works and the toolbars blend in | Safari **Home Screen app** (always full screen, no live heart rate), [Bluefy or WebBLE](#choosing-a-browser-iphone) |
+| **How to open the app** | A **Safari tab** with the beacio extension and the [Compact tab layout](#making-safari-look-like-an-app): live heart rate works and the address bar shrinks out of the way | Safari **Home Screen app** (always full screen, no live heart rate), [Bluefy or WebBLE](#choosing-a-browser-iphone) |
 | **Live heart rate over Bluetooth** | The **beacio** Safari extension in a Safari tab (the Home Screen app's **Open in Safari** button takes you there) | [Bluefy](#choosing-a-browser-iphone) |
 | **Getting your data in** | [Cloud sync](docs/cloud-sync.md): updates itself every 30 min | [Drop in GarminDB files](#getting-your-data) by hand |
 | **Watch → Garmin** | [Every Garmin notification on](#1-turn-on-every-garmin-notification) + the [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | [Other options](#other-options) |
@@ -57,7 +57,7 @@ don't have. Everything else (cloud sync, charts, Sync now) works in any browser.
 
 | Option | Full screen | Live heart rate | Notes |
 | --- | --- | --- | --- |
-| ⭐ **Safari tab + beacio extension** | Nearly: toolbars shrink and match the app's colours | ✅ | Best overall. See [Making Safari look like an app](#making-safari-look-like-an-app). |
+| ⭐ **Safari tab + beacio extension** | Nearly: the address bar shrinks to a small pill, or hide it | ✅ | Best overall. See [Making Safari look like an app](#making-safari-look-like-an-app). |
 | **Safari Home Screen app** | ✅ Always | ❌ (extensions don't run in Home Screen apps; it has an **Open in Safari** button) | Good if you rarely need live heart rate |
 | **Bluefy** | Only from Bluefy's own menu (the app can't turn it on) | ✅ | Easiest if you want live heart rate everywhere |
 | **WebBLE** | Not confirmed | ✅ | Similar to Bluefy |
@@ -89,15 +89,15 @@ videos), but you can get close:
    The address bar shrinks to a thin strip as soon as you scroll.
 2. **Hide Toolbar:** tap the page menu at the left of the address bar →
    **Hide Toolbar**. Tap the top of the screen to bring it back.
-3. **Toolbar colours:** BetterGarmin tints Safari's bars to match whatever is
-   at the top of the screen (your background photo or gradient on Today, the
-   app colour elsewhere, light or dark), so they blend in instead of showing as
-   a grey strip. Nothing to set up.
+3. **Toolbar colours:** BetterGarmin asks Safari to tint its bars to match the
+   top of the screen. Older Safari versions follow this; the floating address
+   bar in the newest iOS mostly picks its own colour, so there it may still
+   show as a dark strip. Steps 1 and 2 are what really get it out of the way.
 
 The Home Screen app keeps its own storage, so connect cloud sync once more
 inside it (Worker address and access token). In your Shortcut, set the last
-**Open App** to the browser you opened BetterGarmin from. If the Home Screen
-app isn't in the Open App list, use Safari.
+**Open App** to **Safari** (Home Screen web apps usually aren't in the Open App
+list; Safari brings you back to your BetterGarmin tab).
 
 ## How it works
 
@@ -213,8 +213,8 @@ In the **Shortcuts** app, tap **+** and rename it exactly
 5. **If** → tap *Condition* → **Shortcut Input** → **is** → type `app`
    (if Shortcut Input isn't listed, tap **Select Variable** and tap the
    Receive block at the top)
-   - Inside the If: **Open App** → the browser you use BetterGarmin in
-     (Safari for the Home Screen app, or Bluefy)
+   - Inside the If: **Open App** → **Safari** (or Bluefy if that's where you
+     use BetterGarmin). This is where Sync now brings you back to.
    - Under **Otherwise**: **Go to Home Screen**
 6. Tap **Done**.
 
@@ -226,7 +226,7 @@ Open App  Connect
 Wait  5 seconds
 Get Contents of URL  https://…workers.dev/sync  (POST, Authorization: Bearer …)
 If  Shortcut Input  is  app
-    Open App  Safari (or Bluefy)
+    Open App  Safari
 Otherwise
     Go to Home Screen
 End If

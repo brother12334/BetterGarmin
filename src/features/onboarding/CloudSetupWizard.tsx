@@ -353,7 +353,7 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
       <SecretRow name="URL" value={syncUrl} copy={workerUrl ? syncUrl : undefined} />
       <ol start={5} className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
         <li>
-          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> your browser (Safari or Bluefy); <b>Otherwise</b> → <b>Go to Home Screen</b>
+          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> <b>Safari</b> (or Bluefy if you use that); <b>Otherwise</b> → <b>Go to Home Screen</b>
         </li>
       </ol>
       <label className="flex items-center justify-between gap-3 text-sm">
@@ -367,7 +367,7 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
       <P>
         <b>4. Where to open BetterGarmin.</b> ⭐ Recommended: a <b>Safari tab</b> with the{' '}
         <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio extension</Ext> (allowed only on this site) for live heart rate. Set
-        Settings → Apps → Safari → Tabs → <b>Compact</b> so the address bar shrinks when you scroll; BetterGarmin tints Safari's bars to match the app.
+        Settings → Apps → Safari → Tabs → <b>Compact</b> so the address bar shrinks when you scroll, or use <b>Hide Toolbar</b> from the page menu.
         Prefer always-fullscreen? <b>Share → Add to Home Screen</b> works too, but extensions don't run there, so live heart rate needs its{' '}
         <b>Open in Safari</b> button. Each one keeps its own storage, so connect cloud sync in each.
       </P>
