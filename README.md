@@ -173,11 +173,11 @@ permission to open Connect and Bluefy and to run the Shortcut; choose
 
 **Check that it worked**
 
-- **Quick check:** temporarily add a **Show Result** action right after
+- **Quick check:** temporarily add a **Show Content** action (called Show Result on older iOS; Quick Look also works) right after
   *Get Contents of URL* and run the Shortcut. `{"started":"…"}` means the
   cloud sync was started. `Unauthorized` means the token or the `Bearer `
   part is wrong; a "server not found" error means the address is wrong.
-  Remove Show Result afterwards.
+  Remove it afterwards.
 - **On GitHub:** open your repository → **Actions** → **Sync Garmin data**.
   A new run should appear within seconds of running the Shortcut.
 - **In BetterGarmin:** about 2–3 minutes later, **Last synced** on the More
