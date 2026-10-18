@@ -96,6 +96,22 @@ BetterGarmin reads your data from Garmin's servers, and only the official
 hasn't run in a while, BetterGarmin has nothing new to fetch. These three
 steps make syncing as hands-off as an iPhone allows.
 
+**All the ways to keep it synced, at a glance**
+
+| Method | Effort | What it covers |
+| --- | --- | --- |
+| [Garmin notifications on](#1-turn-on-every-garmin-notification) | One-time, 1 min | More frequent background syncs all day |
+| [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | One-time, 5 min | One tap: watch uploads **and** cloud sync starts right away |
+| [Shortcut automations](#3-run-it-automatically) | One-time, 2 min each | Syncs on wake-up, when you open an app, when you charge, or with an NFC tap |
+| [Garmin Connect widget](#other-options) | One-time | Gives the app extra chances to sync |
+| [Garmin Express while charging](#other-options) | Plug in at a computer | Full sync every time you charge there |
+| [Wi-Fi upload](#other-options) | Watches with Wi-Fi only | Uploads activities without the phone |
+| [Spare Android phone](#other-options) | Advanced | Fully automatic syncing at home |
+| Cloud sync schedule | Automatic | BetterGarmin pulls from Garmin every 30 minutes |
+
+The in-app setup (**More → Cloud sync → Set up**) walks through the first
+three as its last step.
+
 #### 1. Turn on every Garmin notification
 
 In Garmin Connect, open your device → **Notifications & Alerts** and switch
@@ -198,6 +214,28 @@ Shortcut** → BetterGarmin Sync. Good triggers:
   phone on it.
 - Optional backup **Time of Day** runs at 7:30 AM, 12:30 PM, 5:00 PM and
   9:30 PM. These only run if the phone is unlocked at that minute.
+
+#### Other options
+
+- **Garmin Connect widget:** add it to your Home Screen or Lock Screen. iOS
+  refreshes widgets regularly, which gives Garmin Connect extra chances to
+  sync in the background.
+- **Garmin Express while charging:** install Garmin Express on a Mac or PC and
+  charge the watch from that computer. It syncs everything each time you plug
+  in, so your sleep is up to date in the morning. It only works while the
+  watch is plugged in or nearby.
+- **Wi-Fi upload:** if your watch has Wi-Fi (many Music and higher-end
+  models), add your home network in Garmin Connect. It then uploads activities
+  on its own, mostly after workouts and while charging. Screenless bands like
+  the CIRQA don't have Wi-Fi.
+- **Spare Android phone (advanced):** Android lets apps run in the
+  background freely, and tools like MacroDroid can open Garmin Connect every
+  hour even while the phone is locked. The catches: the watch pairs with only
+  one phone, so you'd use your iPhone's Garmin Connect less, and it only syncs
+  while you're home.
+- **What doesn't work:** Garmin's LiveTrack only runs during recorded
+  activities and still needs the phone app. Open-source replacements like
+  Gadgetbridge are Android-only.
 
 > Yes, it's annoying to set up, but it's the only option available at the
 > moment. Garmin doesn't let other apps pull data from the watch or tell

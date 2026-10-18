@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button'
 import { useData } from '../../app/DataProvider'
 import { cn } from '../../lib/cn'
 import { CopyField } from './CopyField'
+import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import workerCode from '../../../worker/dashboard-worker.js?raw'
 
 /**
@@ -53,7 +54,7 @@ function extractAccountId(input: string): string | null {
   return m ? m[0].toLowerCase() : null
 }
 
-const STEPS = ['Your copy', 'Storage', 'Worker', 'Storage keys', 'GitHub secrets', 'First sync', 'Connect', 'Sync now']
+const STEPS = ['Your copy', 'Storage', 'Worker', 'Storage keys', 'GitHub secrets', 'First sync', 'Connect', 'Sync now', 'Auto-sync']
 
 export function CloudSetupWizard({ onDone }: { onDone?: () => void }) {
   const [s, setS] = useState<WizardState>(loadState)
@@ -185,7 +186,7 @@ export function CloudSetupWizard({ onDone }: { onDone?: () => void }) {
         )
       case 6:
         return <ConnectStep workerUrl={s.workerUrl} token={s.accessToken} onConnected={() => go(7)} />
-      default:
+      case 7:
         return (
           <>
             <P>
@@ -199,11 +200,13 @@ export function CloudSetupWizard({ onDone }: { onDone?: () => void }) {
             <SecretRow name="GITHUB_TOKEN (Secret)" value="the token you just created" />
             <SecretRow name="GITHUB_REPO (Text)" copy={s.owner && s.repo ? `${s.owner}/${s.repo}` : undefined} value={s.owner && s.repo ? `${s.owner}/${s.repo}` : 'owner/repo'} />
             <SecretRow name="GITHUB_REF (Text)" value="your fork's default branch, e.g. main" />
-            <Button variant="secondary" onClick={onDone}>
-              Finish
+            <Button variant="secondary" onClick={() => go(8)}>
+              Next
             </Button>
           </>
         )
+      case 8:
+        return <AutoSyncStep workerUrl={s.workerUrl} onDone={onDone} />
     }
   })()
 
@@ -314,6 +317,59 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
 
 function Missing() {
   return <p className="text-sm text-amber-400">Enter your GitHub username and repo in step 1 first.</p>
+}
+
+/** Your watch only uploads through the Garmin Connect app, so this step makes the phone side as hands-off as iOS allows. */
+function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () => void }) {
+  const shortcutOn = useShortcutSync()
+  const syncUrl = workerUrl ? `${workerUrl.replace(/\/+$/, '')}/sync` : 'your Worker address + /sync'
+  return (
+    <>
+      <P>
+        Your watch only uploads through the <b>Garmin Connect</b> app. Until it runs, there's nothing new to sync. Do these on your iPhone:
+      </P>
+      <P>
+        <b>1. Notifications.</b> In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
+        alerts stays connected, so Garmin Connect syncs in the background much more often. Also keep Background App Refresh on, Low Power Mode off, and
+        don't swipe the app closed.
+      </P>
+      <P>
+        <b>2. The Shortcut.</b> In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
+      </P>
+      <ol className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
+        <li>
+          Tap ⓘ → turn on <b>Show in Share Sheet</b>, and set the Receive block at the top to <b>Text</b>
+        </li>
+        <li>
+          <b>Open App</b> → Connect
+        </li>
+        <li>
+          <b>Wait</b> → 5 seconds
+        </li>
+        <li>
+          <b>Get Contents of URL</b> → method <b>POST</b>, header <code>Authorization</code> = <code>Bearer</code> + your access token, URL:
+        </li>
+      </ol>
+      <SecretRow name="URL" value={syncUrl} copy={workerUrl ? syncUrl : undefined} />
+      <ol start={5} className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
+        <li>
+          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> Bluefy; <b>Otherwise</b> → <b>Go to Home Screen</b>
+        </li>
+      </ol>
+      <label className="flex items-center justify-between gap-3 text-sm">
+        Make Sync now run this Shortcut
+        <input type="checkbox" checked={shortcutOn} onChange={(e) => setShortcutSync(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+      </label>
+      <P>
+        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: <b>Sleep → Wake Up</b>, <b>App → Is
+        Opened</b> (an app you use a few times a day), and <b>Charger → Connected</b>.
+      </P>
+      <P>The README has the full guide, with more trigger ideas and how to check it worked.</P>
+      <Button variant="secondary" onClick={onDone}>
+        Finish
+      </Button>
+    </>
+  )
 }
 
 function SecretRow({ name, value, copy }: { name: string; value: string; copy?: string }) {
