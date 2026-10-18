@@ -371,23 +371,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const [garminPull, setGarminPull] = useState<GarminPullState>({ status: 'idle' })
 
+  // Set synchronously on tap, so a double tap can't start two GitHub runs before the button re-renders as disabled.
+  const pullInFlight = useRef(false)
+
   const pullFromGarmin = useCallback(async () => {
     const config = cloudConfigRef.current
-    if (!config) return
+    if (!config || pullInFlight.current) return
     if (!navigator.onLine) {
       setGarminPull({ status: 'error', message: "You're offline. Showing the data saved on this device." })
       return
     }
+    pullInFlight.current = true
     try {
-      // With the Shortcut on, it opens Garmin Connect first and starts the cloud sync itself; we just watch for the result.
-      let startedAt: Date
-      if (getShortcutSync()) {
-        startedAt = new Date()
-        runSyncShortcut()
-      } else {
-        startedAt = await startCloudSync(config)
-      }
+      let startedAt = new Date()
       setGarminPull({ status: 'running', startedAt })
+      // With the Shortcut on, it opens Garmin Connect first and starts the cloud sync itself; we just watch for the result.
+      if (getShortcutSync()) runSyncShortcut()
+      else startedAt = await startCloudSync(config)
       // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
       const deadline = Date.now() + PULL_TIMEOUT_MS
       while (Date.now() < deadline) {
@@ -403,6 +403,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setGarminPull({ status: 'error', message: "The sync is taking longer than usual. It will show up automatically when it's done." })
     } catch (err) {
       setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
+    } finally {
+      pullInFlight.current = false
     }
   }, [syncFromCloud])
 
