@@ -35,6 +35,17 @@ function set(patch: Partial<LiveHrState>) {
   listeners.forEach((l) => l())
 }
 
+// Safari extensions that add Web Bluetooth (e.g. beacio) can inject navigator.bluetooth after the app has started,
+// so keep checking for a few seconds, and again whenever the page comes back, before giving up on it.
+function recheckSupport() {
+  if (state.status === 'unsupported' && typeof navigator !== 'undefined' && navigator.bluetooth) set({ status: 'disconnected' })
+}
+if (typeof window !== 'undefined' && state.status === 'unsupported') {
+  for (const ms of [250, 1000, 2500, 5000, 10000]) setTimeout(recheckSupport, ms)
+  window.addEventListener('load', recheckSupport)
+  document.addEventListener('visibilitychange', recheckSupport)
+}
+
 function handleValueChanged(ev: Event) {
   const target = ev.target as BluetoothRemoteGATTCharacteristic
   if (target.value) set({ bpm: parseHeartRateMeasurement(target.value) })

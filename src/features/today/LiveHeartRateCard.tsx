@@ -42,8 +42,8 @@ export function LiveHeartRateCard() {
 
       {live.status === 'unsupported' ? (
         <p className="mt-3 text-xs text-[var(--text-tertiary)]">
-          For live, second-by-second updates instead of a refreshed reading, your browser needs Web Bluetooth
-          (Chrome or Edge) — not available in Safari or iOS.
+          For live, second-by-second updates, your browser needs Web Bluetooth: Chrome or Edge, or on iPhone Safari with the beacio extension
+          (allowed on this site) or Bluefy.
         </p>
       ) : (
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--border-panel)] pt-3">
