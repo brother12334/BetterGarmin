@@ -21,6 +21,19 @@ export interface BandActivity {
   anaerobicTE: number | null
   /** Heart-rate samples (epoch ms, bpm). */
   hr: [number, number][]
+  /** Strength sets the band logged (active sets only), when the file has them. */
+  sets?: BandSet[]
+}
+
+export interface BandSet {
+  startTime: string | null
+  /** Seconds. */
+  duration: number | null
+  reps: number | null
+  /** Kilograms. */
+  weight: number | null
+  /** Garmin's exercise category, e.g. "benchPress", when the band recognised or was told the exercise. */
+  exercise: string | null
 }
 
 export type FitResult =
@@ -50,6 +63,18 @@ export function validateAndDecodeFit(bytes: Uint8Array, expectedSize: number | n
     const v = num(r.heartRate)
     if (t != null && v != null) hr.push([t, v])
   }
+  const sets: BandSet[] = []
+  for (const st of m.setMesgs ?? []) {
+    if (st.setType !== 'active') continue
+    const cat = Array.isArray(st.category) ? st.category[0] : st.category
+    sets.push({
+      startTime: iso(st.startTime),
+      duration: num(st.duration),
+      reps: num(st.repetitions),
+      weight: num(st.weight),
+      exercise: typeof cat === 'string' && cat !== 'unknown' ? cat : null,
+    })
+  }
   return {
     ok: true,
     fileType,
@@ -67,6 +92,7 @@ export function validateAndDecodeFit(bytes: Uint8Array, expectedSize: number | n
       aerobicTE: num(session.totalTrainingEffect),
       anaerobicTE: num(session.totalAnaerobicTrainingEffect),
       hr,
+      sets,
     },
   }
 }

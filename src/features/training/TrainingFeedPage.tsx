@@ -71,6 +71,21 @@ export function TrainingFeedPage() {
 
   // Strength (and Element 26 import) works without any Garmin activities, so it is always reachable.
   const strengthLink = (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/training/history">
+          <Card className="flex h-full flex-col gap-1">
+            <p className="font-semibold">Workout history</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Band recordings, search, notes</p>
+          </Card>
+        </Link>
+        <Link to="/training/routines">
+          <Card className="flex h-full flex-col gap-1">
+            <p className="font-semibold">Routines</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Plans, progress and PRs</p>
+          </Card>
+        </Link>
+      </div>
       <Link to="/training/strength">
         <Card className="flex items-center gap-4 border-teal-500/30 transition-colors hover:border-teal-500/60">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-teal-500/15 text-teal-400">
@@ -85,6 +100,7 @@ export function TrainingFeedPage() {
           <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
         </Card>
       </Link>
+    </>
   )
 
   const records = useMemo(() => {

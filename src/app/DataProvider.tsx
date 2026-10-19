@@ -35,7 +35,7 @@ interface DataContextValue {
   disconnectCloud: () => void
   syncNow: () => Promise<void>
   /** Runs the Garmin download now (not just a re-check of storage), then loads the result. */
-  pullFromGarmin: () => Promise<void>
+  pullFromGarmin: (opts?: { bandOnly?: boolean }) => Promise<void>
   garminPull: GarminPullState
   /** Whether the device currently has a connection. */
   online: boolean
@@ -442,7 +442,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [syncFromCloud],
   )
 
-  const pullFromGarmin = useCallback(async () => {
+  const pullFromGarmin = useCallback(async (opts: { bandOnly?: boolean } = {}) => {
     if (pullInFlight.current) return
     const config = cloudConfigRef.current
     const bluetooth = typeof navigator !== 'undefined' && 'bluetooth' in navigator
@@ -466,7 +466,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const bandNote = parts.join(' · ')
           // When Garmin Connect is also paired it collects the all-day and sleep files first, so those arrive through
           // the cloud copy: refresh that too.
-          if (config && navigator.onLine) {
+          if (config && navigator.onLine && !opts.bandOnly) {
             try {
               const startedAt = await startCloudSync(config)
               savePendingPull(startedAt)
@@ -483,7 +483,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return
         } catch (err) {
           const why = err instanceof Error ? err.message : String(err)
-          if (!config || !navigator.onLine) throw new Error(`Couldn't sync from the band: ${why}`)
+          if (!config || !navigator.onLine || opts.bandOnly) throw new Error(`Couldn't sync from the band: ${why}`)
           // Band unreachable: use the cloud copy, but say so.
           bandFailure = why
         }

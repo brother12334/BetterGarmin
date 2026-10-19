@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { band } from '../../lib/band/bandStore'
@@ -7,9 +8,6 @@ import { useData } from '../../app/DataProvider'
 import type { WellnessSummary } from '../../lib/band/bandWellness'
 import { syncBand, type SyncProgress, type SyncReport } from '../../lib/band/bandSync'
 
-const fmtDuration = (s: number | null) => (s == null ? '—' : `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, '0')}s`)
-const label = (r: BandFileRecord) =>
-  r.activity?.subSport && r.activity.subSport !== 'generic' ? r.activity.subSport.replace(/([A-Z])/g, ' $1').toLowerCase() : (r.activity?.sport ?? 'activity')
 
 /** Experimental direct sync: downloads new files from the band over Bluetooth and shows what was imported. */
 export function BandSyncPanel({ ready }: { ready: boolean }) {
@@ -18,7 +16,6 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
   const [report, setReport] = useState<SyncReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [records, setRecords] = useState<BandFileRecord[] | null>(null)
-  const [open, setOpen] = useState<string | null>(null)
   const [wellness, setWellness] = useState<WellnessSummary | null>(null)
   const { refreshBandData } = useData()
 
@@ -74,7 +71,7 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
         <div className="flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
           <p>
             {progress?.phase === 'listing' && 'Listing files on the band…'}
-            {cur && `File ${cur.index + 1} of ${cur.total}${cur.dataType ? ` (${cur.dataType})` : ''}: ${cur.received.toLocaleString()} of ${cur.size.toLocaleString()} bytes`}
+            {cur && `File ${cur.index + 1} of ${cur.total}${cur.dataType ? ` (${cur.dataType})` : ''}: ${cur.received.toLocaleString()} of ${cur.size.toLocaleString()} bytes${cur.attempt > 1 ? ` (retry ${cur.attempt - 1})` : ''}`}
           </p>
           {cur && cur.size > 0 && (
             <div className="h-1 overflow-hidden rounded-full bg-[var(--ring-track)]">
@@ -116,51 +113,10 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
       )}
 
       {activities.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="eyebrow text-[var(--text-tertiary)]">Activities from the band</p>
-          {activities.map((r) => {
-            const a = r.activity!
-            const expanded = open === r.key
-            return (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setOpen(expanded ? null : r.key)}
-                className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-3 text-left"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold capitalize">{label(r)}</span>
-                  <span className="text-xs text-[var(--text-tertiary)]">{a.startTime ? new Date(a.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : ''}</span>
-                </div>
-                <div className="mt-2 grid grid-cols-3 gap-2 text-xs tabular-nums">
-                  <Fact k="Duration" v={fmtDuration(a.elapsed)} />
-                  <Fact k="Calories" v={a.calories ?? '—'} />
-                  <Fact k="Avg / max HR" v={a.avgHr != null ? `${a.avgHr} / ${a.maxHr ?? '—'}` : '—'} />
-                </div>
-                {expanded && (
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs tabular-nums">
-                    <Fact k="Moving time" v={fmtDuration(a.timer)} />
-                    <Fact k="Aerobic TE" v={a.aerobicTE?.toFixed(1) ?? '—'} />
-                    <Fact k="Anaerobic TE" v={a.anaerobicTE?.toFixed(1) ?? '—'} />
-                    <Fact k="HR samples" v={a.hr.length} />
-                    <Fact k="Distance" v={a.distance != null ? `${(a.distance / 1000).toFixed(2)} km` : '—'} />
-                    <Fact k="File" v={`${(r.size / 1024).toFixed(1)} KB`} />
-                  </div>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        <Link to="/training/history" className="text-sm font-medium text-[var(--accent)]">
+          {activities.length} workout{activities.length === 1 ? '' : 's'} from the band · open Workout history ›
+        </Link>
       )}
-    </div>
-  )
-}
-
-function Fact({ k, v }: { k: string; v: string | number }) {
-  return (
-    <div>
-      <p className="text-[var(--text-tertiary)]">{k}</p>
-      <p className="font-semibold text-[var(--text-primary)]">{v}</p>
     </div>
   )
 }

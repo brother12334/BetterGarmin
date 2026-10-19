@@ -8,6 +8,8 @@ import { useApplyAppearance } from './app/appearance'
 
 const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
 const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ default: m.MorePage })))
+const WorkoutHistoryPage = lazy(() => import('./features/history/WorkoutHistoryPage').then((m) => ({ default: m.WorkoutHistoryPage })))
+const BandWorkoutPage = lazy(() => import('./features/history/BandWorkoutPage').then((m) => ({ default: m.BandWorkoutPage })))
 const HealthPage = lazy(() => import('./features/health/HealthPage').then((m) => ({ default: m.HealthPage })))
 const SleepPage = lazy(() => import('./features/sleep/SleepPage').then((m) => ({ default: m.SleepPage })))
 const TrainingFeedPage = lazy(() =>
@@ -60,6 +62,8 @@ export default function App() {
           <Route index element={<TodayPage />} />
           <Route path="health" element={<HealthPage />} />
           <Route path="training" element={<TrainingFeedPage />} />
+          <Route path="training/history" element={<WorkoutHistoryPage />} />
+          <Route path="training/history/:key" element={<BandWorkoutPage />} />
           <Route path="training/strength" element={<StrengthPage />} />
           <Route path="training/strength/workout/:workoutId" element={<WorkoutTimelinePage />} />
           <Route path="training/strength/compare/:a/:b" element={<CompareWorkoutsPage />} />
