@@ -48,6 +48,14 @@ describe('band wellness files', () => {
     expect(monitoring.statements.filter((s) => s.sql.includes('monitoring_hr')).length).toBe(11)
   })
 
+  it('finds the FIT file when the transfer put extra bytes in front of it', () => {
+    const fit = wellnessFit()
+    const prefixed = new Uint8Array(fit.length + 3)
+    prefixed.set([0, 0, 0])
+    prefixed.set(fit, 3)
+    expect(decodeWellness(prefixed)?.stress.length).toBe(6)
+  })
+
   it('rejects a corrupted file', () => {
     const b = wellnessFit()
     b[50] ^= 0xff

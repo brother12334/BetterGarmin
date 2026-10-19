@@ -402,7 +402,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const refreshBandData = useCallback(async () => {
     const summary = await applyBandWellness(indexedDbBandStore).catch(() => null)
-    if (summary) {
+    if (summary?.files) {
       setLoadedKinds((prev) => Array.from(new Set<DbKind>([...prev, 'garmin', 'monitoring'])))
       setStatus((s) => (s === 'empty' ? 'ready' : s))
       setLastSynced(new Date()) // re-runs every screen's queries
@@ -461,9 +461,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const parts = [
             `Band: ${report.listed} file${report.listed === 1 ? '' : 's'} listed, ${n('imported') + n('unsupported')} new, ${n('skipped-duplicate')} already synced`,
             n('failed') ? `${n('failed')} failed (${failed?.error})` : '',
-            w ? `${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate readings, ${w.nights} nights` : 'no stress, energy or sleep data in the files yet',
+            w?.files ? `${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate readings, ${w.nights} nights` : 'no stress, energy or sleep data read from the files yet (file details: More → Garmin band)',
           ].filter(Boolean)
-          setGarminPull(n('failed') && !w ? { status: 'error', message: parts.join(' · ') } : { status: 'idle', note: parts.join(' · ') })
+          setGarminPull(n('failed') && !w?.files ? { status: 'error', message: parts.join(' · ') } : { status: 'idle', note: parts.join(' · ') })
           return
         } catch (err) {
           const why = err instanceof Error ? err.message : String(err)

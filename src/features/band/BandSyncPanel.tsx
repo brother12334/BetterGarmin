@@ -40,7 +40,8 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
       setReport(r)
       const w = await refreshBandData()
       setWellness(w)
-      band.addLog('info', `All-day data: ${w ? `${w.files} files, ${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate samples, ${w.nights} nights; messages ${JSON.stringify(w.counts)}` : 'none found'}`)
+      for (const line of w?.diagnostics ?? []) band.addLog('info', `File: ${line}`)
+      band.addLog('info', `All-day data: ${w?.files ? `${w.files} files, ${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate samples, ${w.nights} nights; messages ${JSON.stringify(w.counts)}` : 'none found'}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -93,10 +94,16 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
             {counts.failed ? <Badge tone="danger">{counts.failed} failed</Badge> : null}
           </div>
           <p>
-            {wellness
+            {wellness?.files
               ? `All-day data: ${wellness.stress.toLocaleString()} stress, ${wellness.bodyBattery.toLocaleString()} energy and ${wellness.hr.toLocaleString()} heart-rate readings, ${wellness.nights} night${wellness.nights === 1 ? '' : 's'} of sleep.`
               : 'No stress, energy, heart-rate or sleep data found in the synced files yet.'}
           </p>
+          {wellness && wellness.diagnostics.length > 0 && (
+            <details className="text-[11px] text-[var(--text-tertiary)]">
+              <summary className="cursor-pointer">File details ({wellness.diagnostics.length})</summary>
+              <pre className="mt-1 whitespace-pre-wrap break-all font-mono">{wellness.diagnostics.join('\n')}</pre>
+            </details>
+          )}
           {report.outcomes
             .filter((o) => o.result === 'failed')
             .slice(0, 5)

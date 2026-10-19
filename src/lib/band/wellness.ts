@@ -41,12 +41,28 @@ export function emptyWellness(): WellnessData {
   return { stress: [], bodyBattery: [], hr: [], steps: [], restingHr: [], sleepLevels: [], sleepScores: [], counts: {} }
 }
 
-/** Decodes one wellness FIT file. Returns null when the file isn't valid FIT. */
-export function decodeWellness(bytes: Uint8Array): WellnessData | null {
+/** Where the FIT header starts: 0 normally, or later if the transfer put extra bytes in front. -1 if there's no ".FIT". */
+export function fitStart(bytes: Uint8Array): number {
+  for (let i = 8; i + 4 <= Math.min(bytes.length, 256); i++) {
+    if (bytes[i] === 0x2e && bytes[i + 1] === 0x46 && bytes[i + 2] === 0x49 && bytes[i + 3] === 0x54) {
+      const start = i - 8
+      if (bytes[start] === 12 || bytes[start] === 14) return start
+    }
+  }
+  return -1
+}
+
+export type WellnessDecode = { ok: true; data: WellnessData; offset: number } | { ok: false; reason: string }
+
+/** Decodes one wellness FIT file, explaining why when it can't. */
+export function decodeWellnessDetailed(raw: Uint8Array): WellnessDecode {
+  const offset = fitStart(raw)
+  if (offset < 0) return { ok: false, reason: 'no FIT header' }
+  const bytes = offset ? raw.slice(offset) : raw
   const stream = Stream.fromByteArray(Array.from(bytes))
-  if (!Decoder.isFIT(stream)) return null
+  if (!Decoder.isFIT(stream)) return { ok: false, reason: 'bad FIT header' }
   const decoder = new Decoder(stream)
-  if (!decoder.checkIntegrity()) return null
+  if (!decoder.checkIntegrity()) return { ok: false, reason: 'FIT integrity check failed' }
   const out = emptyWellness()
   // Monitoring samples often carry only a 16-bit timestamp, resolved against the last full one, in file order.
   let lastFull: number | null = null // FIT-epoch seconds
@@ -103,8 +119,15 @@ export function decodeWellness(bytes: Uint8Array): WellnessData | null {
   }
 
   const { errors } = decoder.read({ mesgListener: listener as never, includeUnknownData: true, mergeHeartRates: false })
-  if (errors.length) return null
-  return out
+  // The file passed its CRC, so keep whatever decoded before an error rather than dropping the whole file.
+  if (errors.length && !Object.keys(out.counts).length) return { ok: false, reason: `decode error: ${String(errors[0])}` }
+  return { ok: true, data: out, offset }
+}
+
+/** Decodes one wellness FIT file. Returns null when it can't be read. */
+export function decodeWellness(bytes: Uint8Array): WellnessData | null {
+  const r = decodeWellnessDetailed(bytes)
+  return r.ok ? r.data : null
 }
 
 export function mergeWellness(parts: WellnessData[]): WellnessData {
