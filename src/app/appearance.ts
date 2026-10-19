@@ -4,7 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 export const TODAY_WIDGETS = [
   { id: 'hero', label: 'Readiness & backdrop' },
   { id: 'sync', label: 'Sync now bar' },
-  { id: 'training', label: 'Training (pinned routines, latest workout)' },
+  { id: 'training', label: 'Training (latest workout)' },
   { id: 'heartRate', label: 'Heart rate' },
   { id: 'bars', label: 'Sleep / Stress / Energy bars' },
   { id: 'energy', label: 'Energy Reserve curve' },

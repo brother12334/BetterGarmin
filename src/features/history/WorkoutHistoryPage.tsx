@@ -75,7 +75,7 @@ export function WorkoutHistoryPage() {
       ) : shown.length === 0 ? (
         <Card>
           <p className="text-sm text-[var(--text-secondary)]">
-            {items.length === 0 ? 'No workouts yet. Record one on your band and tap Sync now, or log one under Strength.' : 'No workouts match that search.'}
+            {items.length === 0 ? 'No workouts yet. Record one on your band and tap Sync now, or import one from Element 26 under Strength.' : 'No workouts match that search.'}
           </p>
         </Card>
       ) : (

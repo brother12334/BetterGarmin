@@ -1,81 +1,22 @@
 import { useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { useUnits } from '../../app/units'
 import { convertWeight, weightUnitLabel } from '../../lib/units'
 import { useStrengthLog } from '../training/useStrengthLog'
 import { useWorkoutHistory } from '../history/useWorkoutHistory'
-import { deleteRoutine, duplicateRoutine, loadDraft, moveRoutine, sortedRoutines, upsertRoutine, useRoutines } from './routines'
 import { exerciseProgress, weeklyStats } from './progress'
 
-/** Saved routines (pinned first) and progress from logged and recorded workouts. */
-export function RoutinesPage() {
-  const routines = useRoutines()
-  const navigate = useNavigate()
-  const ordered = sortedRoutines(routines)
-
+/** Progress from recorded and imported workouts: weekly frequency, training time and personal records. */
+export function ProgressPage() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Routines</h1>
-        <Button onClick={() => navigate('/training/routines/new/edit')}>New routine</Button>
-      </div>
-
-      {ordered.length === 0 ? (
-        <Card>
-          <p className="text-sm text-[var(--text-secondary)]">No routines yet. Create one with your exercises and target sets, reps and weight, then start it whenever you train.</p>
-        </Card>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {ordered.map((r) => {
-            const draft = loadDraft(r.id)
-            return (
-              <li key={r.id}>
-                <Card className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">
-                        {r.pinned && <span aria-label="Pinned">★ </span>}
-                        {r.name}
-                      </p>
-                      <p className="text-xs text-[var(--text-tertiary)]">
-                        {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'} · {r.exercises.reduce((n, e) => n + e.sets, 0)} sets
-                      </p>
-                    </div>
-                    {draft && <Badge tone="warning">Unfinished</Badge>}
-                  </div>
-                  <Button onClick={() => navigate(`/training/routines/${r.id}/run`)}>{draft ? 'Continue' : 'Start'}</Button>
-                  <div className="flex flex-wrap gap-1 text-sm">
-                    <Action onClick={() => upsertRoutine({ ...r, pinned: !r.pinned })}>{r.pinned ? 'Unpin' : 'Pin'}</Action>
-                    <Action onClick={() => navigate(`/training/routines/${r.id}/edit`)}>Edit</Action>
-                    <Action onClick={() => duplicateRoutine(r.id)}>Duplicate</Action>
-                    <Action onClick={() => moveRoutine(r.id, -1)} label="Move up">
-                      ↑
-                    </Action>
-                    <Action onClick={() => moveRoutine(r.id, 1)} label="Move down">
-                      ↓
-                    </Action>
-                    <Action onClick={() => confirm(`Delete "${r.name}"? Logged workouts are kept.`) && deleteRoutine(r.id)}>Delete</Action>
-                  </div>
-                </Card>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
+      <Link to="/training" className="text-sm text-[var(--accent)]">
+        ‹ Training
+      </Link>
       <Progress />
     </div>
-  )
-}
-
-function Action({ onClick, children, label }: { onClick: () => void; children: React.ReactNode; label?: string }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} className="min-h-11 rounded-control px-3 text-[var(--text-secondary)] hover:bg-[var(--ring-track)]">
-      {children}
-    </button>
   )
 }
 
@@ -101,7 +42,7 @@ function Progress() {
 
   return (
     <>
-      <h2 className="mt-2 text-xl font-bold">Progress</h2>
+      <h1 className="text-2xl font-bold">Progress</h1>
       <Card className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
           <p className="font-semibold">Workouts per week</p>
@@ -127,7 +68,7 @@ function Progress() {
       <Card className="flex flex-col gap-2">
         <p className="font-semibold">Strength by exercise</p>
         {progress.length === 0 ? (
-          <p className="text-sm text-[var(--text-tertiary)]">Log sets with a weight and reps to see progress and personal records.</p>
+          <p className="text-sm text-[var(--text-tertiary)]">Import workouts with weights and reps from Element 26 to see progress and personal records.</p>
         ) : (
           <ul className="flex flex-col divide-y divide-[var(--border-panel)]">
             {progress.slice(0, 12).map((p) => {

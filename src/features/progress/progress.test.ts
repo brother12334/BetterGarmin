@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { exerciseProgress, weeklyStats } from './progress'
-import { previousSets } from './routines'
 import type { WorkoutWithSets } from '../../db/strengthLog'
 
 const w = (day: string, sets: [string, number, number | null, boolean?][]): WorkoutWithSets =>
@@ -26,12 +25,6 @@ describe('progress', () => {
     expect(p.find((x) => x.exercise === 'Pull-up')).toBeUndefined()
     const p2 = exerciseProgress([...log, w('2026-10-22', [['Bench', 6, 70]])])
     expect(p2.find((x) => x.exercise === 'Bench')!.isRecord).toBe(true)
-  })
-
-  it('previous numbers come from the newest earlier workout with that exercise', () => {
-    expect(previousSets(log, 'bench')).toEqual({ day: '2026-10-15', sets: [{ reps: 8, weight: 60 }] })
-    expect(previousSets(log, 'Bench', '2026-10-15')?.day).toBe('2026-10-08')
-    expect(previousSets(log, 'Squat')).toBeNull()
   })
 
   it('weekly stats count workouts and only known durations', () => {

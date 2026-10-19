@@ -79,10 +79,10 @@ export function TrainingFeedPage() {
             <p className="text-xs text-[var(--text-tertiary)]">Band recordings, search, notes</p>
           </Card>
         </Link>
-        <Link to="/training/routines">
+        <Link to="/training/progress">
           <Card className="flex h-full flex-col gap-1">
-            <p className="font-semibold">Routines</p>
-            <p className="text-xs text-[var(--text-tertiary)]">Plans, progress and PRs</p>
+            <p className="font-semibold">Progress</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Weekly workouts, time and PRs</p>
           </Card>
         </Link>
       </div>
@@ -94,7 +94,7 @@ export function TrainingFeedPage() {
           <div className="min-w-0 flex-1">
             <p className="font-semibold">Strength Training</p>
             <p className="text-xs text-[var(--text-tertiary)]">
-              {strengthCount > 0 ? `${strengthCount} session${strengthCount === 1 ? '' : 's'} · PRs, volume, 1RM trends` : 'Log sets, track PRs and volume'}
+              {strengthCount > 0 ? `${strengthCount} session${strengthCount === 1 ? '' : 's'} · PRs, volume, 1RM trends` : 'Import from Element 26, track PRs and volume'}
             </p>
           </div>
           <span className="shrink-0 text-[var(--text-tertiary)]">→</span>

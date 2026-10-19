@@ -19,7 +19,7 @@ Not affiliated with Garmin. Not medical advice.
 
 - **Today**: a readiness score, Energy Reserve curve, sleep and stress bars, steps and active calories, and plain-language insights.
 - **Health, Sleep, Training**: trends, records and activity details, including maps.
-- **Strength training**: log workouts, or import them from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
+- **Strength training**: import workouts from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
 - **Insights**: findings that link training with sleep, resting HR and HRV, with sample sizes and evidence levels instead of overconfident claims. Also history charts, personal experiments, and an optional Gemini assistant that uses your own API key.
 - **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge; on iPhone, Safari with the beacio extension or Bluefy).
 - **Sync straight from the band**: **Sync now** downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. No Garmin Connect or Garmin cloud needed.
@@ -129,13 +129,12 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   exercise, note or date; open a workout for heart rate, recorded sets,
   metrics (anything not recorded is labelled), your own name and notes, and
   **Export FIT**.
-- **Routines** (Training → Routines): create, edit, duplicate, reorder and
-  pin routines with target sets, reps and weight. Running one shows last
-  session's numbers next to each set and keeps unfinished entries through a
-  refresh. **Progress** shows workouts per week, training time and personal
-  records, using only data that was actually recorded.
-- **Backup and privacy** (More): workouts CSV, a full backup file (routines,
-  notes, history and original band files), restore, and separate delete
+- **Progress** (Training → Progress): workouts per week, training time and
+  personal records compared with the previous session, using only data that
+  was actually recorded or imported. Strength sets come from **Element 26**
+  imports (Strength → Import); there's no in-app workout logging.
+- **Backup and privacy** (More): workouts CSV, a full backup file (notes,
+  history and original band files), restore, and separate delete
   buttons. Everything stays on the phone.
 - **Reminders** (More): optional, with quiet hours. They only fire while the
   app is open; iPhone doesn't let web pages schedule notifications.
@@ -145,7 +144,7 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
 | Connect, handshake, list files | ✅ tested on a real CIRQA |
 | Download, size and FIT checks, no duplicates | ✅ tested on a real CIRQA (18 files) |
 | Workout start/pause/resume/finish on the band | ✅ tested (driven from Element 26; the code here is unchanged) |
-| Auto-reconnect, per-file retries, save status, history, routines, backup | 🧪 simulator and demo tested, awaiting device testing |
+| Auto-reconnect, per-file retries, save status, history, progress, backup | 🧪 simulator and demo tested, awaiting device testing |
 | Battery level | 🧪 read from the standard Battery Service if the band offers it; not seen on a CIRQA yet |
 | All-day and sleep files from the band | ❓ none seen yet (see below) |
 | Alarms that vibrate on the band | ❌ not offered: storing an alarm on the band and seeing it fire hasn't been verified |

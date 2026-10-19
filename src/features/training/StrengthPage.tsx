@@ -11,7 +11,6 @@ import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS } from '../../l
 import { EXERCISE_CATALOG, SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useStrengthLog } from './useStrengthLog'
 import { useStrengthSessions } from './useStrengthSessions'
-import { LogWorkoutForm } from './LogWorkoutForm'
 import { ImportElement26Button } from './ImportElement26Button'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import {
@@ -22,16 +21,13 @@ import {
   computeWeeklyVolume,
   setsForExercise,
 } from './strengthStats'
-import type { WorkoutWithSets } from '../../db/strengthLog'
 
 const BALANCE_WINDOW_DAYS = 28
 const SESSIONS_PAGE_SIZE = 15
 
 export function StrengthPage() {
-  const { workouts, loading, refresh, save, remove, clearAll } = useStrengthLog()
+  const { workouts, loading, refresh, remove, clearAll } = useStrengthLog()
   const { sessions, loading: sessionsLoading } = useStrengthSessions(workouts)
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<WorkoutWithSets | null>(null)
   const [exercise, setExercise] = useState<string | null>(null)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [visibleSessions, setVisibleSessions] = useState(SESSIONS_PAGE_SIZE)
@@ -73,34 +69,10 @@ export function StrengthPage() {
             </Link>
             <h1 className="text-2xl font-bold">Strength</h1>
           </div>
-          {!formOpen && (
-            <Button
-              onClick={() => {
-                setEditing(null)
-                setFormOpen(true)
-              }}
-            >
-              Log workout
-            </Button>
-          )}
         </div>
-        {!formOpen && <ImportElement26Button onImported={refresh} />}
+        <ImportElement26Button onImported={refresh} />
       </div>
 
-      {formOpen && (
-        <Card>
-          <p className="mb-3 font-semibold">{editing ? 'Edit workout' : 'Log a workout'}</p>
-          <LogWorkoutForm
-            existing={editing ?? undefined}
-            onCancel={() => setFormOpen(false)}
-            onSave={async (workout, sets) => {
-              await save(workout, sets)
-              setFormOpen(false)
-              setEditing(null)
-            }}
-          />
-        </Card>
-      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="This week" value={`${streak.sessionsThisWeek}`} sublabel="sessions" />
@@ -269,7 +241,7 @@ export function StrengthPage() {
         <p className="font-semibold">Sessions</p>
         {sessionsLoading && <Skeleton className="h-24 w-full" />}
         {!sessionsLoading && sessions.length === 0 && (
-          <Card className="text-center text-[var(--text-secondary)]">No strength sessions yet — log one above.</Card>
+          <Card className="text-center text-[var(--text-secondary)]">No strength sessions yet. Import one from Element 26 above.</Card>
         )}
         {sessions.slice(0, visibleSessions).map((s, i) => (
           <Card key={i} className="flex flex-col gap-2">
@@ -299,18 +271,7 @@ export function StrengthPage() {
                     <Link to={`/training/strength/workout/${s.workout.id}/review`} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
                       Review
                     </Link>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                      onClick={() => {
-                        setEditing(s.workout)
-                        setFormOpen(true)
-                      }}
-                    >
-                      Edit
-                    </button>
-                  )}
+                  ) : null}
                   <button
                     type="button"
                     className="text-xs text-rose-400 hover:text-rose-300"
@@ -329,26 +290,6 @@ export function StrengthPage() {
                 {s.activity.training_load != null && <span>Load {Math.round(s.activity.training_load)}</span>}
                 {s.activity.self_eval_effort != null && <span>Effort {s.activity.self_eval_effort}/5</span>}
               </div>
-            )}
-            {!s.workout && s.activity && (
-              <Button
-                variant="ghost"
-                className="self-start text-xs"
-                onClick={() => {
-                  setEditing({
-                    id: `new-${s.activity!.activity_id}`,
-                    day: s.day,
-                    split: 'custom',
-                    notes: null,
-                    linkedActivityId: s.activity!.activity_id,
-                    createdAt: Date.now(),
-                    sets: [],
-                  })
-                  setFormOpen(true)
-                }}
-              >
-                Add sets for this session
-              </Button>
             )}
           </Card>
         ))}

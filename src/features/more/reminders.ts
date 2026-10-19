@@ -76,7 +76,7 @@ export function useReminderScheduler() {
         // ignore
       }
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification('BetterGarmin', { body: 'Time to train. Open a routine when you are ready.', tag: 'bettergarmin-reminder' })
+        new Notification('BetterGarmin', { body: 'Time to train.', tag: 'bettergarmin-reminder' })
       }
     }
     tick()

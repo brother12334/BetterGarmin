@@ -6,7 +6,6 @@ import { downloadObjectsAsCsv } from '../../lib/csv'
 import { indexedDbBandStore, type BandFileRecord, type HistoryEntry } from '../../lib/band/bandFileStore'
 import { clearBandIndex } from '../../lib/band/bandIndex'
 import { exportStrengthLog, importStrengthLog, clearAllWorkouts } from '../../db/strengthLog'
-import { loadRoutines, saveRoutines, type Routine } from '../routines/routines'
 import { loadWorkoutHistory, sportLabel } from '../history/useWorkoutHistory'
 
 const BACKUP_VERSION = 1
@@ -18,7 +17,7 @@ const toB64 = (b: Uint8Array) => {
 }
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
 
-/** Workout CSV, a full backup file (routines, notes, history, original band files) and restore, plus deletion. */
+/** Workout CSV, a full backup file (notes, history, original band files) and restore, plus deletion. */
 export function BackupCard() {
   const [msg, setMsg] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -54,7 +53,6 @@ export function BackupCard() {
       app: 'BetterGarmin',
       version: BACKUP_VERSION,
       createdAt: new Date().toISOString(),
-      routines: loadRoutines(),
       bandHistory: history,
       bandFiles: files.map((f) => ({ ...f, bytes: toB64(f.bytes) })),
       strength,
@@ -67,32 +65,24 @@ export function BackupCard() {
     try {
       const data = JSON.parse(await file.text())
       if (data?.app !== 'BetterGarmin') throw new Error("That isn't a BetterGarmin backup file")
-      const byId = new Map(loadRoutines().map((r) => [r.id, r]))
-      for (const r of (data.routines ?? []) as Routine[]) byId.set(r.id, r)
-      saveRoutines([...byId.values()])
       for (const f of (data.bandFiles ?? []) as (Omit<BandFileRecord, 'bytes'> & { bytes: string })[]) await indexedDbBandStore.put({ ...f, bytes: fromB64(f.bytes) })
       for (const h of (data.bandHistory ?? []) as HistoryEntry[]) {
         await indexedDbBandStore.addHistory(h.key)
         await indexedDbBandStore.updateHistory(h.key, { name: h.name, notes: h.notes })
       }
       const n = data.strength ? await importStrengthLog(data.strength) : 0
-      setMsg(`Restored ${data.routines?.length ?? 0} routines, ${data.bandFiles?.length ?? 0} band files and ${n} strength-log records. Existing items with the same ID were replaced; nothing else was removed.`)
+      setMsg(`Restored ${data.bandFiles?.length ?? 0} band files and ${n} strength-log records. Existing items with the same ID were replaced; nothing else was removed.`)
     } catch (e) {
       setMsg(`Restore failed: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const wipe = async (what: 'band' | 'routines' | 'strength') => {
-    const label = { band: 'all workouts and files downloaded from the band', routines: 'all routines and unfinished routine drafts', strength: 'all logged and imported strength workouts' }[what]
+  const wipe = async (what: 'band' | 'strength') => {
+    const label = { band: 'all workouts and files downloaded from the band', strength: 'all imported strength workouts' }[what]
     if (!confirm(`Delete ${label} from this device? This can't be undone. Nothing on your band is touched.`)) return
     if (what === 'band') {
       await indexedDbBandStore.clear()
       clearBandIndex()
-    } else if (what === 'routines') {
-      saveRoutines([])
-      Object.keys(localStorage)
-        .filter((k) => k.startsWith('bettergarmin:routineDraft:'))
-        .forEach((k) => localStorage.removeItem(k))
     } else await clearAllWorkouts()
     setMsg('Deleted.')
   }
@@ -125,11 +115,8 @@ export function BackupCard() {
           <Button variant="ghost" onClick={() => wipe('band')}>
             Delete band workouts and files
           </Button>
-          <Button variant="ghost" onClick={() => wipe('routines')}>
-            Delete routines
-          </Button>
           <Button variant="ghost" onClick={() => wipe('strength')}>
-            Delete strength log
+            Delete imported strength workouts
           </Button>
           <p className="text-xs text-[var(--text-tertiary)]">Garmin data (from the cloud or files) is removed with "Forget my data" above.</p>
         </div>
