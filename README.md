@@ -99,6 +99,31 @@ inside it (Worker address and access token). In your Shortcut, set the last
 **Open App** to **Safari** (Home Screen web apps usually aren't in the Open App
 list; Safari brings you back to your BetterGarmin tab).
 
+## Garmin band direct connection (experimental)
+
+BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
+(Bluefy on iPhone, or Chrome/Edge), without Garmin Connect or Garmin's cloud.
+
+- **Workouts:** tapping **Start** on the Strength page starts a Strength
+  activity on the band. Pause, Resume and Finish (save) control the band too.
+  Each step shows whether it was sent, accepted, or confirmed by the band. If
+  Bluetooth fails, the workout keeps running and logging in the app.
+- **Test band alert:** makes the band buzz (Find My Watch). It's a test, not a
+  custom vibration or an alarm.
+- **Direct sync:** lists the files on the band. Downloading and importing them
+  isn't available yet.
+- **Wake-up alarms:** not available yet.
+
+**Connect:** More → **Garmin band** → **Connect**, then choose your CIRQA.
+
+**Band not in the list?** Garmin Connect may be holding it. On iPhone go to
+Settings → Bluetooth → ⓘ next to **Garmin Device** and turn **Connect** off
+under *Apps allowed to connect*. Connect in BetterGarmin, and turn it back on
+when you're done. Don't unpair or reset the band. Details are in
+[troubleshooting](docs/troubleshooting.md#garmin-band-cirqa-wont-connect-directly);
+the protocol and what's been verified are in
+[docs/band-protocol.md](docs/band-protocol.md).
+
 ## How it works
 
 GitHub Pages only serves static files — it can't run Python, can't run

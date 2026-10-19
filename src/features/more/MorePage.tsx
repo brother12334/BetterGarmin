@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
+import { BandCard } from '../band/BandCard'
 import { setClockFormat, useClockFormat } from '../../lib/clock'
 import { fullscreenSupported, setFullscreenPref, useFullscreenPref } from '../../lib/fullscreen'
 import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
@@ -80,6 +81,8 @@ export function MorePage() {
           </label>
         </Card>
       )}
+
+      <BandCard />
 
       <Card>
         <p className="mb-3 font-semibold">Clock</p>

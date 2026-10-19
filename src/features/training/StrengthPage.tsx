@@ -10,7 +10,8 @@ import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS } from '../../l
 import { EXERCISE_CATALOG, SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useStrengthLog } from './useStrengthLog'
 import { useStrengthSessions } from './useStrengthSessions'
-import { LogWorkoutForm } from './LogWorkoutForm'
+import { LogWorkoutForm, type LiveTiming } from './LogWorkoutForm'
+import { LiveWorkoutCard } from './LiveWorkoutCard'
 import { ImportElement26Button } from './ImportElement26Button'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import {
@@ -31,6 +32,7 @@ export function StrengthPage() {
   const { sessions, loading: sessionsLoading } = useStrengthSessions(workouts)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<WorkoutWithSets | null>(null)
+  const [liveTiming, setLiveTiming] = useState<LiveTiming | null>(null)
   const [exercise, setExercise] = useState<string | null>(null)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [visibleSessions, setVisibleSessions] = useState(SESSIONS_PAGE_SIZE)
@@ -86,16 +88,31 @@ export function StrengthPage() {
         )}
       </div>
 
+      {!formOpen && (
+        <LiveWorkoutCard
+          onFinished={(w, bandActivityUuid) => {
+            setEditing(null)
+            setLiveTiming({ startedAt: w.startedAt, finishedAt: w.finishedAt, bandActivityUuid })
+            setFormOpen(true)
+          }}
+        />
+      )}
+
       {formOpen && (
         <Card>
-          <p className="mb-3 font-semibold">{editing ? 'Edit workout' : 'Log a workout'}</p>
+          <p className="mb-3 font-semibold">{editing ? 'Edit workout' : liveTiming ? 'Log the sets you just did' : 'Log a workout'}</p>
           <LogWorkoutForm
             existing={editing ?? undefined}
-            onCancel={() => setFormOpen(false)}
+            live={liveTiming ?? undefined}
+            onCancel={() => {
+              setFormOpen(false)
+              setLiveTiming(null)
+            }}
             onSave={async (workout, sets) => {
               await save(workout, sets)
               setFormOpen(false)
               setEditing(null)
+              setLiveTiming(null)
             }}
           />
         </Card>

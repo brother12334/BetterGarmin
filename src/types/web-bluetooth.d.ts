@@ -1,10 +1,22 @@
 /**
  * Minimal Web Bluetooth ambient types — not part of TypeScript's built-in DOM
- * lib. Covers only what useLiveHeartRate.ts actually uses.
+ * lib. Covers what the heart-rate card and the band session use.
  */
+
+interface BluetoothCharacteristicProperties {
+  readonly write: boolean
+  readonly writeWithoutResponse: boolean
+  readonly notify: boolean
+  readonly read: boolean
+}
 
 interface BluetoothRemoteGATTCharacteristic extends EventTarget {
   readonly value: DataView | undefined
+  readonly properties?: BluetoothCharacteristicProperties
+  readValue(): Promise<DataView>
+  writeValue?(value: BufferSource): Promise<void>
+  writeValueWithResponse?(value: BufferSource): Promise<void>
+  writeValueWithoutResponse?(value: BufferSource): Promise<void>
   startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>
   stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>
   addEventListener(
