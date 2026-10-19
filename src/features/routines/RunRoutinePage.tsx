@@ -27,7 +27,8 @@ export function RunRoutinePage() {
   const toDisplay = (kg: number | null) => (kg == null ? '' : String(Math.round(convertWeight(kg, units) * 10) / 10))
   const toKg = (v: string) => (v.trim() === '' ? null : units === 'imperial' ? Number(v) / 2.20462 : Number(v))
 
-  const [restored, setRestored] = useState(false)
+  // Read before the first save below, so a fresh start isn't mistaken for a restored draft.
+  const [restored] = useState(() => !!(routine && loadDraft(routine.id)))
   const [draft, setDraft] = useState<RunDraft | null>(() => {
     if (!routine) return null
     const saved = loadDraft(routine.id)
@@ -41,10 +42,6 @@ export function RunRoutinePage() {
       ),
     }
   })
-  useEffect(() => {
-    if (routine && loadDraft(routine.id)) setRestored(true)
-    // only on mount
-  }, [])
   useEffect(() => {
     if (draft) saveDraft(draft)
   }, [draft])

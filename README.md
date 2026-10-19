@@ -115,6 +115,41 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   copy. With cloud sync set up, it also refreshes the Garmin cloud copy after
   the band sync.
 
+**Workouts from the band**
+
+- **Save status:** every band workout shows three separate checks:
+  *Saved on band* (it appeared in the band's file list), *Downloaded* (the
+  file arrived, its size matched and its FIT checksum passed) and *Added to
+  history*. If a download fails, the recording stays on the band and a
+  **Retry download** button appears.
+- **Reliable sync:** the app reconnects to the band on its own after a drop,
+  retries each file up to three times, resumes interrupted syncs on the next
+  tap and never imports a file twice. Original FIT files are kept for export.
+- **Workout history** (Training → Workout history): search by name, type,
+  exercise, note or date; open a workout for heart rate, recorded sets,
+  metrics (anything not recorded is labelled), your own name and notes, and
+  **Export FIT**.
+- **Routines** (Training → Routines): create, edit, duplicate, reorder and
+  pin routines with target sets, reps and weight. Running one shows last
+  session's numbers next to each set and keeps unfinished entries through a
+  refresh. **Progress** shows workouts per week, training time and personal
+  records, using only data that was actually recorded.
+- **Backup and privacy** (More): workouts CSV, a full backup file (routines,
+  notes, history and original band files), restore, and separate delete
+  buttons. Everything stays on the phone.
+- **Reminders** (More): optional, with quiet hours. They only fire while the
+  app is open; iPhone doesn't let web pages schedule notifications.
+
+| Feature | Status |
+| --- | --- |
+| Connect, handshake, list files | ✅ tested on a real CIRQA |
+| Download, size and FIT checks, no duplicates | ✅ tested on a real CIRQA (18 files) |
+| Workout start/pause/resume/finish on the band | ✅ tested (driven from Element 26; the code here is unchanged) |
+| Auto-reconnect, per-file retries, save status, history, routines, backup | 🧪 simulator and demo tested, awaiting device testing |
+| Battery level | 🧪 read from the standard Battery Service if the band offers it; not seen on a CIRQA yet |
+| All-day and sleep files from the band | ❓ none seen yet (see below) |
+| Alarms that vibrate on the band | ❌ not offered: storing an alarm on the band and seeing it fire hasn't been verified |
+
 **Testing status (October 2026):** still being tested on a real CIRQA band.
 
 - **Confirmed on the real band:** connecting, listing files, and downloading
@@ -133,10 +168,14 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
 
 **Connect:** More → **Garmin band** → **Connect**, then choose your CIRQA.
 
-**Band not in the list?** Garmin Connect may be holding it. On iPhone go to
-Settings → Bluetooth → ⓘ next to **Garmin Device** and turn **Connect** off
-under *Apps allowed to connect*. Connect in BetterGarmin, and turn it back on
-when you're done. Don't unpair or reset the band. Details are in
+**Band not in the list, or connecting fails? (known iPhone conflict)** The
+Garmin Connect app can hold the band. What resolved it for us: on iPhone go to
+Settings → Bluetooth → ⓘ next to the band (it may show as **Garmin Device**)
+and under *Apps allowed to connect* turn **Connect** off. Leave **Bluefy**
+on. Then connect in BetterGarmin. To go back to Garmin Connect, turn
+**Connect** back on in the same place and open the Garmin Connect app so it
+syncs. Don't unpair, forget or reset the band. The same steps are in the app
+under More → Garmin band → *Connection trouble?* Details are in
 [troubleshooting](docs/troubleshooting.md#garmin-band-cirqa-wont-connect-directly);
 the protocol and what's been verified are in
 [docs/band-protocol.md](docs/band-protocol.md).

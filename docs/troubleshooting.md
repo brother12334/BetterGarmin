@@ -63,6 +63,21 @@ counts (no health values), which shows what Garmin actually returned.
 
 ## Garmin band (CIRQA) won't connect directly
 
+### A sync stopped part-way, or a workout says "not downloaded"
+
+The recording is still on the band; BetterGarmin never deletes or changes band
+files. Keep the band close and tap **Retry download** on the workout, or
+**Sync now**. Files that already arrived are kept and skipped, and the rest
+download again. Each workout shows *Saved on band*, *Downloaded* and *Added to
+history* separately, so you can see which step is missing.
+
+### The band keeps disconnecting
+
+BetterGarmin reconnects on its own a few times after a drop (the card shows
+**Reconnecting…**). If it ends at **Disconnected**, bring the band within a
+metre or two and tap **Connect**. If it still fails, check the Garmin Connect
+conflict below.
+
 ### The band is missing from Bluefy's device chooser
 
 Seen on a tested iPhone: the CIRQA worked in Bluefy, but after it reconnected to
@@ -73,7 +88,8 @@ Settings the band showed up as **Garmin Device**, and its details page listed
 brought it back.
 
 1. Open iPhone **Settings → Bluetooth** and tap ⓘ next to **Garmin Device**.
-2. Under **Apps allowed to connect**, turn **Connect** off for now.
+2. Under **Apps allowed to connect**, turn **Connect** off for now. Leave
+   **Bluefy** on.
 3. Open Bluefy and connect from BetterGarmin (**More → Garmin band → Connect**).
 4. When you're done, disconnect in BetterGarmin and turn **Connect** back on,
    so Garmin Connect can sync again.
@@ -82,7 +98,8 @@ brought it back.
 Notes:
 
 - This workaround is verified on that setup. Whether Garmin Connect and
-  BetterGarmin can both use the band at the same time hasn't been tested.
+  BetterGarmin can both use the band at the same time hasn't been tested; in
+  practice the band only talks to one app at a time.
 - The "Garmin Device" name only appears in iPhone Settings. The band still
   identifies itself as **CIRQA Smart Band** over Bluetooth.
 - During the failed attempts Bluefy reported a bare error, `2`. What it means

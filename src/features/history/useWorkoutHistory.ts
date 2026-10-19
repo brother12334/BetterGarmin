@@ -73,7 +73,7 @@ export async function loadWorkoutHistory(): Promise<HistoryItem[]> {
       kind: 'log',
       id: w.id,
       at: w.startedAtEpochMs ?? Date.parse(`${w.day}T12:00:00`),
-      title: w.title || (w.split === 'custom' ? 'Strength workout' : `${w.split.replace('_', ' ')} workout`),
+      title: w.title || (w.split === 'custom' ? 'Strength workout' : `${w.split.replace('_', ' ').replace(/^./, (c) => c.toUpperCase())} workout`),
       type: w.source === 'element26' ? 'Strength · Element 26' : 'Strength · logged',
       workout: w,
     })
