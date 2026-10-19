@@ -11,6 +11,8 @@ import { formatWeight } from '../../lib/units'
 import { SPLIT_NAMES } from '../../lib/strengthPlans'
 import { useWorkoutTimeline, type HrSource, type PreviousExerciseSession } from './useWorkoutTimeline'
 import { TimelineCard } from './TimelineCard'
+import { WorkoutStory } from './WorkoutStory'
+import { buildWorkoutSummary } from './workoutSummary'
 import { SyncFirstCard } from './SyncFirstCard'
 import { bpm, clock, duration } from './timelineUi'
 import {
@@ -113,6 +115,14 @@ export function WorkoutTimelinePage() {
           )}
         </div>
       </div>
+
+      <WorkoutStory
+        summary={buildWorkoutSummary({ workout, activity: matchedActivity, timeline, previousByExercise: data.previousByExercise, sleepScore: readiness?.sleepScore })}
+        title={title}
+        dateLabel={new Date(`${workout.day}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+        hrSeries={timeline?.hrSeries ?? []}
+        weight={(kg) => formatWeight(kg, units, 1)}
+      />
 
       <Card>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
