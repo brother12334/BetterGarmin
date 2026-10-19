@@ -15,7 +15,7 @@ const BAND_COLORS = ['#7d8aa3', '#4f8dff', '#2fd08a', '#ffc24b', '#ff4d6d']
 function GradeChip({ grade }: { grade: Grade | undefined }) {
   if (!grade) return null
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-1 text-xs font-bold text-white">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2.5 py-1 text-xs font-bold text-[var(--text-primary)]">
       <span style={{ color: GRADE_COLOR(grade.letter) }}>{grade.letter}</span> {grade.title}
     </span>
   )
@@ -26,16 +26,16 @@ function Ring({ score, letter }: { score: number; letter: Letter }) {
   const c = 2 * Math.PI * r
   return (
     <svg viewBox="0 0 100 100" width="104" height="104" aria-label={`Overall grade ${letter}`}>
-      <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" />
+      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--ring-track)" strokeWidth="10" />
       <circle cx="50" cy="50" r={r} fill="none" stroke={GRADE_COLOR(letter)} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(c * score) / 100} ${c}`} transform="rotate(-90 50 50)" />
-      <text x="50" y="58" textAnchor="middle" fontSize="28" fontWeight="800" fill="#fff">
+      <text x="50" y="58" textAnchor="middle" fontSize="28" fontWeight="800" fill="var(--text-primary)">
         {letter}
       </text>
     </svg>
   )
 }
 
-function Spark({ series }: { series: HrSample[] }) {
+function Spark({ series, color }: { series: HrSample[]; color: string }) {
   if (series.length < 2) return null
   const w = 300
   const h = 90
@@ -50,30 +50,38 @@ function Spark({ series }: { series: HrSample[] }) {
   const peak = series.reduce((a, b) => (b.v > a.v ? b : a))
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width="100%" preserveAspectRatio="none" className="h-24" aria-label="Heart rate during the workout">
-      <path d={`${d} L${w},${h} L0,${h}Z`} fill="rgba(255,255,255,0.18)" />
-      <path d={d} fill="none" stroke="#fff" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={x(peak.t)} cy={y(peak.v)} r="4" fill="#fff" />
+      <path d={`${d} L${w},${h} L0,${h}Z`} fill={color} opacity="0.18" />
+      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={x(peak.t)} cy={y(peak.v)} r="4" fill={color} />
     </svg>
   )
 }
 
-function Slide({ bg, label, children, footer }: { bg: string; label: string; children: ReactNode; footer?: ReactNode }) {
+/** A story card in the user's own card style (glass, liquid, solid, outline), washed with the card's colour. */
+function Slide({ tint, label, children, footer }: { tint: string; label: string; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="flex w-[86%] shrink-0 snap-center flex-col justify-between gap-4 rounded-[26px] p-5 text-white sm:w-[360px]" style={{ background: bg, minHeight: 300 }}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-white/70">{label}</p>
-      <div className="flex flex-col gap-2">{children}</div>
-      {footer}
+    <div className="glass-panel relative flex w-[86%] shrink-0 snap-center flex-col justify-between gap-4 overflow-hidden rounded-[var(--radius-card)] p-5 sm:w-[360px]" style={{ minHeight: 300 }}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, ${tint} 26%, transparent), transparent 70%), linear-gradient(160deg, color-mix(in srgb, ${tint} 10%, transparent), transparent)` }}
+      />
+      <p className="relative text-[11px] font-semibold uppercase tracking-[0.09em]" style={{ color: tint }}>
+        {label}
+      </p>
+      <div className="relative flex flex-col gap-2">{children}</div>
+      {footer && <div className="relative">{footer}</div>}
     </div>
   )
 }
 
 const Big = ({ children }: { children: ReactNode }) => <p className="text-5xl font-extrabold leading-none tabular-nums tracking-tight">{children}</p>
-const Sub = ({ children }: { children: ReactNode }) => <p className="text-sm text-white/75">{children}</p>
+const Sub = ({ children }: { children: ReactNode }) => <p className="text-sm text-[var(--text-secondary)]">{children}</p>
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/60">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</p>
       <p className="text-lg font-bold tabular-nums">{value}</p>
     </div>
   )
@@ -85,7 +93,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
   const grade = (a: Grade['area']) => s.grades.find((g) => g.area === a)
 
   const slides: ReactNode[] = [
-    <Slide key="overview" bg="linear-gradient(160deg,#1d2a4a,#0f1424)" label={`${dateLabel} · summary`}>
+    <Slide key="overview" tint="var(--accent)" label={`${dateLabel} · summary`}>
       <div className="flex items-center gap-4">
         {s.overall && <Ring score={s.overall.score} letter={s.overall.letter} />}
         <div className="min-w-0">
@@ -103,7 +111,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="effort" bg="linear-gradient(160deg,#ff8a4c,#b43d0b)" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
+    <Slide key="effort" tint="#ff8a4c" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
       {s.calories != null ? (
         <>
           <Big>{s.calories}</Big>
@@ -120,13 +128,13 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="heart" bg="linear-gradient(160deg,#4a0d1c,#e63e5f)" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
+    <Slide key="heart" tint="#ff4d6d" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
       {s.hrAvg != null ? (
         <>
-          <Spark series={hrSeries} />
+          <Spark series={hrSeries} color="#ff4d6d" />
           <Big>
             {s.hrAvg}
-            <span className="ml-1 text-base font-semibold text-white/70">avg bpm</span>
+            <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">avg bpm</span>
           </Big>
           <Sub>
             Peak {s.hrMax}
@@ -146,10 +154,10 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       )}
     </Slide>,
 
-    <Slide key="strength" bg="linear-gradient(160deg,#232b3d,#141a26)" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
+    <Slide key="strength" tint="#8b7bf6" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
       <Big>
         {s.volumeKg.toLocaleString()}
-        <span className="ml-1 text-base font-semibold text-white/70">kg moved</span>
+        <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">kg moved</span>
       </Big>
       <Sub>
         {s.workingSets} working sets · {s.reps} reps
@@ -159,7 +167,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
           <li key={t.exercise} className="flex justify-between gap-3">
             <span className="min-w-0 truncate">
               {t.exercise}
-              {t.pr && <span className="ml-1 font-bold text-amber-300">★ PR</span>}
+              {t.pr && <span className="ml-1 font-bold text-amber-500">★ PR</span>}
             </span>
             <b className="shrink-0 tabular-nums">
               {weight(t.weight)} × {t.reps}
@@ -171,7 +179,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
 
     <Slide
       key="rest"
-      bg="linear-gradient(160deg,#0d3a2a,#1f9d68)"
+      tint="#2fd08a"
       label="Rest & recovery"
       footer={
         <div className="flex flex-wrap gap-2">
@@ -191,11 +199,11 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
 
     ...(s.vsLast.length
       ? [
-          <Slide key="vs" bg="linear-gradient(160deg,#2a1f4a,#5b3fc4)" label="You vs last time">
+          <Slide key="vs" tint="#9b7bff" label="You vs last time">
             {s.vsLast.map((c) => (
               <div key={c.label} className="flex items-baseline justify-between">
                 <span className="text-base">{c.label}</span>
-                <b className="text-3xl font-extrabold tabular-nums" style={{ color: (c.change >= 0) === c.higherIsBetter ? '#7dfcc0' : '#ffb3c0' }}>
+                <b className={cn('text-3xl font-extrabold tabular-nums', (c.change >= 0) === c.higherIsBetter ? 'text-emerald-500' : 'text-rose-500')}>
                   {c.change > 0 ? '+' : ''}
                   {c.change}%
                 </b>
@@ -206,12 +214,12 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
         ]
       : []),
 
-    <Slide key="next" bg="linear-gradient(160deg,#10202e,#1b3b55)" label="Next up">
+    <Slide key="next" tint="#4f8dff" label="Next up">
       {s.recoveryHours != null && (
         <>
           <Big>
             {s.recoveryHours}
-            <span className="ml-1 text-base font-semibold text-white/70">hours</span>
+            <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">hours</span>
           </Big>
           <Sub>estimated recovery before training these muscles hard again</Sub>
         </>
