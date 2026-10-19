@@ -48,6 +48,8 @@ interface Scenario {
   files: { ms: Uint8Array; ls: Uint8Array; bytes: Uint8Array }[]
   dropEvery?: number
   disconnectAfterPackets?: number
+  /** The band answers the first N pulls with NO_AVAILABLE_RESOURCES. */
+  refusePulls?: number
 }
 
 /** Installs a fake band that serves `files` over the simulated reliable pipe. */
@@ -101,6 +103,7 @@ function serve(fake: FakeBand, session: () => BandSession, sc: Scenario) {
       const f = sc.files.find((x) => hex(x.ms) === hex(ms))
       pulls.push(hex(ms))
       if (!f) return reply(requestId, lfield(43, lfield(2, vfield(1, 8))))
+      if (sc.refusePulls && pulls.length <= sc.refusePulls) return reply(requestId, lfield(43, lfield(2, vfield(1, 3))))
       current = f.bytes
       return reply(requestId, lfield(43, lfield(2, [...vfield(1, 0), ...vfield(2, 0), ...vfield(3, 0x12345678)])))
     }
@@ -153,6 +156,16 @@ describe('direct sync against a simulated band', () => {
     const second = await syncBand(session, store)
     expect(second.outcomes.map((o) => o.result)).toEqual(['skipped-duplicate'])
     expect(store.records.size).toBe(1)
+  }, 30_000)
+
+  it('retries a refused download within the same sync and adds the workout to history', async () => {
+    const fit = strengthFit()
+    const { pulls } = await connected({ files: [{ ms: MS, ls: LS, bytes: fit }], refusePulls: 1 })
+    const store = memoryBandStore()
+    const r = await syncBand(session, store)
+    expect(r.outcomes[0].result).toBe('imported')
+    expect(pulls.length).toBe(2)
+    expect([...store.entries.keys()]).toEqual([...store.records.keys()])
   }, 30_000)
 
   it('survives packet loss on a multi-wrap transfer', async () => {

@@ -18,7 +18,7 @@ import {
 import { BAND_UUIDS, GFDI_SERVICE, closeHandleRequest, fragment, isCloseHandleResponse, parseRegisterResponse, registerRequest, type RegisterResponse } from './multilink'
 import { decodeMessage, type ProtoField } from './proto'
 
-export type SessionState = 'idle' | 'connecting' | 'registering' | 'handshaking' | 'ready' | 'disconnected' | 'error'
+export type SessionState = 'idle' | 'connecting' | 'registering' | 'handshaking' | 'ready' | 'reconnecting' | 'disconnected' | 'error'
 
 export interface LogEntry {
   t: number
@@ -92,6 +92,11 @@ export class BandSession {
   routingHandle: number | null = null
   info: string | null = null
   log: LogEntry[] = []
+  /** Battery percentage from the standard Battery Service, when the band exposes it (unverified on CIRQA). */
+  batteryPercent: number | null = null
+
+  private userDisconnect = false
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private device: BluetoothDevice | null = null
   private notifyChar: BluetoothRemoteGATTCharacteristic | null = null
@@ -138,8 +143,15 @@ export class BandSession {
   }
 
   /** Opens the browser's device chooser, connects and completes registration + handshake. */
-  async connect(opts: { showAll?: boolean } = {}): Promise<void> {
+  /**
+   * Opens the device chooser and connects. With `reuse`, reconnects to the band chosen earlier without the chooser
+   * (no tap needed, so it can run after an unexpected disconnect).
+   */
+  async connect(opts: { showAll?: boolean; reuse?: boolean } = {}): Promise<void> {
     if (this.state === 'connecting' || this.state === 'registering' || this.state === 'handshaking' || this.state === 'ready') return
+    this.userDisconnect = false
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
+    this.reconnectTimer = null
     if (!navigator.bluetooth) throw new Error('This browser has no Web Bluetooth. On iPhone, use Bluefy (or Safari with a Web Bluetooth extension).')
     this.error = null
     this.registered = deferred<number>()
@@ -147,8 +159,9 @@ export class BandSession {
     this.stream.reset()
     this.setState('connecting')
     try {
-      const optionalServices = [BAND_UUIDS.MULTILINK_SERVICE, BAND_UUIDS.HEART_RATE_SERVICE]
-      this.device = await navigator.bluetooth.requestDevice(
+      const optionalServices = [BAND_UUIDS.MULTILINK_SERVICE, BAND_UUIDS.HEART_RATE_SERVICE, 'battery_service']
+      const reuse = opts.reuse && this.device ? this.device : null
+      this.device = reuse ?? await navigator.bluetooth.requestDevice(
         opts.showAll
           ? { acceptAllDevices: true, optionalServices }
           : // Same request as the tested Protocol Lab: a name-prefix filter only. Adding a service filter left
@@ -158,7 +171,7 @@ export class BandSession {
       this.deviceName = this.device.name ?? 'Garmin band'
       this.deviceId = this.device.id ?? null
       this.device.addEventListener('gattserverdisconnected', this.handleDisconnect)
-      this.addLog('info', `Selected ${this.deviceName}`)
+      this.addLog('info', reuse ? `Reconnecting to ${this.deviceName}` : `Selected ${this.deviceName}`)
       const server = await this.device.gatt!.connect()
       const service = await server.getPrimaryService(BAND_UUIDS.MULTILINK_SERVICE)
       this.notifyChar = await service.getCharacteristic(BAND_UUIDS.NOTIFY)
@@ -186,6 +199,7 @@ export class BandSession {
       await timeout(this.configAcked.promise, 20_000, 'the band to finish the handshake')
       this.setState('ready')
       this.addLog('info', 'session ready')
+      void this.readBattery(server)
     } catch (err) {
       // Keep the browser's exact error (Bluefy has returned a bare "2") instead of guessing what it means.
       const raw = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
@@ -198,7 +212,24 @@ export class BandSession {
     }
   }
 
+  /** Best effort: the standard Battery Service. Many Garmin bands don't expose it, so this often stays null. */
+  private async readBattery(server: BluetoothRemoteGATTServer) {
+    try {
+      const svc = await server.getPrimaryService('battery_service')
+      const ch = await svc.getCharacteristic('battery_level')
+      const v = await ch.readValue()
+      this.batteryPercent = v.getUint8(0)
+      this.addLog('info', `battery ${this.batteryPercent}%`)
+      this.emit()
+    } catch {
+      this.batteryPercent = null
+    }
+  }
+
   disconnect() {
+    this.userDisconnect = true
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
+    this.reconnectTimer = null
     try {
       if (this.device?.gatt?.connected) this.device.gatt.disconnect()
     } catch {
@@ -229,7 +260,29 @@ export class BandSession {
   private handleDisconnect = () => {
     this.addLog('info', 'band disconnected')
     this.cleanup()
-    this.setState('disconnected')
+    if (this.userDisconnect || !this.device) {
+      this.setState('disconnected')
+      return
+    }
+    // Unexpected drop (out of range, band busy): try to come back on our own a few times.
+    this.setState('reconnecting')
+    const delays = [1000, 3000, 8000]
+    const attempt = (i: number) => {
+      this.reconnectTimer = setTimeout(async () => {
+        this.reconnectTimer = null
+        if (this.userDisconnect) return
+        try {
+          this.state = 'disconnected' // let connect() run
+          await this.connect({ reuse: true })
+        } catch {
+          if (i + 1 < delays.length && !this.userDisconnect) {
+            this.setState('reconnecting')
+            attempt(i + 1)
+          } else this.setState('disconnected')
+        }
+      }, delays[i])
+    }
+    attempt(0)
   }
 
   private async writeRaw(bytes: Uint8Array): Promise<void> {

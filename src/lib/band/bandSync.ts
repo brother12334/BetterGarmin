@@ -5,6 +5,7 @@ import { decodeFileListPage, decodePullResponse, type FileItem } from './files'
 import { fileAccessCapabilities, fileListRequest, pullItemDataRequest } from './smart'
 import { validateAndDecodeFit } from './fitImport'
 import type { BandFileStore } from './bandFileStore'
+import { markBandSynced, recordAttempt, recordSeen } from './bandIndex'
 
 /**
  * Direct band → BetterGarmin sync over Bluetooth (experimental):
@@ -15,11 +16,15 @@ import type { BandFileStore } from './bandFileStore'
 
 const FILE_ACCESS_CAPABILITY = 90
 const IDLE_TIMEOUT_MS = 20_000
+/** Download attempts per file in one sync, while the band stays connected. */
+const MAX_ATTEMPTS = 3
+/** Failures that won't change on a retry. */
+const permanent = (msg: string) => /compressed|too large|no UUID|not support/i.test(msg)
 const MAX_FILE_BYTES = 8 * 1024 * 1024
 
 export interface SyncProgress {
   phase: 'listing' | 'downloading' | 'done'
-  current?: { index: number; total: number; dataType: string | null; received: number; size: number }
+  current?: { index: number; total: number; dataType: string | null; received: number; size: number; attempt: number }
 }
 
 export interface FileOutcome {
@@ -168,6 +173,13 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
   const { items, nextTransactionId } = await listAll(session)
   const deviceKey = session.deviceId ?? session.deviceName ?? 'band'
   const outcomes: FileOutcome[] = []
+  recordSeen(
+    items
+      .filter((i) => i.uidHex)
+      .map((i) => ({ key: `${deviceKey}:${i.uidHex}`, uidHex: i.uidHex!, dataType: i.dataType, size: i.dataSize != null ? Number(i.dataSize) : null, modifiedTime: i.modifiedTime })),
+  )
+  // Files downloaded by an earlier version, before workouts had history entries.
+  for (const r of await store.all()) if (r.activity) await store.addHistory(r.key)
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
@@ -183,10 +195,19 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
     }
     const size = item.dataSize != null ? Number(item.dataSize) : 0
     try {
-      onProgress({ phase: 'downloading', current: { index: i, total: items.length, dataType: item.dataType, received: 0, size } })
-      const bytes = await downloadFile(session, item, (received) =>
-        onProgress({ phase: 'downloading', current: { index: i, total: items.length, dataType: item.dataType, received, size } }),
-      )
+      let bytes: Uint8Array | null = null
+      for (let attempt = 1; !bytes; attempt++) {
+        onProgress({ phase: 'downloading', current: { index: i, total: items.length, dataType: item.dataType, received: 0, size, attempt } })
+        try {
+          bytes = await downloadFile(session, item, (received) =>
+            onProgress({ phase: 'downloading', current: { index: i, total: items.length, dataType: item.dataType, received, size, attempt } }),
+          )
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e)
+          if (attempt >= MAX_ATTEMPTS || session.state !== 'ready' || permanent(msg)) throw e
+          session.addLog('info', `retrying file ${i + 1} (attempt ${attempt + 1}): ${msg}`)
+        }
+      }
       const fit = validateAndDecodeFit(bytes, item.dataSize != null ? Number(item.dataSize) : null)
       // A complete download that isn't FIT at all (settings, logs) is remembered so it isn't fetched again, but nothing is
       // imported from it. A FIT file that fails its size or CRC check is an error and is retried next time.
@@ -206,12 +227,18 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
         activity: fit.ok ? fit.activity : null,
         bytes,
       })
+      // Saved first, then it joins the history: a workout is never "in history" without its original file.
+      if (status === 'imported') await store.addHistory(key)
+      recordAttempt(key, null)
       outcomes.push({ ...base, result: status })
     } catch (e) {
-      outcomes.push({ ...base, result: 'failed', error: e instanceof Error ? e.message : String(e) })
+      const error = e instanceof Error ? e.message : String(e)
+      recordAttempt(key, error)
+      outcomes.push({ ...base, result: 'failed', error })
       if (session.state !== 'ready') break // disconnected: stop; the next sync resumes with what's left
     }
   }
+  if (!outcomes.some((o) => o.result === 'failed')) markBandSynced()
   onProgress({ phase: 'done' })
   return { listed: items.length, outcomes, nextTransactionId }
 }
