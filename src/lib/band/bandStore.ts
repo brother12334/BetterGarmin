@@ -130,8 +130,11 @@ function withTimeout<T>(p: Promise<T>, ms = 15_000): Promise<T> {
   return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('No answer from the band')), ms))])
 }
 
-/** Discovers LiveSession support and subscribes to its events, as the tested client did before any command. */
-async function prepareActivity() {
+/**
+ * Discovers LiveSession support and subscribes to its events, as the tested client did before any command.
+ * Not run automatically: starting workouts on the band is handled by Element 26. Kept (and tested) as a reference.
+ */
+export async function prepareActivity() {
   setActivity({ ...INITIAL, support: { state: 'checking' } })
   try {
     const missing = ACTIVITY_REQUIRED_BITS.filter((b) => !band.bandConfigBits.includes(b))
@@ -151,7 +154,6 @@ async function prepareActivity() {
 
 let lastState = band.state
 band.subscribe(() => {
-  if (band.state === 'ready' && lastState !== 'ready') void prepareActivity()
   if (band.state !== 'ready' && lastState === 'ready') setActivity({ support: { state: 'not-checked' } })
   lastState = band.state
 })

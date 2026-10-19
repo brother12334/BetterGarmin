@@ -88,15 +88,3 @@ Notes:
 - During the failed attempts Bluefy reported a bare error, `2`. What it means
   isn't known, so BetterGarmin shows the browser's exact error text alongside
   these steps rather than calling it an authentication failure.
-
-### Connected, but a command doesn't take effect
-
-The band card on the More page shows each workout command in three stages:
-
-- **Sent:** written over Bluetooth.
-- **Accepted:** the band answered the request.
-- **Band confirmed:** the band then reported an activity event.
-
-A command stuck at "Sent" or "Accepted" didn't fully go through. Your workout
-keeps running in BetterGarmin either way. The **protocol log** on the band card
-shows every message, which helps with bug reports.

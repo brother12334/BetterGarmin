@@ -44,7 +44,7 @@ export interface WorkoutRecord {
   linkedActivityId: string | null
   createdAt: number
   /** 'manual' = typed in via the logger form (no reliable timestamps). 'element26' = imported, carries real set timestamps. */
-  source?: 'manual' | 'element26' | 'live'
+  source?: 'manual' | 'element26'
   /** Precise workout window, epoch ms. Only present for imports with real timing data — required to build a timeline. */
   startedAtEpochMs?: number | null
   finishedAtEpochMs?: number | null
@@ -53,8 +53,6 @@ export interface WorkoutRecord {
   feelRating?: number | null
   qualityGrade?: string | null
   qualityPercent?: number | null
-  /** UUID the Garmin band returned for the activity it recorded alongside a live workout. */
-  bandActivityUuid?: string | null
   /** Display name from the source app (e.g. a routine label like "Upper A"), distinct from the split taxonomy. */
   title?: string | null
 }

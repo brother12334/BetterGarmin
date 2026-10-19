@@ -104,10 +104,9 @@ list; Safari brings you back to your BetterGarmin tab).
 BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
 (Bluefy on iPhone, or Chrome/Edge), without Garmin Connect or Garmin's cloud.
 
-- **Workouts:** tapping **Start** on the Strength page starts a Strength
-  activity on the band. Pause, Resume and Finish (save) control the band too.
-  Each step shows whether it was sent, accepted, or confirmed by the band. If
-  Bluetooth fails, the workout keeps running and logging in the app.
+- **Workouts:** starting a Strength activity on the band from a workout is
+  planned for **Element 26**, not BetterGarmin. The tested protocol is in
+  [docs/band-protocol.md](docs/band-protocol.md).
 - **Test band alert:** makes the band buzz (Find My Watch). It's a test, not a
   custom vibration or an alarm.
 - **Direct sync:** lists the files on the band. Downloading and importing them

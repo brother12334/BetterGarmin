@@ -4,7 +4,7 @@ import { fromHex } from './bytes'
 import { FakeBand } from './fakeBand.testutil'
 import { MSG, encodeFrame, protobufPayload } from './gfdi'
 import { lfield, vfield } from './proto'
-import { band, bandActivityReady, getActivitySnapshotForTests as snapshot, sendActivityCommand } from './bandStore'
+import { band, bandActivityReady, getActivitySnapshotForTests as snapshot, prepareActivity, sendActivityCommand } from './bandStore'
 
 const reply = (fake: FakeBand, requestId: number, smart: number[]) =>
   fake.sendFrame(encodeFrame(MSG.PROTOBUF_RESPONSE, protobufPayload({ requestId, offset: 0, total: smart.length, data: Uint8Array.from(smart) })))
@@ -51,6 +51,7 @@ describe('band store: real workout events drive command tracking', () => {
     }
     fake.install()
     await band.connect()
+    await prepareActivity()
     await until(() => bandActivityReady())
 
     expect(sendActivityCommand('START')).toBe(true)

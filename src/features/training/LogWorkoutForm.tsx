@@ -17,33 +17,20 @@ function todayStr(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-function localDay(ms: number): string {
-  const d = new Date(ms)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
 function newKey(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 const SPLITS: StrengthSplit[] = ['push', 'pull', 'legs', 'full_body']
 
-/** Timing from a workout run live in BetterGarmin (and the band activity it started, if any). */
-export interface LiveTiming {
-  startedAt: number
-  finishedAt: number
-  bandActivityUuid: string | null
-}
-
 interface LogWorkoutFormProps {
   existing?: WorkoutWithSets
-  live?: LiveTiming
   onSave: (workout: WorkoutRecord, sets: SetRecord[]) => Promise<void>
   onCancel: () => void
 }
 
-export function LogWorkoutForm({ existing, live, onSave, onCancel }: LogWorkoutFormProps) {
-  const [day, setDay] = useState(existing?.day ?? (live ? localDay(live.startedAt) : todayStr()))
+export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormProps) {
+  const [day, setDay] = useState(existing?.day ?? todayStr())
   const [split, setSplit] = useState<StrengthSplit | 'custom'>(existing?.split ?? 'push')
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [sets, setSets] = useState<DraftSet[]>(
@@ -86,7 +73,6 @@ export function LogWorkoutForm({ existing, live, onSave, onCancel }: LogWorkoutF
       notes: notes.trim() || null,
       linkedActivityId: existing?.linkedActivityId ?? null,
       createdAt,
-      ...(live ? { source: 'live' as const, startedAtEpochMs: live.startedAt, finishedAtEpochMs: live.finishedAt, bandActivityUuid: live.bandActivityUuid } : {}),
     }
     const setRecords: SetRecord[] = sets.map((s, i) => ({
       id: `${id}-${i}`,

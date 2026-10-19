@@ -112,11 +112,10 @@ export function BandCard() {
       {ready && (
         <>
           <div className="flex flex-wrap gap-2 text-[11px]">
-            <Cap on={b.activity.support.state === 'ready'} label={b.activity.support.state === 'checking' ? 'Workout control: checking…' : 'Workout control'} />
             <Cap on={b.configBits.includes(BAND_CAPS.FIND_MY_WATCH)} label="Alert" />
             <Cap on={b.configBits.includes(BAND_CAPS.FILE_ACCESS)} label="File access" />
           </div>
-          {b.activity.support.state === 'unavailable' && <p className="text-xs text-amber-400">Workout control unavailable: {b.activity.support.reason}</p>}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" onClick={alert}>
               Test band alert
