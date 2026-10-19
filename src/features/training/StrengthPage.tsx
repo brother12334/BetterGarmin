@@ -1,3 +1,4 @@
+import { DAY_AXIS, dayLabel } from '../../components/charts/chartKit'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
@@ -193,7 +194,7 @@ export function StrengthPage() {
             option={{
               xAxis: {
                 type: 'value',
-                splitNumber: 4,
+                ...DAY_AXIS,
                 splitLine: { lineStyle: { color: 'var(--border-panel)' } },
                 axisLabel: {
                   color: 'var(--text-tertiary)',
@@ -240,9 +241,9 @@ export function StrengthPage() {
               option={{
                 xAxis: {
                   type: 'time',
-                  splitNumber: 4,
+                  ...DAY_AXIS,
                   axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-                  axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
+                  axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: dayLabel },
                 },
                 yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
                 series: [

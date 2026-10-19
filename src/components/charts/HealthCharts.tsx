@@ -94,8 +94,8 @@ function bucket(pts: Raw[], size: number): [number, number][] {
   return [...sums.entries()].sort((x, y) => x[0] - y[0]).map(([k, e]) => [k + size / 2, Math.round(e.s / e.n)])
 }
 
-function rangesFor(min: number, max: number): Range[] {
-  if (max - min <= 2 * DAY) {
+function rangesFor(min: number, max: number, intraday: boolean): Range[] {
+  if (intraday) {
     // A day chart always shows the whole day, midnight to midnight.
     const day = new Date(max)
     day.setHours(0, 0, 0, 0)
@@ -131,8 +131,10 @@ export function DetailChart({
   const allPts = allSeries.flatMap(pointsOf)
   const min = allPts.length ? Math.min(...allPts.map((p) => p.t)) : 0
   const max = allPts.length ? Math.max(...allPts.map((p) => p.t)) : 0
-  const intraday = allPts.length > 0 && max - min <= 2 * DAY
-  const ranges = allPts.length ? rangesFor(min, max) : []
+  // Day charts are the ones built on an hour axis; a short history of daily values is still a history chart.
+  const axisId = ((Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis) as { id?: string } | undefined)?.id
+  const intraday = allPts.length > 0 && axisId === 'hour'
+  const ranges = allPts.length ? rangesFor(min, max, intraday) : []
   // Long histories open on the most recent stretch; a single day opens on the whole day.
   const defaultKey = intraday ? 'all' : (ranges.find((r) => r.key === 'month') ?? ranges[0])?.key
   const [key, setKey] = useState<string | undefined>(undefined)

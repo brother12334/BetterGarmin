@@ -14,7 +14,7 @@ import { HistoryTab } from './HistoryTab'
 import { ExperimentsCard } from './ExperimentsCard'
 import { AskTab } from './AskTab'
 import { BigStat, Dial } from '../../components/charts/HealthCharts'
-import type { Point } from '../../components/charts/chartKit'
+import { DAY_AXIS, dayLabel, type Point } from '../../components/charts/chartKit'
 
 const TABS = [
   { key: 'findings', label: 'Findings' },
@@ -42,9 +42,9 @@ function metricUnit(key: MetricKey, units: UnitSystem): string {
 function dayAxis() {
   return {
     type: 'time' as const,
-    splitNumber: 3,
+    ...DAY_AXIS,
     axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-    axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
+    axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: dayLabel },
   }
 }
 

@@ -53,13 +53,26 @@ export function zoom(startPct = 0): EChartsOption['dataZoom'] {
   ]
 }
 
+const DAY_MS = 86_400_000
+
+/** Date label for a day axis: only ticks on a midnight get a label, so a short history never repeats "Oct 16 Oct 16". */
+export function dayLabel(v: number): string {
+  const d = new Date(v)
+  return d.getHours() === 0 && d.getMinutes() === 0 ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
+}
+
+/** Axis settings shared by every date axis: whole days only, no crowding. */
+export const DAY_AXIS = { minInterval: DAY_MS, splitNumber: 4 } as const
+
 export function timeAxis(kind: 'hour' | 'day'): EChartsOption['xAxis'] {
   return {
+    id: kind,
+    ...(kind === 'day' ? DAY_AXIS : { minInterval: 3_600_000 }),
     type: 'time',
     axisLine: { lineStyle: { color: GRID_LINE } },
     axisTick: { show: false },
     splitLine: { show: false },
-    axisLabel: { color: AXIS_TEXT, fontSize: 10, hideOverlap: true, formatter: kind === 'hour' ? (v: number) => formatTime(v) : '{MMM} {d}' },
+    axisLabel: { color: AXIS_TEXT, fontSize: 10, hideOverlap: true, formatter: kind === 'hour' ? (v: number) => formatTime(v) : dayLabel },
   }
 }
 

@@ -7,7 +7,7 @@ import { InfoButton } from '../../components/ui/InfoButton'
 import { addDays } from '../../lib/dateRange'
 import type { AnalyticsDataset, DayRecord } from '../analytics/model'
 import { mad, median } from '../analytics/robust'
-import { GLASS_SLIDER } from '../../components/charts/chartKit'
+import { DAY_AXIS, GLASS_SLIDER, dayLabel } from '../../components/charts/chartKit'
 
 const RANGES = [
   { label: '7d', days: 7 },
@@ -77,7 +77,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
 
     const workoutsInRange = dataset.sessions.filter((s) => s.day >= from && s.day <= to)
     const vi = PANELS.length
-    xAxes.push({ type: 'time', gridIndex: vi, min: x(from), max: x(to), splitNumber: 3, axisLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) } })
+    xAxes.push({ type: 'time', gridIndex: vi, min: x(from), max: x(to), ...DAY_AXIS, axisLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)', hideOverlap: true, formatter: dayLabel } })
     yAxes.push({ type: 'value', gridIndex: vi, name: 'Volume (t)', nameGap: 6, nameTextStyle: { color: 'var(--text-tertiary)', align: 'left', padding: [0, 0, 0, -40] }, splitNumber: 2, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)', fontSize: 10 } })
     series.push({
       name: 'Strength volume',
