@@ -463,7 +463,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
             n('failed') ? `${n('failed')} failed (${failed?.error})` : '',
             w?.files ? `${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate readings, ${w.nights} nights` : 'no stress, energy or sleep data read from the files yet (file details: More → Garmin band)',
           ].filter(Boolean)
-          setGarminPull(n('failed') && !w?.files ? { status: 'error', message: parts.join(' · ') } : { status: 'idle', note: parts.join(' · ') })
+          const bandNote = parts.join(' · ')
+          // When Garmin Connect is also paired it collects the all-day and sleep files first, so those arrive through
+          // the cloud copy: refresh that too.
+          if (config && navigator.onLine) {
+            try {
+              const startedAt = await startCloudSync(config)
+              savePendingPull(startedAt)
+              await watchForPull(config, startedAt)
+              setGarminPull({ status: 'idle', note: `${bandNote} · Garmin cloud refreshed` })
+            } catch {
+              setGarminPull({ status: 'idle', note: `${bandNote} · Garmin cloud refresh failed` })
+            }
+            return
+          }
+          setGarminPull(n('failed') && !w?.files ? { status: 'error', message: bandNote } : { status: 'idle', note: bandNote })
           return
         } catch (err) {
           const why = err instanceof Error ? err.message : String(err)
