@@ -15,7 +15,7 @@ import {
   readU16Safe,
   type GfdiFrame,
 } from './gfdi'
-import { BAND_UUIDS, GFDI_SERVICE, fragment, parseRegisterResponse, registerRequest } from './multilink'
+import { BAND_UUIDS, GFDI_SERVICE, closeHandleRequest, fragment, isCloseHandleResponse, parseRegisterResponse, registerRequest, type RegisterResponse } from './multilink'
 import { decodeMessage, type ProtoField } from './proto'
 
 export type SessionState = 'idle' | 'connecting' | 'registering' | 'handshaking' | 'ready' | 'disconnected' | 'error'
@@ -84,6 +84,8 @@ function deferred<T>() {
 export class BandSession {
   state: SessionState = 'idle'
   deviceName: string | null = null
+  /** Web Bluetooth's stable per-site device ID; used to key synced files. */
+  deviceId: string | null = null
   error: { message: string; raw: string } | null = null
   bandProtocolVersion: number | null = null
   bandConfigBits: number[] = []
@@ -104,6 +106,10 @@ export class BandSession {
   private registered = deferred<number>()
   private configAcked = deferred<void>()
   private listeners = new Set<Listener>()
+  private disconnectListeners = new Set<() => void>()
+  private reliableReceivers = new Map<number, (packet: Uint8Array) => void>()
+  private registerWaiters = new Map<number, (r: RegisterResponse & { raw?: Uint8Array }) => void>()
+  private closeWaiters = new Map<number, (r: { service: number; handle: number; status: number }) => void>()
   private smartListeners = new Set<(m: SmartMessage) => boolean | void>()
 
   subscribe(l: Listener): () => void {
@@ -150,6 +156,7 @@ export class BandSession {
             { filters: [{ namePrefix: 'CIRQA' }], optionalServices },
       )
       this.deviceName = this.device.name ?? 'Garmin band'
+      this.deviceId = this.device.id ?? null
       this.device.addEventListener('gattserverdisconnected', this.handleDisconnect)
       this.addLog('info', `Selected ${this.deviceName}`)
       const server = await this.device.gatt!.connect()
@@ -213,6 +220,10 @@ export class BandSession {
     this.pendingResponses.clear()
     this.pendingDelivery.clear()
     this.reassembly.clear()
+    this.reliableReceivers.clear()
+    this.registerWaiters.clear()
+    this.closeWaiters.clear()
+    this.disconnectListeners.forEach((l) => l())
   }
 
   private handleDisconnect = () => {
@@ -239,6 +250,48 @@ export class BandSession {
     if (this.routingHandle == null) throw new Error('Not registered')
     for (const w of fragment(this.routingHandle, cobsEncode(frame))) await this.writeRaw(w)
     this.addLog('out', label)
+  }
+
+  /** Registers an extra MultiLink service (e.g. a reliable file pipe) and returns the band's response. */
+  async registerService(service: number, options: number): Promise<RegisterResponse> {
+    if (this.state !== 'ready') throw new Error('Band is not connected')
+    const resp = new Promise<RegisterResponse>((resolve) => this.registerWaiters.set(service, resolve))
+    await this.writeRaw(registerRequest(service, 1, options))
+    this.addLog('out', `register service 0x${service.toString(16)} (options ${options})`)
+    return timeout(resp, STEP_TIMEOUT_MS, `the registration of service 0x${service.toString(16)}`)
+  }
+
+  /** Asks the band to close a registered service. Resolves false if it didn't answer in time. */
+  async closeService(service: number, handle: number): Promise<boolean> {
+    if (!this.writeChar) return false
+    const resp = new Promise<boolean>((resolve) => this.closeWaiters.set(service, () => resolve(true)))
+    try {
+      await this.writeRaw(closeHandleRequest(service, handle))
+      this.addLog('out', `close service 0x${service.toString(16)} handle 0x${handle.toString(16)}`)
+      return await timeout(resp, 3000, 'the close response')
+    } catch {
+      this.closeWaiters.delete(service)
+      return false
+    } finally {
+      this.reliableReceivers.delete(handle)
+    }
+  }
+
+  /** Called whenever the connection drops or is closed. */
+  onDisconnect(fn: () => void): () => void {
+    this.disconnectListeners.add(fn)
+    return () => this.disconnectListeners.delete(fn)
+  }
+
+  /** Routes packets for a reliable handle to `fn`; returns an unsubscribe. */
+  onReliable(handle: number, fn: (packet: Uint8Array) => void): () => void {
+    this.reliableReceivers.set(handle, fn)
+    return () => this.reliableReceivers.delete(handle)
+  }
+
+  /** Writes one already-framed reliable packet (header carries the handle). */
+  writeReliable(packet: Uint8Array): Promise<void> {
+    return this.writeRaw(packet)
   }
 
   /** Sends a Smart protobuf payload as a 5043 request, fragmenting if needed. */
@@ -278,8 +331,26 @@ export class BandSession {
     const bytes = new Uint8Array(v.buffer, v.byteOffset, v.byteLength).slice()
     if (bytes.length === 0) return
     const handle = bytes[0]
+    if (handle & 0x80) {
+      // Reliable channels (file pipes) carry their own handle bits; never COBS/GFDI-decode them.
+      this.reliableReceivers.get(0x80 | ((handle >> 4) & 7))?.(bytes)
+      return
+    }
     if (handle === 0) {
       const resp = parseRegisterResponse(bytes)
+      const closed = isCloseHandleResponse(bytes)
+      if (closed) {
+        this.addLog('in', `close response: service 0x${closed.service.toString(16)}, handle ${closed.handle}, status ${closed.status}`)
+        this.closeWaiters.get(closed.service)?.(closed)
+        this.closeWaiters.delete(closed.service)
+        return
+      }
+      if (resp && resp.service !== GFDI_SERVICE) {
+        this.addLog('in', `register response: service 0x${resp.service.toString(16)}, status ${resp.status}, handle 0x${resp.handle.toString(16)}, options ${resp.options}`)
+        this.registerWaiters.get(resp.service)?.(resp)
+        this.registerWaiters.delete(resp.service)
+        return
+      }
       if (resp && resp.service === GFDI_SERVICE) {
         this.addLog('in', `register response: status ${resp.status}, handle ${resp.handle}`)
         if (resp.status === 0) {

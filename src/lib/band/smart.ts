@@ -60,18 +60,16 @@ export function fileListRequest(opts: { maxReferences?: number; sessionId?: numb
 }
 
 /**
- * FileAccess field 1 = PullItemDataRequest. It only negotiates a transfer; the bytes travel over a separate
- * reliable MultiLink pipe that BetterGarmin does not implement yet, so this is built but never sent.
+ * FileAccess field 1 = PullItemDataRequest: item { uid { fixed64 1, fixed64 2 } }, priority, transport
+ * MULTILINK_TRANSPORT_PIPE (0), offset. No compression window is requested, so the band should send plain bytes.
  */
-export function pullItemDataRequest(itemReference: Uint8Array, opts: { priority?: number; compressionWindow?: number } = {}): number[] {
-  return lfield(
-    SMART.FILE_ACCESS,
-    lfield(1, [
-      ...lfield(1, itemReference),
-      ...(opts.priority != null ? vfield(2, opts.priority) : []),
-      ...vfield(3, 0), // MULTILINK_TRANSPORT_PIPE
-      ...vfield(4, 0), // fresh download
-      ...(opts.compressionWindow != null ? vfield(5, opts.compressionWindow) : []),
-    ]),
-  )
+export function pullItemDataRequest(uid: { ms: Uint8Array; ls: Uint8Array }, opts: { priority?: number; offset?: number } = {}): number[] {
+  if (uid.ms.length !== 8 || uid.ls.length !== 8) throw new Error('Expected two 8-byte UUID halves')
+  const uuid = [0x09, ...uid.ms, 0x11, ...uid.ls]
+  return lfield(SMART.FILE_ACCESS, lfield(1, [...lfield(1, lfield(1, uuid)), ...vfield(2, opts.priority ?? 30), ...vfield(3, 0), ...vfield(4, opts.offset ?? 0)]))
+}
+
+/** Incremental listing from a saved cursor (static-derived; not yet verified on the band). */
+export function incrementalFileList(transactionId: number): number[] {
+  return lfield(SMART.FILE_ACCESS, lfield(9, vfield(2, transactionId)))
 }

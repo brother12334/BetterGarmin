@@ -22,7 +22,7 @@ which reconstructed them from the owner-supplied Android descriptor pack.
 | Discard | ⚠️ Derived from the command enum, not physically tested. The app asks for confirmation first. |
 | Test band alert (Find My Watch) | ✅ Physical alert confirmed. Cancelling isn't verified. |
 | File listing | ✅ Verified (17 references over two pages); decoded exactly by `files.ts` |
-| File download and import | ❌ Not implemented. The reliable transfer pipe hasn't been exercised. |
+| File download and import | 🧪 Implemented and simulator-tested; **not yet verified on a real band** |
 | Custom vibration patterns | ❌ Unknown |
 | Stored wake-up alarms | ❌ Not implemented; see [Alarms](#alarms) |
 | Heart rate over the standard service (0x180D) | Declared for device selection only; streaming hasn't been tested |
@@ -160,43 +160,74 @@ automatically: the band may already have acted, so the command shows as
 
 ## Direct sync (experimental)
 
-Implemented: read-only listing. `ItemListResponse` (Smart 43 → 10) is decoded
-exactly:
+Implemented from the CIRQA-Sync-Protocol packet in `bandSync.ts`, `reliable.ts`,
+`files.ts` and `fitImport.ts`. **It has been tested in the simulator only, not
+on a real band yet.** For each file the band lists that hasn't been synced, it
+runs these steps:
 
-- **1:** status (0 = SUCCESS)
-- **2:** session ID, used to continue an unfinished listing
-- **3:** `next_transaction_id`, stored for future incremental listings (not yet
-  verified on the band)
-- **4:** repeated ItemReference: uid, data type, size, modified time
+1. **Register a reliable file pipe.** Use a service from the pool `0x2018,
+   0x4018 … 0xE018`, with options 2, for example `00 00 01 00 00 00 00 00 00
+   00 18 20 02`.
+   - Require status 0 and a reliable handle (`0x80`–`0x87`).
+   - The service ID, routing handle and transfer handle are kept separate.
+2. **Negotiate the download** with PullItemDataRequest (Smart 43 → FileAccess
+   1):
+   - the exact UUID halves from the listing, as raw fixed64 bytes
+   - priority 30, pipe transport 0, offset 0, no compression
+   - The response must have result SUCCESS, transport 0 and a transfer
+     handle. A compressed transfer is refused.
+3. **Configure the read pipe** by sending `00 00 <transfer handle u32 LE>`
+   through the reliable channel. The reply `00 <general> <configure>` must be
+   `00 00 00`.
+4. **Receive** the ordered bytes until the listed size arrives. Inactivity,
+   disconnect or a channel failure aborts the download.
+5. **Close the pipe** with close-handle request type 2, whatever happened.
+6. **Validate** with Garmin's FIT SDK: the size must match the listing, and
+   the header, data size and CRC must pass.
+   - Activity files are decoded: sport, start, duration, calories, heart rate
+     and training effect.
+   - A complete file that isn't FIT is remembered as unsupported and not
+     imported.
+7. **Save** to IndexedDB keyed by device and file UUID, and only then count it
+   as synced. Already-synced keys are skipped.
 
-The count is the number of field-4 entries. Data-type string keys are scoped to
-each response and aren't carried between pages. Files on the band are never
-deleted or marked as synced.
+**Reliable channel** (`reliable.ts`):
 
-Located, but not implemented or exercised:
+- **Header:** `byte0 = 0x80 | ((H&7)<<4) | (A>>2)`, `byte1 = ((A&3)<<6) | S`.
+- **Sequence space:** 64 for revision 0, 8 for revision 255.
+- **ACK-only packets** don't advance the receive sequence.
+- **ACKs:** delayed 10 ms, or sent at once after 5 packets. Every data packet
+  carries an ACK.
+- **Cumulative ACKs** are accepted only inside the sent range, so wraparound
+  is safe.
+- **Retransmission:** RTO starts at 1 s, adapts with a 500 ms floor and
+  doubles up to 20 s. A timeout halves the window and rewinds to resend
+  everything unacknowledged. The channel fails after a bounded number of
+  timeouts.
 
-- **PullItemDataRequest** (FileAccess 1, response 2): built in `smart.ts` but
-  never sent. It only negotiates a transfer.
-- **Reliable MultiLink pipe:** a separate service from the pool `0x2018,
-  0x4018 … 0xE018`, configured with `00 00 <transfer handle u32 LE>`.
-  The read direction is 0, which differs from FileAccess's PULL = 1.
-- **Reliable header (recovered):**
-  - If byte 0 bit 7 is set, the header is two bytes: internal handle = `0x80 |
-    ((byte0 >> 4) & 7)`, six-bit A = `((byte0 & 15) << 2) | (byte1 >> 6)`,
-    six-bit B = `byte1 & 63`.
-  - Otherwise it is one byte, with raw handle = `byte0 & 0x7f`.
-- **Still unresolved:** what A and B mean, sequencing, windows, ACKs,
-  retransmission, timers, boundaries and recovery. The next analysis targets
-  are `MLR_reliable_on_receive_raw_packet` and `MLR_reliable_run_protocol` in
-  `libreliable-ml.so`.
-- **Compression:** uses a streaming inflater when negotiated. Resume and
-  compression offsets aren't verified.
-- A pull request is never sent before a receiver is ready, so no transfer is
-  left pending on the band.
+**Simulator tests** (`reliable.test.ts`, `bandSync.test.ts`):
 
-Full sync stays labelled experimental until a file is downloaded, checked
-(size and FIT integrity), deduplicated by stable device/file IDs, saved, and
-only then marked imported.
+- the native oracle vectors, and all 32,768 header combinations
+- transfers that wrap the sequence space several times
+- dropped data and dropped ACKs, duplicates, and the modulo-8 space
+- a peer that goes silent
+- a full sync of a real FIT activity built with Garmin's SDK, and a repeat
+  sync with no duplicate import
+- packet loss mid-transfer
+- a disconnect mid-transfer with nothing saved, then recovery on reconnect
+- a corrupted file being rejected
+
+**Not yet known, so still unverified on hardware:**
+
+- **Revision:** whether the register response reports the reliable revision.
+  BetterGarmin assumes 0, the native default.
+- **Close:** the exact close-handle layout. It follows Gadgetbridge.
+- **Configure reply:** whether it ever carries file bytes after its three
+  status bytes. They're treated as file data if it does.
+- **Supported types:** which listed files are activities, and how health,
+  sleep and monitoring files map. Only activity FIT files are imported.
+- **Incremental listing:** using `next_transaction_id`. It's built, but not
+  used yet.
 
 ## Alarms
 

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
-import { BAND_CAPS, band, cancelBandAlert, listBandFiles, testBandAlert, useBand, type FileListing } from '../../lib/band/bandStore'
+import { BAND_CAPS, band, cancelBandAlert, testBandAlert, useBand } from '../../lib/band/bandStore'
+import { BandSyncPanel } from './BandSyncPanel'
 
 const STATE_TEXT: Record<string, string> = {
   idle: 'Not connected',
@@ -17,10 +18,7 @@ const STATE_TEXT: Record<string, string> = {
 /** Direct Bluetooth connection to a Garmin CIRQA band: status, test alert, experimental file listing and a protocol log. */
 export function BandCard() {
   const b = useBand()
-  const [busy, setBusy] = useState(false)
   const [alertResult, setAlertResult] = useState<string | null>(null)
-  const [listing, setListing] = useState<FileListing | null>(null)
-  const [listError, setListError] = useState<string | null>(null)
   const [showLog, setShowLog] = useState(false)
   const supported = typeof navigator !== 'undefined' && !!navigator.bluetooth
   const ready = b.state === 'ready'
@@ -50,19 +48,6 @@ export function BandCard() {
       setAlertResult(`Stop sent (band status ${status === 100 ? 'OK' : status}). Whether it stops the buzzing early hasn't been verified.`)
     } catch (e) {
       setAlertResult(`Stop failed: ${e instanceof Error ? e.message : String(e)}`)
-    }
-  }
-
-  const list = async () => {
-    setBusy(true)
-    setListError(null)
-    setListing(null)
-    try {
-      setListing(await listBandFiles())
-    } catch (e) {
-      setListError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -130,32 +115,10 @@ export function BandCard() {
             Uses the band's Find My Watch alert. It isn't a custom vibration or an alarm.
           </p>
 
-          <div className="border-t border-[var(--border-panel)] pt-3">
-            <p className="text-sm font-semibold">Direct sync (experimental)</p>
-            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-              Lists the files on the band without changing anything. Downloading and importing them isn't available yet: the band's file-transfer
-              channel hasn't been verified, so BetterGarmin won't try it.
-            </p>
-            <Button loading={busy} variant="secondary" className="mt-2" onClick={list} disabled={busy}>
-              {busy ? 'Listing…' : 'List files on band'}
-            </Button>
-            {listError && <p className="mt-2 text-xs text-rose-400">{listError}</p>}
-            {listing && (
-              <div className="mt-2 text-xs text-[var(--text-secondary)]">
-                <p>
-                  {listing.total} file reference{listing.total === 1 ? '' : 's'} over {listing.pages.length} page{listing.pages.length === 1 ? '' : 's'}
-                  {listing.complete ? '' : ' (stopped before the end)'}.
-                  {listing.nextTransactionId != null ? ` Next transaction ID ${listing.nextTransactionId} saved.` : ''}
-                </p>
-                <details className="mt-1">
-                  <summary className="cursor-pointer text-[var(--text-tertiary)]">Raw response</summary>
-                  <pre className="mt-1 max-h-60 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(listing, null, 1)}</pre>
-                </details>
-              </div>
-            )}
-          </div>
         </>
       )}
+
+      <BandSyncPanel ready={ready} />
 
       <div className="border-t border-[var(--border-panel)] pt-2">
         <button className="text-xs text-[var(--text-tertiary)] underline" onClick={() => setShowLog((v) => !v)}>

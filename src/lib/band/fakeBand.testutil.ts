@@ -12,6 +12,11 @@ export class FakeBand {
   private notifyListener: ((ev: Event) => void) | null = null
   private stream = new CobsStream()
   onProtobuf: (requestId: number, data: Uint8Array) => void = () => {}
+  /** Extra service registrations (file pipes): return [status, handle]. */
+  onRegister: (service: number, options: number) => [number, number] = () => [1, 0]
+  /** Packets written on a reliable handle (high bit set). */
+  onReliable: (packet: Uint8Array) => void = () => {}
+  closes: { service: number; handle: number }[] = []
 
   notify(bytes: Uint8Array) {
     const value = new DataView(bytes.slice().buffer)
@@ -24,6 +29,23 @@ export class FakeBand {
 
   private onWrite(bytes: Uint8Array) {
     this.writes.push(bytes)
+    if (bytes[0] & 0x80) {
+      this.onReliable(bytes)
+      return
+    }
+    if (bytes[0] === 0 && bytes[1] === 2) {
+      // Close-handle request → close response.
+      const service = bytes[10] | (bytes[11] << 8)
+      this.closes.push({ service, handle: bytes[12] })
+      this.notify(concat([0, 3], bytes.slice(2, 10), u16(service), [bytes[12], 0]))
+      return
+    }
+    if (bytes[0] === 0 && (bytes[10] | (bytes[11] << 8)) !== 1) {
+      const service = bytes[10] | (bytes[11] << 8)
+      const [status, handle] = this.onRegister(service, bytes[12])
+      this.notify(concat([0, 1], bytes.slice(2, 10), u16(service), [status, handle, bytes[12]]))
+      return
+    }
     if (bytes[0] === 0) {
       // Register request → response with our handle, then start the handshake with Device Information.
       this.notify(concat([0, 1], bytes.slice(2, 10), u16(1), [0, this.handle, 0]))
@@ -63,6 +85,7 @@ export class FakeBand {
         },
       }) as unknown as BluetoothRemoteGATTCharacteristic
     const device = {
+      id: 'fake-cirqa',
       name: 'CIRQA Smart Band',
       gatt: {
         connected: true,

@@ -48,3 +48,26 @@ export function fragment(handle: number, stream: Uint8Array, budget = WRITE_BUDG
   for (let o = 0; o < stream.length; o += per) out.push(concat([handle], stream.slice(o, o + per)))
   return out
 }
+
+/** File-pipe services the Android app uses for reliable downloads. */
+export const FILE_PIPE_SERVICES = [0x2018, 0x4018, 0x6018, 0x8018, 0xa018, 0xc018, 0xe018] as const
+/** Registration option requesting a reliable channel. */
+export const OPTION_RELIABLE = 2
+
+const CLOSE_HANDLE_REQUEST = 2
+const CLOSE_HANDLE_RESPONSE = 3
+
+/**
+ * Close one registered service: type 2 · client ID (u64) · service (u16) · handle.
+ * Layout follows Gadgetbridge's MultiLink implementation; not yet exercised on a CIRQA.
+ */
+export function closeHandleRequest(service: number, handle: number, clientId = CLIENT_ID): Uint8Array {
+  const id = new Uint8Array(8)
+  new DataView(id.buffer).setBigUint64(0, BigInt(clientId), true)
+  return concat([0, CLOSE_HANDLE_REQUEST], id, u16(service), [handle])
+}
+
+export function isCloseHandleResponse(bytes: Uint8Array): { service: number; handle: number; status: number } | null {
+  if (bytes.length < 14 || bytes[0] !== 0 || bytes[1] !== CLOSE_HANDLE_RESPONSE) return null
+  return { service: readU16(bytes, 10), handle: bytes[12], status: bytes[13] ?? 0 }
+}

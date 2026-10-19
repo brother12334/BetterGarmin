@@ -109,8 +109,10 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   [docs/band-protocol.md](docs/band-protocol.md).
 - **Test band alert:** makes the band buzz (Find My Watch). It's a test, not a
   custom vibration or an alarm.
-- **Direct sync:** lists the files on the band. Downloading and importing them
-  isn't available yet.
+- **Direct sync (experimental):** **Sync** downloads new files from the band
+  over Bluetooth, checks them, and imports activities (duration, calories,
+  heart rate, training effect). Health, sleep and monitoring files aren't
+  imported yet. It's tested in a simulator, not yet on a real band.
 - **Wake-up alarms:** not available yet.
 
 **Connect:** More → **Garmin band** → **Connect**, then choose your CIRQA.

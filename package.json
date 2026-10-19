@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@garmin/fitsdk": "21.217.0",
     "clsx": "^2.1.1",
     "echarts": "^6.1.0",
     "echarts-for-react": "^3.0.6",
