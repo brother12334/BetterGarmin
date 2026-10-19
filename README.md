@@ -112,7 +112,23 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   steps, sleep stages and sleep score, plus activities. Files are never
   deleted or changed on the band, and nothing is imported twice. If the band
   can't be reached and cloud sync is set up, Sync now falls back to the cloud
-  copy. Tested in a simulator; still being confirmed on a real band.
+  copy. With cloud sync set up, it also refreshes the Garmin cloud copy after
+  the band sync.
+
+**Testing status (October 2026):** still being tested on a real CIRQA band.
+
+- **Confirmed on the real band:** connecting, listing files, and downloading
+  and checking them. 18 files came through: activities, workouts, device and
+  settings files, and three file types (44, 72, 74) that use undocumented
+  Garmin messages.
+- **Not confirmed yet:** all-day (monitoring) and sleep files. None have
+  appeared on the band so far. The likely reason is that Garmin Connect
+  collects them first while it's paired.
+- **Next test:** an overnight run with the band's Garmin Connect setting off,
+  to see whether those files stay on the band for BetterGarmin to read.
+- **For now:** the band only talks to one app at a time. To use both apps,
+  keep Garmin Connect paired; sleep, stress and energy then come in through
+  the cloud sync.
 - **Wake-up alarms:** not available yet.
 
 **Connect:** More → **Garmin band** → **Connect**, then choose your CIRQA.
