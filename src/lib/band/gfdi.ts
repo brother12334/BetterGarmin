@@ -13,12 +13,18 @@ export const MSG = {
 export interface GfdiFrame {
   messageId: number
   payload: Uint8Array
+  /** Transaction tag when the band used the compact header (high bit set); replies must echo it. */
+  tag: number | null
 }
 
-/** length (u16 LE) · message ID (u16 LE) · payload · CRC-16/ARC (u16 LE) over everything before it. */
-export function encodeFrame(messageId: number, payload: Uint8Array | number[]): Uint8Array {
+/**
+ * length (u16 LE) · message ID (u16 LE) · payload · CRC-16/ARC (u16 LE) over everything before it.
+ * With a `tag`, the ID uses the compact form the band used: byte 2 = ID − 5000, byte 3 = 0x80 | tag.
+ */
+export function encodeFrame(messageId: number, payload: Uint8Array | number[], tag: number | null = null): Uint8Array {
   const length = 2 + 2 + payload.length + 2
-  const body = concat(u16(length), u16(messageId), payload)
+  const id = tag == null ? u16(messageId) : [messageId - 5000, 0x80 | (tag & 0x7f)]
+  const body = concat(u16(length), id, payload)
   return concat(body, u16(crc16Arc(body)))
 }
 
@@ -31,9 +37,13 @@ export function decodeFrame(bytes: Uint8Array): DecodeResult {
   const crc = readU16(bytes, bytes.length - 2)
   if (crc16Arc(bytes, 0, bytes.length - 2) !== crc) return { ok: false, error: 'CRC mismatch' }
   let messageId = readU16(bytes, 2)
-  // Devices may send a compact ID: high bit set, low byte = offset from 5000 (bits 8-14 carry a sequence number).
-  if (messageId & 0x8000) messageId = (messageId & 0xff) + 5000
-  return { ok: true, frame: { messageId, payload: bytes.slice(4, bytes.length - 2) } }
+  let tag: number | null = null
+  // Compact header: high bit set, low byte = offset from 5000, bits 8-14 = transaction tag.
+  if (messageId & 0x8000) {
+    tag = (messageId >> 8) & 0x7f
+    messageId = (messageId & 0xff) + 5000
+  }
+  return { ok: true, frame: { messageId, payload: bytes.slice(4, bytes.length - 2), tag } }
 }
 
 /** Plain acknowledgment: original message ID + status (0 = ACK). */
@@ -42,7 +52,7 @@ export function ackPayload(originalId: number, status = 0, extra: number[] = [])
 }
 
 /** Host side of the Device Information exchange, sent as an ACK to the band's 5024 message. */
-export function hostDeviceInformation(): Uint8Array {
+export function hostDeviceInformation(tag: number | null = null): Uint8Array {
   return encodeFrame(
     MSG.ACK,
     concat(
@@ -57,6 +67,7 @@ export function hostDeviceInformation(): Uint8Array {
       pstring('Bluetooth client'),
       [1],
     ),
+    tag,
   )
 }
 
@@ -109,8 +120,8 @@ export function parseProtobufPayload(payload: Uint8Array): ProtobufChunk | null 
  * ACK for an incoming protobuf message: the plain ACK plus request ID, offset, chunk status (0 = kept)
  * and protobuf status (0 = no error).
  */
-export function protobufAck(originalId: number, chunk: ProtobufChunk): Uint8Array {
-  return encodeFrame(MSG.ACK, ackPayload(originalId, 0, [...u16(chunk.requestId), ...u32(chunk.offset), 0, 0]))
+export function protobufAck(originalId: number, chunk: ProtobufChunk, status = 0, detail = 0, tag: number | null = null): Uint8Array {
+  return encodeFrame(MSG.ACK, ackPayload(originalId, 0, [...u16(chunk.requestId), ...u32(chunk.offset), status, detail]), tag)
 }
 
 export function parseDeviceInformation(payload: Uint8Array): { protocolVersion: number; name: string | null } {

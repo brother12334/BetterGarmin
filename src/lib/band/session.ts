@@ -48,6 +48,7 @@ type Listener = () => void
 
 const PROTOBUF_CHUNK = 400 // well under the band's reported 512-byte GFDI packet limit
 const STEP_TIMEOUT_MS = 10_000
+const SMART_TIMEOUT_MS = 15_000
 
 function timeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -95,6 +96,7 @@ export class BandSession {
   private writeChar: BluetoothRemoteGATTCharacteristic | null = null
   private stream = new CobsStream()
   private writeChain: Promise<void> = Promise.resolve()
+  private smartChain: Promise<void> = Promise.resolve()
   private nextRequestId = 1
   private pendingResponses = new Map<number, ReturnType<typeof deferred<SmartMessage>>>()
   private pendingDelivery = new Map<number, ReturnType<typeof deferred<void>>>()
@@ -102,14 +104,15 @@ export class BandSession {
   private registered = deferred<number>()
   private configAcked = deferred<void>()
   private listeners = new Set<Listener>()
-  private smartListeners = new Set<(m: SmartMessage) => void>()
+  private smartListeners = new Set<(m: SmartMessage) => boolean | void>()
 
   subscribe(l: Listener): () => void {
     this.listeners.add(l)
     return () => this.listeners.delete(l)
   }
 
-  onSmart(l: (m: SmartMessage) => void): () => void {
+  /** Listeners return true when they handled a band-initiated request. */
+  onSmart(l: (m: SmartMessage) => boolean | void): () => void {
     this.smartListeners.add(l)
     return () => this.smartListeners.delete(l)
   }
@@ -245,7 +248,15 @@ export class BandSession {
     const delivered = deferred<void>()
     this.pendingResponses.set(requestId, response)
     this.pendingDelivery.set(requestId, delivered)
+    // Like the tested client, keep one Smart request outstanding at a time: wait for the previous answer (or its timeout).
+    const previous = this.smartChain
+    const settled = response.promise.then(
+      () => undefined,
+      () => undefined,
+    )
+    this.smartChain = previous.then(() => Promise.race([settled, new Promise<void>((r) => setTimeout(r, SMART_TIMEOUT_MS))]))
     const sent = (async () => {
+      await previous
       if (this.state !== 'ready') throw new Error('Band is not connected')
       for (let o = 0; o < Math.max(1, data.length); o += PROTOBUF_CHUNK) {
         const chunk = data.slice(o, o + PROTOBUF_CHUNK)
@@ -292,19 +303,29 @@ export class BandSession {
   }
 
   private async handleFrame(frame: GfdiFrame) {
-    const { messageId, payload } = frame
+    const { messageId, payload, tag } = frame
+    if (messageId >= 5101 && messageId <= 5112) {
+      // Proprietary authentication isn't implemented; never guess a reply.
+      const err = new Error(`The band asked for authentication (${messageId}). BetterGarmin doesn't support that, so it stopped.`)
+      this.addLog('error', err.message)
+      this.configAcked.reject(err)
+      this.error = { message: err.message, raw: `GFDI ${messageId}` }
+      this.disconnect()
+      this.setState('error')
+      return
+    }
     switch (messageId) {
       case MSG.DEVICE_INFORMATION: {
         const info = parseDeviceInformation(payload)
         this.bandProtocolVersion = info.protocolVersion
         this.addLog('in', `5024 device information (protocol ${info.protocolVersion})`)
-        await this.sendFrame(hostDeviceInformation(), '5000 ack 5024 + host device information')
+        await this.sendFrame(hostDeviceInformation(tag), '5000 ack 5024 + host device information')
         return
       }
       case MSG.CONFIGURATION: {
         this.bandConfigBits = readConfigurationBits(payload)
         this.addLog('in', `5050 configuration (${this.bandConfigBits.length} capability bits)`)
-        await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(MSG.CONFIGURATION)), '5000 ack 5050')
+        await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(MSG.CONFIGURATION), tag), '5000 ack 5050')
         await this.sendFrame(hostConfiguration(), '5050 host configuration')
         return
       }
@@ -332,13 +353,21 @@ export class BandSession {
           this.addLog('error', `malformed ${messageId}`)
           return
         }
-        await this.sendFrame(protobufAck(messageId, chunk), `5000 ack ${messageId} #${chunk.requestId}`)
         const key = `${messageId}:${chunk.requestId}`
         const entry = this.reassembly.get(key) ?? { total: chunk.total, parts: [], got: 0 }
+        if (chunk.offset !== entry.got || chunk.total !== entry.total) {
+          // Repeated fragment: acknowledge as a duplicate; anything else out of order is dropped.
+          if (chunk.offset < entry.got) await this.sendFrame(protobufAck(messageId, chunk, 0, 101, tag), `5000 ack ${messageId} #${chunk.requestId} (duplicate)`)
+          else this.addLog('error', `out-of-order ${messageId} fragment #${chunk.requestId}`)
+          return
+        }
         entry.parts.push(chunk.data)
         entry.got += chunk.data.length
         this.reassembly.set(key, entry)
-        if (entry.got < entry.total) return
+        if (entry.got < entry.total) {
+          await this.sendFrame(protobufAck(messageId, chunk, 0, 0, tag), `5000 ack ${messageId} #${chunk.requestId}`)
+          return
+        }
         this.reassembly.delete(key)
         const raw = new Uint8Array(entry.total)
         let o = 0
@@ -347,17 +376,29 @@ export class BandSession {
           o += p.length
         }
         const msg: SmartMessage = { kind: messageId === MSG.PROTOBUF_RESPONSE ? 'response' : 'request', requestId: chunk.requestId, fields: decodeMessage(raw), raw }
+        // Band-initiated requests nobody handles are acknowledged as not handled (status 1, detail 201), like the tested client.
+        const handled = msg.kind === 'response' || [...this.smartListeners].some((l) => l(msg) === true)
+        await this.sendFrame(protobufAck(messageId, chunk, handled ? 0 : 1, handled ? 0 : 201, tag), `5000 ack ${messageId} #${chunk.requestId}`)
         this.addLog('in', `${messageId} #${chunk.requestId} (${raw.length} bytes) ${hex(raw.slice(0, 32))}${raw.length > 32 ? '…' : ''}`)
         if (msg.kind === 'response') {
           this.pendingResponses.get(chunk.requestId)?.resolve(msg)
           this.pendingResponses.delete(chunk.requestId)
+          this.smartListeners.forEach((l) => l(msg))
         }
-        this.smartListeners.forEach((l) => l(msg))
         return
       }
+      case 5027:
+        this.addLog('in', '5027 handshake capabilities')
+        await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(5027, 0, [0]), tag), '5000 ack 5027')
+        return
+      case 5045:
+        this.addLog('in', '5045 band cancelled a protobuf request')
+        this.pendingResponses.forEach((d) => d.reject(new Error('The band cancelled the request')))
+        this.pendingResponses.clear()
+        return
       default:
-        this.addLog('in', `message ${messageId} (${payload.length} bytes), acknowledged`)
-        await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(messageId)), `5000 ack ${messageId}`)
+        // Unknown requests aren't answered: a guessed reply could be read as agreement.
+        this.addLog('in', `message ${messageId} (${payload.length} bytes), not handled`)
     }
   }
 }

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { band, sendActivityCommand } from '../../lib/band/bandStore'
+import { bandActivityReady, sendActivityCommand } from '../../lib/band/bandStore'
 import type { ActivityCommandName } from '../../lib/band/smart'
 
 /**
@@ -61,7 +61,7 @@ export function useLiveWorkout(): LiveWorkout {
 
 /** Mirrors a step on the band when it's connected. Never blocks or fails the in-app step. */
 function mirror(command: ActivityCommandName): boolean {
-  if (band.state !== 'ready') return false
+  if (!bandActivityReady()) return false
   return sendActivityCommand(command)
 }
 

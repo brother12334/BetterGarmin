@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
-import { useBand } from '../../lib/band/bandStore'
+import { useBand, uuidKey } from '../../lib/band/bandStore'
 import { CommandStage } from '../band/CommandStage'
 import {
   discardLiveWorkout,
@@ -39,7 +39,7 @@ export function LiveWorkoutCard({ onFinished }: { onFinished: (w: FinishedWorkou
     return () => clearInterval(id)
   }, [w.status])
 
-  const bandReady = b.state === 'ready'
+  const bandReady = b.state === 'ready' && b.activity.support.state === 'ready'
   const cmd = b.activity.command
 
   if (w.status === 'idle') {
@@ -79,7 +79,7 @@ export function LiveWorkoutCard({ onFinished }: { onFinished: (w: FinishedWorkou
           )}
           <Button
             onClick={() => {
-              const uuid = b.activity.uuid
+              const uuid = uuidKey(b.activity.uuid)
               const done = finishLiveWorkout()
               if (done) onFinished(done, done.bandLinked ? uuid : null)
             }}
@@ -90,7 +90,7 @@ export function LiveWorkoutCard({ onFinished }: { onFinished: (w: FinishedWorkou
       </div>
 
       {w.bandLinked && cmd && <CommandStage status={cmd} />}
-      {w.bandLinked && b.activity.uuid && <p className="text-[11px] text-[var(--text-tertiary)]">Band activity {b.activity.uuid}</p>}
+      {w.bandLinked && b.activity.bandState && <p className="text-[11px] text-[var(--text-tertiary)]">Band reports {b.activity.bandState}{b.activity.uuid ? ' · activity ID received' : ''}</p>}
       {w.bandLinked && !bandReady && (
         <p className="text-xs text-amber-400">The band disconnected. Your workout keeps running here; reconnect on the More page to keep it in step.</p>
       )}

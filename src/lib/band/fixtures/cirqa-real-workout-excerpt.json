@@ -1,0 +1,90 @@
+{
+  "label": "Real device capture excerpt, manually extracted from owner-pasted Protocol Lab 1.6 export",
+  "scope": "12 original notification packets from one workout; not a complete export, no synthesized notification bytes",
+  "assignedHandle": 5,
+  "commands": [
+    {
+      "time": "2026-10-18T23:51:00.926Z",
+      "command": "INITIAL_START",
+      "smartPayloadHex": "c2 03 0b 8a 01 08 0a 04 08 0a 10 14 10 00"
+    },
+    {
+      "time": "2026-10-18T23:51:03.841Z",
+      "command": "PAUSE",
+      "smartPayloadHex": "c2 03 05 8a 01 02 10 02"
+    },
+    {
+      "time": "2026-10-18T23:51:05.855Z",
+      "command": "RESUME",
+      "smartPayloadHex": "c2 03 05 8a 01 02 10 01"
+    },
+    {
+      "time": "2026-10-18T23:51:08.137Z",
+      "command": "SAVE",
+      "smartPayloadHex": "c2 03 05 8a 01 02 10 03"
+    }
+  ],
+  "notifications": [
+    {
+      "time": "2026-10-18T23:51:01.062Z",
+      "annotation": "INITIAL_START response",
+      "hex": "05 00 02 1a 04 b4 13 03 01 01 01 01 02 06 01 01 02 06 01 01 06 c2 03 03 92 01 03 1a ca 00"
+    },
+    {
+      "time": "2026-10-18T23:51:01.148Z",
+      "annotation": "ActivityStartRequest",
+      "hex": "05 00 02 55 04 b3 13 01 01 01 01 01 02 41 01 01 02 41 01 01 31 f2 01 3e 1a 3c 0a 01 13 a2 3f 36 0a 34 0a 12 09 a3 48 c4 b0 74 08 1f 6e 11 62 f7 e3 ed f1 58 8d 8c 12 0a 08 0a 10 14 20 ff ff ff ff 0f 22 10 08 10 12 0c 80 01 99 01 b3 01 cc 01 e6 01 ff 01 22 03 71 aa 00"
+    },
+    {
+      "time": "2026-10-18T23:51:01.157Z",
+      "annotation": "START",
+      "hex": "05 00 02 23 04 b3 13 02 01 01 01 01 02 0f 01 01 02 0f 01 01 0f f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 03 6e aa 00"
+    },
+    {
+      "time": "2026-10-18T23:51:01.158Z",
+      "annotation": "WORKOUT_ACTIVE",
+      "hex": "05 00 02 23 04 b3 13 03 01 01 01 01 02 0f 01 01 02 0f 01 01 12 f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 09 6e ad 00"
+    },
+    {
+      "time": "2026-10-18T23:51:04.034Z",
+      "annotation": "PAUSE response",
+      "hex": "05 00 02 1a 04 b4 13 04 01 01 01 01 02 06 01 01 02 06 01 01 06 c2 03 03 92 01 03 af 7d 00"
+    },
+    {
+      "time": "2026-10-18T23:51:04.036Z",
+      "annotation": "STOP after pause",
+      "hex": "05 00 02 23 04 b3 13 04 01 01 01 01 02 0f 01 01 02 0f 01 01 12 f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 01 2f 6e 00"
+    },
+    {
+      "time": "2026-10-18T23:51:06.010Z",
+      "annotation": "RESUME response",
+      "hex": "05 00 02 1a 04 b4 13 05 01 01 01 01 02 06 01 01 02 06 01 01 06 c2 03 03 92 01 03 92 ac 00"
+    },
+    {
+      "time": "2026-10-18T23:51:06.013Z",
+      "annotation": "START after resume",
+      "hex": "05 00 02 23 04 b3 13 05 01 01 01 01 02 0f 01 01 02 0f 01 01 0f f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 03 2e af 00"
+    },
+    {
+      "time": "2026-10-18T23:51:08.443Z",
+      "annotation": "SAVE response",
+      "hex": "05 00 02 1a 04 b4 13 06 01 01 01 01 02 06 01 01 02 06 01 01 06 c2 03 03 92 01 03 d6 9f 00"
+    },
+    {
+      "time": "2026-10-18T23:51:08.446Z",
+      "annotation": "STOP after save",
+      "hex": "05 00 02 23 04 b3 13 06 01 01 01 01 02 0f 01 01 02 0f 01 01 12 f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 01 af 6d 00"
+    },
+    {
+      "time": "2026-10-18T23:51:08.447Z",
+      "annotation": "SAVING",
+      "hex": "05 00 02 23 04 b3 13 07 01 01 01 01 02 0f 01 01 02 0f 01 01 12 f2 01 0c 1a 0a 0a 01 13 a2 3f 04 12 02 08 05 6e af 00"
+    },
+    {
+      "time": "2026-10-18T23:51:09.517Z",
+      "annotation": "ENDED / SAVED",
+      "hex": "05 00 02 25 04 b3 13 08 01 01 01 01 02 11 01 01 02 11 01 01 11 f2 01 0e 1a 0c 0a 01 13 a2 3f 06 12 04 08 04 10 03 73 eb 00"
+    }
+  ],
+  "ownerVerification": "Owner reported the matching saved workout appeared in Garmin Connect."
+}

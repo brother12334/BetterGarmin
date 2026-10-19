@@ -35,14 +35,20 @@ export function BandCard() {
 
   const alert = async () => {
     setAlertResult('Sending…')
-    const req = testBandAlert()
     try {
-      await req.sent
-      setAlertResult('Sent · waiting for the band')
-      await Promise.race([req.response, new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the band')), 10_000))])
-      setAlertResult('The band answered. It should be buzzing; tap Stop alert to end it early.')
+      await testBandAlert()
+      setAlertResult('The band accepted the alert (status OK). It should be buzzing; tap Stop alert to end it early.')
     } catch (e) {
       setAlertResult(`Failed: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  const stopAlert = async () => {
+    try {
+      const status = await cancelBandAlert()
+      setAlertResult(`Stop sent (band status ${status === 100 ? 'OK' : status}). Whether it stops the buzzing early hasn't been verified.`)
+    } catch (e) {
+      setAlertResult(`Stop failed: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -106,14 +112,16 @@ export function BandCard() {
       {ready && (
         <>
           <div className="flex flex-wrap gap-2 text-[11px]">
-            <Cap on={b.configBits.includes(BAND_CAPS.STRENGTH)} label="Strength activity" />
+            <Cap on={b.activity.support.state === 'ready'} label={b.activity.support.state === 'checking' ? 'Workout control: checking…' : 'Workout control'} />
+            <Cap on={b.configBits.includes(BAND_CAPS.FIND_MY_WATCH)} label="Alert" />
             <Cap on={b.configBits.includes(BAND_CAPS.FILE_ACCESS)} label="File access" />
           </div>
+          {b.activity.support.state === 'unavailable' && <p className="text-xs text-amber-400">Workout control unavailable: {b.activity.support.reason}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" onClick={alert}>
               Test band alert
             </Button>
-            <Button variant="ghost" onClick={() => cancelBandAlert().response.catch(() => {})}>
+            <Button variant="ghost" onClick={stopAlert}>
               Stop alert
             </Button>
           </div>
@@ -135,7 +143,9 @@ export function BandCard() {
             {listing && (
               <div className="mt-2 text-xs text-[var(--text-secondary)]">
                 <p>
-                  {listing.pages.length} page{listing.pages.length === 1 ? '' : 's'}, about {listing.totalCandidates} file references.
+                  {listing.total} file reference{listing.total === 1 ? '' : 's'} over {listing.pages.length} page{listing.pages.length === 1 ? '' : 's'}
+                  {listing.complete ? '' : ' (stopped before the end)'}.
+                  {listing.nextTransactionId != null ? ` Next transaction ID ${listing.nextTransactionId} saved.` : ''}
                 </p>
                 <details className="mt-1">
                   <summary className="cursor-pointer text-[var(--text-tertiary)]">Raw response</summary>

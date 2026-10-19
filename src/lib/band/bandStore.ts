@@ -1,13 +1,25 @@
 import { useSyncExternalStore } from 'react'
 import { BandSession, type SmartMessage } from './session'
-import { describe as describeProto, findAll, num, sub, type ProtoField } from './proto'
 import {
-  LIVE,
-  SMART,
+  decodeCommandResponse,
+  decodeLiveSessionCapabilities,
+  decodeLiveSessionEvents,
+  decodeLocateStatus,
+  decodeSubscribed,
+  decodeSupportedAlerts,
+  type ActivityStateName,
+  type ActivityUuid,
+  type LiveSessionEvent,
+} from './liveSession'
+import { decodeFileListPage, type FileListPage } from './files'
+import {
   activityCommand,
   cancelFindMyWatch,
+  eventSharingSupportedAlerts,
+  fileAccessCapabilities,
   fileListRequest,
   findMyWatch,
+  liveSessionCapabilities,
   subscribeLiveSessionEvents,
   type ActivityCommandName,
 } from './smart'
@@ -15,12 +27,17 @@ import {
 /** One shared band connection for the whole app, so it survives navigating between pages. */
 export const band = new BandSession()
 
+/** Capability bits from the band's Configuration message. */
+export const BAND_CAPS = { FIND_MY_WATCH: 9, SPORT_PROFILE_SETUP: 56, STRENGTH: 58, FILE_ACCESS: 90 } as const
+/** Bits the tested client required before preparing activity control. */
+const ACTIVITY_REQUIRED_BITS = [81, 95, 105]
+
 /**
  * Lifecycle of one command, kept deliberately distinct:
- * sent = written to Bluetooth · accepted = the band answered the request · confirmed = the band then reported an
- * activity event. A transport acknowledgment alone never counts as accepted.
+ * sent = written to Bluetooth · accepted = the band's matched response had no failure · confirmed = the band then
+ * reported the state that command should produce. A transport acknowledgment alone never counts as accepted.
  */
-export type CommandStage = 'sending' | 'sent' | 'accepted' | 'confirmed' | 'failed'
+export type CommandStage = 'sending' | 'sent' | 'accepted' | 'confirmed' | 'failed' | 'uncertain'
 
 export interface CommandStatus {
   command: ActivityCommandName
@@ -28,26 +45,34 @@ export interface CommandStatus {
   requestId: number | null
   at: number
   error?: string
-  /** The band's event that confirmed it, decoded generically (field numbers → values). */
-  event?: unknown
+  /** The band state that confirmed it. */
+  confirmedBy?: string
 }
 
-export interface BandEvent {
+export interface BandEventRecord {
   at: number
-  source: 'live-session-event' | 'live-session-request'
-  summary: unknown
-  /** Every scalar value found in the event, by field path; enum names aren't mapped yet. */
-  values: Record<string, number>
+  event: LiveSessionEvent
+}
+
+export interface ActivitySupport {
+  state: 'not-checked' | 'checking' | 'ready' | 'unavailable'
+  reason?: string
 }
 
 interface ActivityState {
+  support: ActivitySupport
   command: CommandStatus | null
-  events: BandEvent[]
-  /** Activity UUID the band returned, if one was found in its response or events. */
-  uuid: string | null
+  events: BandEventRecord[]
+  /** Latest state the band reported. */
+  bandState: ActivityStateName | null
+  /** From the band's ActivityStartRequest only; null means unknown, never guessed. */
+  uuid: ActivityUuid | null
+  /** Sport/sub-sport the band reported starting. */
+  profile: { sport: number | null; subSport: number | null } | null
 }
 
-let activity: ActivityState = { command: null, events: [], uuid: null }
+const INITIAL: ActivityState = { support: { state: 'not-checked' }, command: null, events: [], bandState: null, uuid: null, profile: null }
+let activity: ActivityState = INITIAL
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 band.subscribe(emit)
@@ -57,76 +82,95 @@ function setActivity(patch: Partial<ActivityState>) {
   emit()
 }
 
-const CONFIRM_WINDOW_MS = 20_000
-let awaitingConfirmation: { requestId: number; since: number } | null = null
-let lastEventAt = 0
-
-/** Pulls a UUID out of a decoded message: a 16-byte bytes field, or a UUID-shaped string. */
-function findUuid(fields: ProtoField[] | null): string | null {
-  for (const { field } of findAll(fields, (f) => f.wire === 2)) {
-    const b = field.value as Uint8Array
-    if (b.length === 16) {
-      const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
-      return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
-    }
-    if (b.length === 36) {
-      const s = new TextDecoder().decode(b)
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return s.toLowerCase()
-    }
-  }
-  return null
+/** Band states that confirm each command, from the real-device capture (START → START/WORKOUT_ACTIVE, PAUSE → STOP, …). */
+const CONFIRMS: Record<ActivityCommandName, (e: LiveSessionEvent) => boolean> = {
+  START: (e) => e.kind === 'start' || (e.kind === 'state' && ['START', 'WORKOUT_ACTIVE', 'RESUME'].includes(e.state)),
+  PAUSE: (e) => e.kind === 'state' && ['STOP', 'PAUSE'].includes(e.state),
+  RESUME: (e) => e.kind === 'state' && ['START', 'RESUME', 'WORKOUT_ACTIVE'].includes(e.state),
+  SAVE: (e) => e.kind === 'state' && (e.state === 'SAVING' || (e.state === 'ENDED' && e.endReason === 'SAVED')),
+  DISCARD: (e) => e.kind === 'state' && (e.state === 'DISCARDING' || (e.state === 'ENDED' && e.endReason === 'DISCARDED')),
 }
 
-function scalarValues(fields: ProtoField[] | null): Record<string, number> {
-  const out: Record<string, number> = {}
-  for (const { field, path } of findAll(fields, (f) => f.wire === 0)) out[path.join('.')] = Number(field.value)
-  return out
-}
+const describeEvent = (e: LiveSessionEvent) =>
+  e.kind === 'state' ? `${e.state}${e.endReason ? ` (${e.endReason})` : ''}` : e.kind === 'start' ? `activity start ${e.sport ?? '?'}/${e.subSport ?? '?'}` : 'activity data'
 
-/** EventSharing alert notifications carry LiveSession events in extension 1012; the band can also send LiveSession requests. */
-function handleBandMessage(m: SmartMessage) {
-  if (m.kind !== 'request') return
-  const liveEvent = findAll(m.fields, (f, path) => f.field === 1012 && path[0] === SMART.EVENT_SHARING)[0]
-  const liveRequest = !liveEvent ? m.fields?.find((f) => f.field === SMART.LIVE_SESSION) : null
-  if (!liveEvent && !liveRequest) return
-  const body = sub(m.fields, liveEvent ? SMART.EVENT_SHARING : SMART.LIVE_SESSION)
-  const event: BandEvent = {
-    at: Date.now(),
-    source: liveEvent ? 'live-session-event' : 'live-session-request',
-    summary: describeProto(body),
-    values: scalarValues(body),
+/** Band-initiated messages: LiveSession events arrive as EventSharing alert notifications. */
+function handleBandMessage(m: SmartMessage): boolean {
+  if (m.kind !== 'request') return false
+  let events: LiveSessionEvent[]
+  try {
+    events = decodeLiveSessionEvents(m.fields)
+  } catch (e) {
+    band.addLog('error', `malformed LiveSession event: ${e instanceof Error ? e.message : String(e)}`)
+    return false
   }
-  const uuid = findUuid(body)
-  lastEventAt = event.at
-  setActivity({ events: [...activity.events.slice(-49), event], uuid: uuid ?? activity.uuid })
-  band.addLog('info', `band activity event: ${JSON.stringify(event.values)}`)
-  const cmd = activity.command
-  if (cmd && awaitingConfirmation && cmd.stage === 'accepted' && Date.now() - awaitingConfirmation.since < CONFIRM_WINDOW_MS) {
-    awaitingConfirmation = null
-    setActivity({ command: { ...cmd, stage: 'confirmed', event: event.summary } })
+  if (events.length === 0) return false
+  const at = Date.now()
+  let next = activity
+  for (const event of events) {
+    band.addLog('info', `band reported ${describeEvent(event)}`)
+    next = {
+      ...next,
+      events: [...next.events.slice(-49), { at, event }],
+      ...(event.kind === 'state' ? { bandState: event.state } : {}),
+      ...(event.kind === 'start' ? { uuid: event.uuid, profile: { sport: event.sport, subSport: event.subSport } } : {}),
+    }
+    const cmd = next.command
+    if (cmd && ['sent', 'accepted', 'sending'].includes(cmd.stage) && at >= cmd.at && CONFIRMS[cmd.command](event)) {
+      next = { ...next, command: { ...cmd, stage: 'confirmed', confirmedBy: describeEvent(event) } }
+    }
   }
+  activity = next
+  emit()
+  return true
 }
 band.onSmart(handleBandMessage)
 
-// Subscribe to LiveSession events as soon as each session becomes ready.
+function withTimeout<T>(p: Promise<T>, ms = 15_000): Promise<T> {
+  return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('No answer from the band')), ms))])
+}
+
+/** Discovers LiveSession support and subscribes to its events, as the tested client did before any command. */
+async function prepareActivity() {
+  setActivity({ ...INITIAL, support: { state: 'checking' } })
+  try {
+    const missing = ACTIVITY_REQUIRED_BITS.filter((b) => !band.bandConfigBits.includes(b))
+    if (missing.length) throw new Error(`The band doesn't advertise capability ${missing.join(', ')}`)
+    const caps = decodeLiveSessionCapabilities((await withTimeout(band.sendSmart(liveSessionCapabilities(), 'LiveSession capabilities').response)).fields)
+    if (!caps.allowRemoteTerminate) throw new Error("The band doesn't allow apps to end activities remotely")
+    const alerts = decodeSupportedAlerts((await withTimeout(band.sendSmart(eventSharingSupportedAlerts(), 'EventSharing supported alerts').response)).fields)
+    if (!alerts.includes(19)) throw new Error("The band doesn't offer LiveSession events")
+    const subscribed = decodeSubscribed((await withTimeout(band.sendSmart(subscribeLiveSessionEvents(), 'subscribe LiveSession events').response)).fields)
+    if (!subscribed) throw new Error("The band didn't confirm the LiveSession subscription")
+    if (!band.bandConfigBits.includes(BAND_CAPS.STRENGTH)) throw new Error("The band doesn't advertise Strength activities (capability 58)")
+    setActivity({ support: { state: 'ready' } })
+  } catch (e) {
+    setActivity({ support: { state: 'unavailable', reason: e instanceof Error ? e.message : String(e) } })
+  }
+}
+
 let lastState = band.state
 band.subscribe(() => {
-  if (band.state === 'ready' && lastState !== 'ready') {
-    band.sendSmart(subscribeLiveSessionEvents(), 'subscribe LiveSession events (alert 19)').response.catch(() => {})
-  }
+  if (band.state === 'ready' && lastState !== 'ready') void prepareActivity()
+  if (band.state !== 'ready' && lastState === 'ready') setActivity({ support: { state: 'not-checked' } })
   lastState = band.state
 })
+
+export function bandActivityReady(): boolean {
+  return band.state === 'ready' && activity.support.state === 'ready'
+}
 
 let queue: Promise<void> = Promise.resolve()
 let startPending = false
 
 /**
  * Queues an activity command and tracks it through sent → accepted → confirmed. Commands run one at a time in
- * order, so a quick pause after start isn't lost. A second START while one is still pending is refused (returns
- * false), so a double tap can't start two activities.
+ * order, so a quick pause after start isn't lost. A second START while one is pending is refused (returns false),
+ * so a double tap can't start two activities. Timeouts are never retried automatically: the band may already have
+ * acted, so the command is marked uncertain instead.
  */
 export function sendActivityCommand(command: ActivityCommandName): boolean {
-  if (band.state !== 'ready') return false
+  if (!bandActivityReady()) return false
   if (command === 'START') {
     if (startPending) return false
     startPending = true
@@ -139,8 +183,7 @@ export function sendActivityCommand(command: ActivityCommandName): boolean {
 
 async function runCommand(command: ActivityCommandName): Promise<void> {
   const status: CommandStatus = { command, stage: 'sending', requestId: null, at: Date.now() }
-  awaitingConfirmation = null
-  setActivity({ command: status, ...(command === 'START' ? { uuid: null, events: [] } : {}) })
+  setActivity({ command: status, ...(command === 'START' ? { uuid: null, profile: null, events: [], bandState: null } : {}) })
   let sent: ReturnType<typeof band.sendSmart>
   try {
     sent = band.sendSmart(activityCommand(command), `LiveSession ${command}`)
@@ -148,70 +191,91 @@ async function runCommand(command: ActivityCommandName): Promise<void> {
     setActivity({ command: { ...status, stage: 'failed', error: e instanceof Error ? e.message : String(e) } })
     return
   }
-  setActivity({ command: { ...status, requestId: sent.requestId } })
   const update = (patch: Partial<CommandStatus>) => {
-    if (activity.command?.requestId === sent.requestId) setActivity({ command: { ...activity.command, ...patch } })
+    const cur = activity.command
+    if (cur?.requestId === sent.requestId) setActivity({ command: { ...cur, ...patch } })
   }
+  setActivity({ command: { ...status, requestId: sent.requestId } })
   try {
     await sent.sent
-    update({ stage: 'sent' })
-    const resp = await Promise.race([sent.response, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('No answer from the band')), 15_000))])
-    const answer = sub(sub(resp.fields, SMART.LIVE_SESSION), LIVE.COMMAND_RESPONSE)
-    if (!answer) throw new Error('The band answered, but not with an activity command response')
-    const uuid = findUuid(answer)
-    if (uuid) setActivity({ uuid })
-    // The band may report its event before answering the request; that still confirms the command.
-    const eventAlready = lastEventAt >= status.at ? activity.events[activity.events.length - 1] : null
-    if (eventAlready) {
-      update({ stage: 'confirmed', event: eventAlready.summary })
-    } else {
-      awaitingConfirmation = { requestId: sent.requestId, since: Date.now() }
-      update({ stage: 'accepted', event: describeProto(answer) })
-    }
   } catch (e) {
     update({ stage: 'failed', error: e instanceof Error ? e.message : String(e) })
+    return
+  }
+  if (activity.command?.stage === 'sending') update({ stage: 'sent' })
+  try {
+    const result = decodeCommandResponse((await withTimeout(sent.response)).fields)
+    if (!result.accepted) {
+      update({ stage: 'failed', error: `The band rejected it (failure ${result.failure})` })
+      return
+    }
+    // A matching band state may already have arrived; keep 'confirmed' in that case.
+    if (activity.command?.stage !== 'confirmed') update({ stage: 'accepted' })
+  } catch (e) {
+    update({ stage: activity.command?.stage === 'confirmed' ? 'confirmed' : 'uncertain', error: e instanceof Error ? e.message : String(e) })
   }
 }
 
-export function testBandAlert() {
-  return band.sendSmart(findMyWatch(), 'Find My Watch (test alert)')
+/** Test band alert via Find My Watch. Resolves with the band's status (100 = OK). */
+export async function testBandAlert(): Promise<number> {
+  if (!band.bandConfigBits.includes(BAND_CAPS.FIND_MY_WATCH)) throw new Error("The band doesn't advertise Find My Watch (capability 9)")
+  const status = decodeLocateStatus((await withTimeout(band.sendSmart(findMyWatch(), 'Find My Watch (test alert)').response, 12_000)).fields, false)
+  if (status !== 100) throw new Error(`The band answered with status ${status === 200 ? 'ERROR' : status}`)
+  return status
 }
 
-export function cancelBandAlert() {
-  return band.sendSmart(cancelFindMyWatch(), 'cancel Find My Watch')
+export async function cancelBandAlert(): Promise<number> {
+  return decodeLocateStatus((await withTimeout(band.sendSmart(cancelFindMyWatch(), 'cancel Find My Watch').response, 12_000)).fields, true)
 }
 
 export interface FileListing {
-  pages: { decoded: unknown; candidateReferences: number; sessionId: number | null }[]
-  totalCandidates: number
-  /** Scalar fields of the final page, kept so a future incremental listing can use next_transaction_id once its field is confirmed. */
-  finalValues: Record<string, number>
+  pages: FileListPage[]
+  total: number
+  complete: boolean
+  /** Kept for future incremental listings; incremental behaviour hasn't been verified on the band. */
+  nextTransactionId: number | null
+}
+
+const TX_KEY = 'bettergarmin:bandNextTransactionId'
+
+export function savedNextTransactionId(): number | null {
+  try {
+    const v = localStorage.getItem(TX_KEY)
+    return v == null ? null : Number(v)
+  } catch {
+    return null
+  }
 }
 
 /**
- * Lists files on the band (FileAccess item-list request). The response schema isn't recovered yet, so pages are
- * decoded generically: references are counted as the most repeated embedded-message field, and the listing continues
- * while a session ID (field 1) comes back. Nothing on the band is changed.
+ * Lists files on the band (read-only: nothing on the band is changed). Continues with the session ID the band
+ * returns until it stops sending one, and stores the final next_transaction_id.
  */
-export async function listBandFiles(maxPages = 10): Promise<FileListing> {
-  const pages: FileListing['pages'] = []
+export async function listBandFiles(maxPages = 8): Promise<FileListing> {
+  if (!band.bandConfigBits.includes(BAND_CAPS.FILE_ACCESS)) throw new Error("The band doesn't advertise FileAccess (capability 90)")
+  await withTimeout(band.sendSmart(fileAccessCapabilities(), 'FileAccess capabilities').response)
+  const pages: FileListPage[] = []
+  const seen = new Set<number>()
   let sessionId: number | null = null
-  let finalValues: Record<string, number> = {}
-  for (let page = 0; page < maxPages; page++) {
+  for (let i = 0; i < maxPages; i++) {
     const req = band.sendSmart(fileListRequest(sessionId == null ? { maxReferences: 10 } : { sessionId }), sessionId == null ? 'FileAccess list (max 10)' : `FileAccess list continue (session ${sessionId})`)
-    const resp = await Promise.race([req.response, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('No answer from the band')), 15_000))])
-    const list = sub(sub(resp.fields, SMART.FILE_ACCESS), 10)
-    if (!list) throw new Error('The band answered without an item-list response')
-    const counts = new Map<number, number>()
-    for (const f of list) if (f.wire === 2) counts.set(f.field, (counts.get(f.field) ?? 0) + 1)
-    const candidateReferences = Math.max(0, ...counts.values())
-    const nextSession = num(list, 1)
-    pages.push({ decoded: describeProto(list), candidateReferences, sessionId: nextSession })
-    finalValues = scalarValues(list)
-    if (nextSession == null || nextSession === sessionId) break
-    sessionId = nextSession
+    const page = decodeFileListPage((await withTimeout(req.response)).fields)
+    pages.push(page)
+    if (page.complete) break
+    if (page.sessionId != null && seen.has(page.sessionId) && page.items.length === 0) throw new Error('The file listing stopped making progress')
+    if (page.sessionId != null) seen.add(page.sessionId)
+    sessionId = page.sessionId
   }
-  return { pages, totalCandidates: pages.reduce((n, p) => n + p.candidateReferences, 0), finalValues }
+  const last = pages[pages.length - 1]
+  const nextTransactionId = last?.nextTransactionId ?? null
+  if (nextTransactionId != null) {
+    try {
+      localStorage.setItem(TX_KEY, String(nextTransactionId))
+    } catch {
+      // fine to lose
+    }
+  }
+  return { pages, total: pages.reduce((n, p) => n + p.items.length, 0), complete: !!last?.complete, nextTransactionId }
 }
 
 export interface BandSnapshot {
@@ -249,5 +313,12 @@ export function useBand(): BandSnapshot {
   }, getSnapshot)
 }
 
-/** Capability bits seen in the band's Configuration message. */
-export const BAND_CAPS = { STRENGTH: 58, SPORT_PROFILE_SETUP: 56, FILE_ACCESS: 90 } as const
+/** UUID halves as one stable string for storage ("msb-wire-bytes / lsb-wire-bytes"). */
+export function uuidKey(u: ActivityUuid | null): string | null {
+  return u ? `${u.mostSignificant.replace(/ /g, '')}:${u.leastSignificant.replace(/ /g, '')}` : null
+}
+
+/** Test hook: the current activity state without React. */
+export function getActivitySnapshotForTests(): ActivityState {
+  return activity
+}

@@ -7,6 +7,7 @@ const LABELS: Record<CommandStatus['stage'], string> = {
   accepted: 'Accepted · waiting for the band to confirm',
   confirmed: 'Band confirmed',
   failed: 'Failed',
+  uncertain: 'Uncertain · check the band before retrying',
 }
 
 const NAMES: Record<CommandStatus['command'], string> = { START: 'Start', PAUSE: 'Pause', RESUME: 'Resume', SAVE: 'Save', DISCARD: 'Discard' }
@@ -21,11 +22,13 @@ export function CommandStage({ status }: { status: CommandStatus }) {
         status.stage === 'accepted' && 'bg-sky-500/15 text-sky-400',
         (status.stage === 'sending' || status.stage === 'sent') && 'bg-slate-500/20 text-[var(--text-secondary)]',
         status.stage === 'failed' && 'bg-rose-500/15 text-rose-400',
+        status.stage === 'uncertain' && 'bg-amber-500/15 text-amber-400',
       )}
       title={status.error}
     >
       Band {NAMES[status.command]}: {LABELS[status.stage]}
-      {status.stage === 'failed' && status.error ? ` (${status.error})` : ''}
+      {status.stage === 'confirmed' && status.confirmedBy ? ` (${status.confirmedBy})` : ''}
+      {(status.stage === 'failed' || status.stage === 'uncertain') && status.error ? ` (${status.error})` : ''}
     </span>
   )
 }
