@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { EChartsOption } from 'echarts'
-import { updateAppearance, useAppearance, type ChartStyle } from '../../app/appearance'
 import { Card } from '../ui/Card'
 import { Chart } from '../ui/Chart'
 import { InfoButton } from '../ui/InfoButton'
@@ -97,16 +96,10 @@ function bucket(pts: Raw[], size: number): [number, number][] {
 
 function rangesFor(min: number, max: number): Range[] {
   if (max - min <= 2 * DAY) {
+    // A day chart always shows the whole day, midnight to midnight.
     const day = new Date(max)
     day.setHours(0, 0, 0, 0)
-    const d0 = day.getTime()
-    return [
-      { key: 'all', label: 'Day', from: null, to: null },
-      { key: 'night', label: 'Night', from: d0, to: d0 + 6 * HOUR },
-      { key: 'morning', label: 'Morning', from: d0 + 6 * HOUR, to: d0 + 12 * HOUR },
-      { key: 'afternoon', label: 'Afternoon', from: d0 + 12 * HOUR, to: d0 + 18 * HOUR },
-      { key: 'evening', label: 'Evening', from: d0 + 18 * HOUR, to: d0 + 24 * HOUR },
-    ]
+    return [{ key: 'all', label: 'Day', from: day.getTime(), to: day.getTime() + DAY }]
   }
   const span = max - min
   const r: Range[] = [{ key: 'week', label: 'Week', from: max - 7 * DAY, to: max + DAY / 2 }]
@@ -116,12 +109,10 @@ function rangesFor(min: number, max: number): Range[] {
   return r
 }
 
-const STYLE_LABEL: Record<ChartStyle, string> = { smooth: 'Smooth', blocks: 'Blocks', detailed: 'Detailed' }
-const NEXT_STYLE: Record<ChartStyle, ChartStyle> = { smooth: 'blocks', blocks: 'detailed', detailed: 'smooth' }
 
 /**
- * A titled card holding a large chart. No pinch or drag: one-tap chips pick a part of the day (or a time span), and
- * tapping the chart on "Day" zooms into the part of the day that was tapped. Day charts follow the chosen chart style.
+ * A titled card holding a large chart, with no pinch or drag. Day charts show the whole day as blocks, one rounded
+ * bar per hour; history charts get one-tap chips for the time span.
  */
 export function DetailChart({
   title,
@@ -136,7 +127,6 @@ export function DetailChart({
   height?: number
   info?: string
 }) {
-  const style = useAppearance().chartStyle
   const allSeries = (Array.isArray(option.series) ? option.series : option.series ? [option.series] : []) as Record<string, unknown>[]
   const allPts = allSeries.flatMap(pointsOf)
   const min = allPts.length ? Math.min(...allPts.map((p) => p.t)) : 0
@@ -148,17 +138,13 @@ export function DetailChart({
   const [key, setKey] = useState<string | undefined>(undefined)
   const active = ranges.find((r) => r.key === (key ?? defaultKey))
 
-  const reshaped = intraday && style !== 'detailed'
+  const reshaped = intraday
   const series = reshaped
     ? allSeries.map((s) => {
         const pts = pointsOf(s)
         const color = seriesColor(s, pts)
-        const zoomedIn = active?.from != null
-        const size = style === 'blocks' ? (zoomedIn ? 15 : 60) * 60_000 : (zoomedIn ? 5 : 20) * 60_000
-        const data = bucket(pts, size)
-        return style === 'blocks'
-          ? { type: 'bar', data, barWidth: '70%', itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
-          : { type: 'line', data, smooth: 0.4, showSymbol: false, lineStyle: { color, width: 3 }, areaStyle: { color: fade(color, 0.25) } }
+        const data = bucket(pts, HOUR)
+        return { type: 'bar', data, barWidth: '70%', itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
       })
     : allSeries
 
@@ -170,21 +156,14 @@ export function DetailChart({
     ...(active?.from != null ? { min: active.from, max: active.to } : {}),
     ...(intraday && {
       // Whole hours only ("6 AM"), spaced so labels never collide.
-      minInterval: (active?.from != null ? 2 : 6) * HOUR,
-      maxInterval: (active?.from != null ? 2 : 6) * HOUR,
-      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleTimeString([], { hour: 'numeric' }) },
+      // Ticks every 2 hours, labelled only at 6 AM, 12 PM and 6 PM so the times never crowd.
+      minInterval: 2 * HOUR,
+      maxInterval: 2 * HOUR,
+      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => ([6, 12, 18].includes(new Date(v).getHours()) ? new Date(v).toLocaleTimeString([], { hour: 'numeric' }) : '') },
     }),
   }
-  const finalOption = { ...rest, xAxis, series } as EChartsOption
-
-  const onClick = (p: { data?: unknown }) => {
-    if (!intraday || (active && active.key !== 'all')) return
-    const v = Array.isArray(p.data) ? p.data : (p.data as { value?: unknown })?.value
-    const t = Array.isArray(v) && typeof v[0] === 'number' ? v[0] : null
-    if (t == null) return
-    const hour = new Date(t).getHours()
-    setKey(hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening')
-  }
+  const grid = intraday ? { ...(rest.grid as object), left: 8, right: 24, containLabel: true } : rest.grid
+  const finalOption = { ...rest, grid, xAxis, series } as EChartsOption
 
   return (
     <Card className="p-4">
@@ -194,16 +173,6 @@ export function DetailChart({
           {info && <InfoButton title={title}>{info}</InfoButton>}
           {hint && <span className="text-[11px] text-[var(--text-tertiary)]">{hint}</span>}
         </div>
-        {intraday && (
-          <button
-            type="button"
-            onClick={() => updateAppearance({ chartStyle: NEXT_STYLE[style] })}
-            className="rounded-full border border-[var(--border-panel)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]"
-            title="Change chart style"
-          >
-            {STYLE_LABEL[style]}
-          </button>
-        )}
       </div>
       {ranges.length > 1 && (
         <div className="mb-2 flex gap-1">
@@ -221,8 +190,7 @@ export function DetailChart({
           ))}
         </div>
       )}
-      <Chart height={height} option={finalOption} onClick={onClick} />
-      {intraday && active?.key === 'all' && <p className="mt-1 text-center text-[11px] text-[var(--text-tertiary)]">Tap the chart to look closer at that part of the day</p>}
+      <Chart height={height} option={finalOption} />
     </Card>
   )
 }

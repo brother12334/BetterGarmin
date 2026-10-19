@@ -423,17 +423,6 @@ function StyleSection() {
               onChange={(density) => updateAppearance({ density })}
             />
           </Field>
-          <Field label="Chart style">
-            <Segmented
-              value={a.chartStyle}
-              options={[
-                ['smooth', 'Smooth'],
-                ['blocks', 'Blocks'],
-                ['detailed', 'Detailed'],
-              ]}
-              onChange={(chartStyle) => updateAppearance({ chartStyle })}
-            />
-          </Field>
         </div>
       </details>
     </Card>
