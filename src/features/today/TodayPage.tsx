@@ -292,7 +292,7 @@ function SyncBar() {
           ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
           : garminPull.status === 'error'
             ? garminPull.message
-            : `Synced ${formatRelativeTime(lastSynced)}`}
+            : garminPull.note ?? `Synced ${formatRelativeTime(lastSynced)}`}
       </span>
       <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
         {running ? 'Syncing…' : 'Sync now'}

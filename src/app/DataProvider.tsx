@@ -43,7 +43,7 @@ interface DataContextValue {
   refreshBandData: () => Promise<WellnessSummary | null>
 }
 
-export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date; via?: 'band' | 'cloud' } | { status: 'error'; message: string }
+export type GarminPullState = { status: 'idle'; note?: string } | { status: 'running'; startedAt: Date; via?: 'band' | 'cloud' } | { status: 'error'; message: string }
 
 const DataContext = createContext<DataContextValue | null>(null)
 const SOURCE_KEY = 'bettergarmin:dataSource'
@@ -447,19 +447,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const config = cloudConfigRef.current
     const bluetooth = typeof navigator !== 'undefined' && 'bluetooth' in navigator
     pullInFlight.current = true
+    let bandFailure: string | null = null
     try {
       // Primary: straight from the band over Bluetooth. connect() runs first, inside the tap, as the browser requires.
       if (bluetooth) {
         setGarminPull({ status: 'running', startedAt: new Date(), via: 'band' })
         try {
           if (band.state !== 'ready') await band.connect()
-          await syncBand(band, indexedDbBandStore)
-          await refreshBandData()
-          setGarminPull({ status: 'idle' })
+          const report = await syncBand(band, indexedDbBandStore)
+          const w = await refreshBandData()
+          const n = (r: string) => report.outcomes.filter((o) => o.result === r).length
+          const failed = report.outcomes.find((o) => o.result === 'failed')
+          const parts = [
+            `Band: ${report.listed} file${report.listed === 1 ? '' : 's'} listed, ${n('imported') + n('unsupported')} new, ${n('skipped-duplicate')} already synced`,
+            n('failed') ? `${n('failed')} failed (${failed?.error})` : '',
+            w ? `${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate readings, ${w.nights} nights` : 'no stress, energy or sleep data in the files yet',
+          ].filter(Boolean)
+          setGarminPull(n('failed') && !w ? { status: 'error', message: parts.join(' · ') } : { status: 'idle', note: parts.join(' · ') })
           return
         } catch (err) {
-          if (!config || !navigator.onLine) throw err
-          // Band unreachable: fall back to the cloud copy below.
+          const why = err instanceof Error ? err.message : String(err)
+          if (!config || !navigator.onLine) throw new Error(`Couldn't sync from the band: ${why}`)
+          // Band unreachable: use the cloud copy, but say so.
+          bandFailure = why
         }
       }
       if (!config) throw new Error('Open this page in Bluefy to sync straight from your band.')
@@ -467,6 +477,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const startedAt = await startCloudSync(config)
       savePendingPull(startedAt)
       await watchForPull(config, startedAt)
+      if (bandFailure) setGarminPull({ status: 'idle', note: `Couldn't reach the band (${bandFailure}), so this used the Garmin cloud copy.` })
     } catch (err) {
       setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
     } finally {

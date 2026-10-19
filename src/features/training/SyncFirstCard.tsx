@@ -21,7 +21,7 @@ export function SyncFirstCard() {
       </div>
       <div className="flex items-center justify-between gap-3 text-xs text-[var(--text-tertiary)]">
         <span className={garminPull.status === 'error' ? 'text-rose-400' : undefined}>
-          {running ? 'Syncing…' : garminPull.status === 'error' ? garminPull.message : `Last synced ${formatRelativeTime(lastSynced)}`}
+          {running ? 'Syncing…' : garminPull.status === 'error' ? garminPull.message : (garminPull.note ?? `Last synced ${formatRelativeTime(lastSynced)}`)}
         </span>
         <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
           {running ? 'Syncing…' : 'Sync now'}

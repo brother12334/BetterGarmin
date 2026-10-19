@@ -156,6 +156,7 @@ export function MorePage() {
             </div>
             {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
             {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
+            {garminPull.status === 'idle' && garminPull.note && <p className="text-sm text-[var(--text-secondary)]">{garminPull.note}</p>}
             {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
             <div className="flex gap-2">
               <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
