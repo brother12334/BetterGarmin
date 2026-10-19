@@ -227,7 +227,6 @@ export function SleepPage() {
       {scores.length > 1 && (
         <DetailChart
           title="Sleep score"
-          hint="pinch or drag to zoom"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct(scores.length, 21)),

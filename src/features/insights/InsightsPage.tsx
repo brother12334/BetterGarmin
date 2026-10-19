@@ -14,7 +14,7 @@ import { HistoryTab } from './HistoryTab'
 import { ExperimentsCard } from './ExperimentsCard'
 import { AskTab } from './AskTab'
 import { BigStat, Dial } from '../../components/charts/HealthCharts'
-import { zoom, type Point } from '../../components/charts/chartKit'
+import type { Point } from '../../components/charts/chartKit'
 
 const TABS = [
   { key: 'findings', label: 'Findings' },
@@ -157,7 +157,6 @@ function TrendExplorer({ data }: { data: DailyMetrics[] }) {
       <Chart
         option={{
           grid: { left: 8, right: 10, top: 30, bottom: 8, containLabel: true },
-          dataZoom: zoom(),
           xAxis: dayAxis(),
           yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
           legend: { data: ['Daily', '7-day avg', '30-day avg'], textStyle: { color: 'var(--text-tertiary)' }, top: 0 },

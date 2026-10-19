@@ -100,7 +100,6 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
       {minPts.length > 0 && (
         <DetailChart
           title="Active minutes"
-          hint="pinch or drag to zoom"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct),

@@ -214,7 +214,6 @@ export function HealthPage() {
       {data.allDayHr.length > 0 && (
         <DetailChart
           title="Heart rate today"
-          hint="pinch or drag to zoom"
           option={{
             grid: detailGrid,
             dataZoom: zoom(),
@@ -228,7 +227,6 @@ export function HealthPage() {
       {data.stress.length > 0 && (
         <DetailChart
           title="Stress today"
-          hint="pinch or drag to zoom"
           info="A 0–100 estimate from heart-rate variability. Below 25 is rest, 26–50 low, 51–75 medium, above 75 high."
           option={{
             grid: detailGrid,
@@ -348,7 +346,6 @@ export function HealthPage() {
       {data.spo2.length > 0 && (
         <DetailChart
           title="Blood oxygen today"
-          hint="pinch or drag to zoom"
           option={{
             grid: detailGrid,
             dataZoom: zoom(),

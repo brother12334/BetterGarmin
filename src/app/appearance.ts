@@ -24,6 +24,8 @@ export type Radius = 'sharp' | 'rounded' | 'round'
 export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
 export type Density = 'compact' | 'comfortable' | 'spacious'
+/** How detail charts draw a day: a smooth averaged line, hourly blocks, or every raw sample. */
+export type ChartStyle = 'smooth' | 'blocks' | 'detailed'
 
 export interface Appearance {
   backgroundMode: BackgroundMode
@@ -44,6 +46,7 @@ export interface Appearance {
   radius: Radius
   font: FontChoice
   density: Density
+  chartStyle: ChartStyle
   todayLayout: WidgetSlot[]
 }
 
@@ -89,6 +92,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   radius: 'round',
   font: 'manrope',
   density: 'comfortable',
+  chartStyle: 'smooth',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 

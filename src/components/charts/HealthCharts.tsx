@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { EChartsOption } from 'echarts'
+import { updateAppearance, useAppearance, type ChartStyle } from '../../app/appearance'
 import { Card } from '../ui/Card'
 import { Chart } from '../ui/Chart'
 import { InfoButton } from '../ui/InfoButton'
@@ -55,7 +57,72 @@ export function BigStat({
   )
 }
 
-/** A titled card holding a large zoomable chart. */
+type Raw = { t: number; v: number; color?: string }
+type Range = { key: string; label: string; from: number | null; to: number | null }
+
+const HOUR = 3600_000
+const DAY = 24 * HOUR
+
+function pointsOf(series: Record<string, unknown>): Raw[] {
+  const data = (series.data as unknown[]) ?? []
+  const out: Raw[] = []
+  for (const d of data) {
+    const pair = Array.isArray(d) ? d : ((d as { value?: unknown })?.value as unknown[] | undefined)
+    if (!Array.isArray(pair)) continue
+    const t = typeof pair[0] === 'number' ? pair[0] : new Date(pair[0] as string).getTime()
+    const v = pair[1]
+    if (Number.isFinite(t) && typeof v === 'number') out.push({ t, v, color: (d as { itemStyle?: { color?: string } })?.itemStyle?.color })
+  }
+  return out
+}
+
+function seriesColor(series: Record<string, unknown>, pts: Raw[]): string {
+  const ls = series.lineStyle as { color?: string } | undefined
+  const is = series.itemStyle as { color?: string } | undefined
+  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#38bdf8'
+}
+
+/** Averages samples into fixed time buckets (centred), so a day reads as a calm shape instead of hundreds of spikes. */
+function bucket(pts: Raw[], size: number): [number, number][] {
+  const sums = new Map<number, { s: number; n: number }>()
+  for (const p of pts) {
+    const k = Math.floor(p.t / size) * size
+    const e = sums.get(k) ?? { s: 0, n: 0 }
+    e.s += p.v
+    e.n++
+    sums.set(k, e)
+  }
+  return [...sums.entries()].sort((x, y) => x[0] - y[0]).map(([k, e]) => [k + size / 2, Math.round(e.s / e.n)])
+}
+
+function rangesFor(min: number, max: number): Range[] {
+  if (max - min <= 2 * DAY) {
+    const day = new Date(max)
+    day.setHours(0, 0, 0, 0)
+    const d0 = day.getTime()
+    return [
+      { key: 'all', label: 'Day', from: null, to: null },
+      { key: 'night', label: 'Night', from: d0, to: d0 + 6 * HOUR },
+      { key: 'morning', label: 'Morning', from: d0 + 6 * HOUR, to: d0 + 12 * HOUR },
+      { key: 'afternoon', label: 'Afternoon', from: d0 + 12 * HOUR, to: d0 + 18 * HOUR },
+      { key: 'evening', label: 'Evening', from: d0 + 18 * HOUR, to: d0 + 24 * HOUR },
+    ]
+  }
+  const span = max - min
+  const r: Range[] = [{ key: 'week', label: 'Week', from: max - 7 * DAY, to: max + DAY / 2 }]
+  if (span > 10 * DAY) r.push({ key: 'month', label: 'Month', from: max - 30 * DAY, to: max + DAY / 2 })
+  if (span > 40 * DAY) r.push({ key: 'quarter', label: '3 months', from: max - 91 * DAY, to: max + DAY / 2 })
+  r.push({ key: 'all', label: 'All', from: null, to: null })
+  return r
+}
+
+const STYLE_LABEL: Record<ChartStyle, string> = { smooth: 'Smooth', blocks: 'Blocks', detailed: 'Detailed' }
+const NEXT_STYLE: Record<ChartStyle, ChartStyle> = { smooth: 'blocks', blocks: 'detailed', detailed: 'smooth' }
+
+/**
+ * A titled card holding a large chart. No pinch or drag: one-tap chips pick a part of the day (or a time span), and
+ * tapping the chart on "Day" zooms into the part of the day that was tapped. Day charts follow the chosen chart style.
+ */
 export function DetailChart({
   title,
   hint,
@@ -69,16 +136,93 @@ export function DetailChart({
   height?: number
   info?: string
 }) {
+  const style = useAppearance().chartStyle
+  const allSeries = (Array.isArray(option.series) ? option.series : option.series ? [option.series] : []) as Record<string, unknown>[]
+  const allPts = allSeries.flatMap(pointsOf)
+  const min = allPts.length ? Math.min(...allPts.map((p) => p.t)) : 0
+  const max = allPts.length ? Math.max(...allPts.map((p) => p.t)) : 0
+  const intraday = allPts.length > 0 && max - min <= 2 * DAY
+  const ranges = allPts.length ? rangesFor(min, max) : []
+  // Long histories open on the most recent stretch; a single day opens on the whole day.
+  const defaultKey = intraday ? 'all' : (ranges.find((r) => r.key === 'month') ?? ranges[0])?.key
+  const [key, setKey] = useState<string | undefined>(undefined)
+  const active = ranges.find((r) => r.key === (key ?? defaultKey))
+
+  const reshaped = intraday && style !== 'detailed'
+  const series = reshaped
+    ? allSeries.map((s) => {
+        const pts = pointsOf(s)
+        const color = seriesColor(s, pts)
+        const zoomedIn = active?.from != null
+        const size = style === 'blocks' ? (zoomedIn ? 15 : 60) * 60_000 : (zoomedIn ? 5 : 20) * 60_000
+        const data = bucket(pts, size)
+        return style === 'blocks'
+          ? { type: 'bar', data, barWidth: '70%', itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
+          : { type: 'line', data, smooth: 0.4, showSymbol: false, lineStyle: { color, width: 3 }, areaStyle: { color: fade(color, 0.25) } }
+      })
+    : allSeries
+
+  const { dataZoom: _dropped, ...rest } = option
+  void _dropped
+  const baseX = (Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis) as Record<string, unknown>
+  const xAxis = {
+    ...baseX,
+    ...(active?.from != null ? { min: active.from, max: active.to } : {}),
+    ...(intraday && {
+      // Whole hours only ("6 AM"), spaced so labels never collide.
+      minInterval: (active?.from != null ? 2 : 6) * HOUR,
+      maxInterval: (active?.from != null ? 2 : 6) * HOUR,
+      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => new Date(v).toLocaleTimeString([], { hour: 'numeric' }) },
+    }),
+  }
+  const finalOption = { ...rest, xAxis, series } as EChartsOption
+
+  const onClick = (p: { data?: unknown }) => {
+    if (!intraday || (active && active.key !== 'all')) return
+    const v = Array.isArray(p.data) ? p.data : (p.data as { value?: unknown })?.value
+    const t = Array.isArray(v) && typeof v[0] === 'number' ? v[0] : null
+    if (t == null) return
+    const hour = new Date(t).getHours()
+    setKey(hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening')
+  }
+
   return (
     <Card className="p-4">
-      <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <p className="font-semibold">{title}</p>
           {info && <InfoButton title={title}>{info}</InfoButton>}
+          {hint && <span className="text-[11px] text-[var(--text-tertiary)]">{hint}</span>}
         </div>
-        {hint && <span className="text-xs text-[var(--text-tertiary)]">{hint}</span>}
+        {intraday && (
+          <button
+            type="button"
+            onClick={() => updateAppearance({ chartStyle: NEXT_STYLE[style] })}
+            className="rounded-full border border-[var(--border-panel)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]"
+            title="Change chart style"
+          >
+            {STYLE_LABEL[style]}
+          </button>
+        )}
       </div>
-      <Chart height={height} option={option} />
+      {ranges.length > 1 && (
+        <div className="mb-2 flex gap-1">
+          {ranges.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => setKey(r.key)}
+              className={`min-w-0 flex-1 truncate rounded-full px-1 py-1 text-[11px] font-medium transition-colors ${
+                r.key === active?.key ? 'bg-[var(--accent)] text-black' : 'bg-[var(--ring-track)] text-[var(--text-secondary)]'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <Chart height={height} option={finalOption} onClick={onClick} />
+      {intraday && active?.key === 'all' && <p className="mt-1 text-center text-[11px] text-[var(--text-tertiary)]">Tap the chart to look closer at that part of the day</p>}
     </Card>
   )
 }
