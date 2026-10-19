@@ -50,7 +50,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col items-start gap-2">
       <input
         ref={inputRef}
         type="file"
@@ -62,7 +62,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
           e.target.value = ''
         }}
       />
-      <Button variant="secondary" onClick={() => inputRef.current?.click()} disabled={importing}>
+      <Button loading={importing} variant="secondary" onClick={() => inputRef.current?.click()} disabled={importing}>
         {importing ? 'Importing…' : 'Import Element 26 workout'}
       </Button>
       {!summary && <p className="text-xs text-[var(--text-tertiary)]">Tip: sync your watch right after your workout so each set gets its heart rate.</p>}
@@ -79,7 +79,7 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
             </Link>
           </p>
           {summary.warnings.length > 0 && (
-            <ul className="flex flex-col gap-0.5 text-amber-400">
+            <ul className="flex flex-col gap-1 text-amber-400">
               {summary.warnings.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}

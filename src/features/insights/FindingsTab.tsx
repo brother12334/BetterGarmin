@@ -27,7 +27,7 @@ function formatValue(i: Indicator, v: number | null | undefined): string {
 export function RecoveryCard({ recovery }: { recovery: RecoverySummary }) {
   return (
     <Card>
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <p className="font-semibold">Recovery indicators</p>
         <InfoButton title="Recovery indicators">
           Each indicator is compared with your own recent normal (median of the 28 days before the last week). There is deliberately no
@@ -47,9 +47,9 @@ export function RecoveryCard({ recovery }: { recovery: RecoverySummary }) {
           return (
             <div key={i.key} className="flex items-center justify-between gap-3 py-2 text-sm">
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5">
+                <p className="flex items-center gap-2">
                   {i.label}
-                  {i.contextOnly && <span className="rounded bg-[var(--bg-panel)] px-1.5 text-[10px] text-[var(--text-tertiary)]">context</span>}
+                  {i.contextOnly && <span className="rounded-full bg-[var(--bg-panel)] px-2 text-xs text-[var(--text-tertiary)]">context</span>}
                 </p>
                 <p className="text-xs text-[var(--text-tertiary)]">
                   {i.key === 'trainingFrequency' ? `${i.recentN} in last 7 days` : `last 7 days ${formatValue(i, i.recent)}`}
@@ -111,7 +111,7 @@ export function FindingsTab({ findings, recovery }: { findings: Finding[]; recov
     <div className="flex flex-col gap-4">
       <RecoveryCard recovery={recovery} />
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <p className="font-semibold">What your data shows</p>
         <InfoButton title="Findings">
           Patterns computed directly from your logged workouts and Garmin data, ordered by evidence and size. Each one lists the period,
@@ -137,7 +137,7 @@ export function FindingsTab({ findings, recovery }: { findings: Finding[]; recov
             <span className="text-xs text-sky-400">{showPending ? 'Hide' : 'Show'}</span>
           </button>
           {showPending && (
-            <ul className="mt-2 flex flex-col gap-1.5 text-xs text-[var(--text-secondary)]">
+            <ul className="mt-2 flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
               {pending.map((f) => (
                 <li key={f.id}>
                   <b className="text-[var(--text-primary)]">{f.title}</b> — {f.n} {f.nLabel} so far; needs {f.needs}.

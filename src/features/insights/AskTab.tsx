@@ -65,10 +65,10 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
             placeholder="Gemini API key"
             value={keyDraft}
             onChange={(e) => setKeyDraft(e.target.value)}
-            className="rounded-xl border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2"
+            className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2"
             autoComplete="off"
           />
-          <input value={modelDraft} onChange={(e) => setModelDraft(e.target.value)} className="rounded-xl border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2 text-xs" aria-label="Model" />
+          <input value={modelDraft} onChange={(e) => setModelDraft(e.target.value)} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2 text-xs" aria-label="Model" />
           <div className="flex items-center gap-3">
             <Button
               disabled={!keyDraft.trim()}
@@ -97,7 +97,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
           <p className="mb-2 font-semibold">Ask about your data</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((q) => (
-              <button key={q} type="button" onClick={() => ask(q)} className="rounded-full border border-[var(--border-panel)] px-3 py-1.5 text-left text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              <button key={q} type="button" onClick={() => ask(q)} className="rounded-full border border-[var(--border-panel)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                 {q}
               </button>
             ))}
@@ -107,7 +107,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
 
       {turns.map((t, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <p className="self-end rounded-2xl bg-sky-500/15 px-3 py-2 text-sm">{t.question}</p>
+          <p className="self-end rounded-control bg-sky-500/15 px-3 py-2 text-sm">{t.question}</p>
           <Card className="text-sm leading-relaxed">
             {t.error ? (
               <p className="text-rose-400">{t.error}</p>
@@ -131,7 +131,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask about your training, sleep or recovery…"
-          className="min-w-0 flex-1 rounded-2xl border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2.5 text-sm"
+          className="min-w-0 flex-1 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-3 text-sm"
         />
         <Button type="submit" disabled={busy || !question.trim()}>
           Ask
@@ -155,7 +155,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
           Forget API key
         </button>
       </div>
-      {showContext && <pre className="max-h-80 overflow-auto rounded-2xl bg-[var(--bg-panel)] p-3 text-[11px]">{JSON.stringify(context, null, 2)}</pre>}
+      {showContext && <pre className="max-h-80 overflow-auto rounded-control bg-[var(--bg-panel)] p-3 text-xs">{JSON.stringify(context, null, 2)}</pre>}
     </div>
   )
 }
@@ -168,7 +168,7 @@ function Answer({ text, knownIds, titles }: { text: string; knownIds: Set<string
         p.kind === 'text' ? (
           <span key={i}>{p.text.replace(/\*\*(.+?)\*\*/g, '$1')}</span>
         ) : (
-          <Link key={i} to={`/insights?tab=findings#finding-${encodeURIComponent(p.id)}`} title={titles.get(p.id)} className="mx-0.5 rounded bg-sky-500/15 px-1 text-xs text-sky-400 hover:text-sky-300">
+          <Link key={i} to={`/insights?tab=findings#finding-${encodeURIComponent(p.id)}`} title={titles.get(p.id)} className="mx-1 rounded-full bg-sky-500/15 px-1 text-xs text-sky-400 hover:text-sky-300">
             ↗ {titles.get(p.id)?.slice(0, 40)}
           </Link>
         ),

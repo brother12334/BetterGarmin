@@ -57,7 +57,7 @@ export function InsightsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Insights</h1>
-      <div className="sticky top-0 z-10 -mx-1 flex gap-1 rounded-2xl bg-[var(--bg-base)]/80 p-1 backdrop-blur" role="tablist">
+      <div className="sticky top-0 z-10 -mx-1 flex gap-1 rounded-control bg-[var(--bg-base)]/80 p-1 backdrop-blur" role="tablist">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -65,7 +65,7 @@ export function InsightsPage() {
             role="tab"
             aria-selected={tab === t.key}
             onClick={() => setParams({ tab: t.key }, { replace: true })}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${tab === t.key ? 'bg-[var(--bg-panel)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+            className={`flex-1 rounded-control px-3 py-2 text-sm font-medium transition-colors ${tab === t.key ? 'bg-[var(--bg-panel)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
           >
             {t.label}
           </button>
@@ -145,7 +145,7 @@ function TrendExplorer({ data }: { data: DailyMetrics[] }) {
         <select
           value={metric}
           onChange={(e) => setMetric(e.target.value as MetricKey)}
-          className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
+          className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
         >
           {METRIC_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
@@ -197,7 +197,7 @@ function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
 
   return (
     <Card>
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <p className="font-semibold">Correlation explorer</p>
         <InfoButton title="Correlation">
           Shows how two metrics move together across your history. A strong correlation doesn't prove one causes
@@ -205,7 +205,7 @@ function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
         </InfoButton>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-        <select value={metricA} onChange={(e) => setMetricA(e.target.value as MetricKey)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+        <select value={metricA} onChange={(e) => setMetricA(e.target.value as MetricKey)} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
           {METRIC_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
               {o.label}
@@ -213,14 +213,14 @@ function CorrelationExplorer({ data }: { data: DailyMetrics[] }) {
           ))}
         </select>
         <span className="text-[var(--text-tertiary)]">vs.</span>
-        <select value={metricB} onChange={(e) => setMetricB(e.target.value as MetricKey)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+        <select value={metricB} onChange={(e) => setMetricB(e.target.value as MetricKey)} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
           {METRIC_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
               {o.label}
             </option>
           ))}
         </select>
-        <select value={lag} onChange={(e) => setLag(Number(e.target.value))} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
+        <select value={lag} onChange={(e) => setLag(Number(e.target.value))} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1">
           <option value={0}>same day</option>
           <option value={1}>next day</option>
           <option value={2}>2 days later</option>

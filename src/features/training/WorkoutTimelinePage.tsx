@@ -260,7 +260,7 @@ function CompareControl({ workout }: { workout: WorkoutWithSets }) {
       aria-label="Compare with another workout"
       value=""
       onChange={(e) => e.target.value && navigate(`/training/strength/compare/${workout.id}/${e.target.value}`)}
-      className="mt-2 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-xs text-[var(--text-secondary)]"
+      className="mt-2 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-xs text-[var(--text-secondary)]"
     >
       <option value="">Compare with…</option>
       {options.map(({ w, shared }) => (
@@ -282,10 +282,10 @@ function BackLink() {
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-xl bg-[var(--bg-panel)] p-3">
+    <div className="rounded-control bg-[var(--bg-panel)] p-3">
       <p className="text-xs text-[var(--text-tertiary)]">{label}</p>
       <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
-      {sub && <p className="text-[11px] text-[var(--text-tertiary)]">{sub}</p>}
+      {sub && <p className="text-xs text-[var(--text-tertiary)]">{sub}</p>}
     </div>
   )
 }
@@ -347,7 +347,7 @@ function SetPanel({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${conf.className}`}>{conf.label}</span>
+          <span className={`rounded-full px-2 py-1 text-xs font-medium ${conf.className}`}>{conf.label}</span>
           <button type="button" onClick={onClose} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
             Close
           </button>
@@ -370,7 +370,7 @@ function SetPanel({
         <Stat label="Peak" value={bpm(analysis.stats.peak)} />
         <Stat label="At end" value={bpm(analysis.stats.last)} sub={analysis.hrChange != null ? `${analysis.hrChange >= 0 ? '+' : ''}${analysis.hrChange} over set` : undefined} />
       </Section>
-      <p className="-mt-1 mb-3 text-[11px] text-[var(--text-tertiary)]">
+      <p className="-mt-1 mb-3 text-xs text-[var(--text-tertiary)]">
         {analysis.stats.n} samples · {Math.round(analysis.stats.coverage * 100)}% of the set covered
       </p>
 
@@ -407,7 +407,7 @@ function SetPanel({
         )}
       </Section>
 
-      <div className="mt-1 rounded-xl bg-[var(--bg-panel)] p-3 text-xs text-[var(--text-secondary)]">
+      <div className="mt-1 rounded-control bg-[var(--bg-panel)] p-3 text-xs text-[var(--text-secondary)]">
         <p>
           Start: <b>{SOURCE_LABELS[analysis.startSource]}</b> · End: <b>{SOURCE_LABELS[analysis.endSource]}</b>
         </p>
@@ -416,7 +416,7 @@ function SetPanel({
             {issue}
           </p>
         ))}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="text-[var(--text-tertiary)]">Adjust start</span>
           <NudgeButton onClick={() => nudge('start', -5000)}>−5s</NudgeButton>
           <NudgeButton onClick={() => nudge('start', 5000)}>+5s</NudgeButton>
@@ -443,7 +443,7 @@ function SetPanel({
             onCorrect(set.id, keepStart ? start - clockOffsetMs : null, keepEnd ? end - clockOffsetMs : null)
           }}
         />
-        <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">Corrections are stored separately — the imported file is never changed.</p>
+        <p className="mt-2 text-xs text-[var(--text-tertiary)]">Corrections are stored separately — the imported file is never changed.</p>
       </div>
 
       <div className="mt-3 flex justify-between text-xs">
@@ -490,7 +490,7 @@ function BoundaryEditor({
     )
   }
   return (
-    <div className="mt-2 flex flex-col gap-1.5">
+    <div className="mt-2 flex flex-col gap-2">
       <label className="flex items-center gap-2">
         <span className="w-10 text-[var(--text-tertiary)]">Start</span>
         <input type="range" min={min} max={end - 1000} step={1000} value={start} onChange={(e) => setStart(Number(e.target.value))} className="flex-1 accent-rose-400" aria-label="Set start" />
@@ -533,7 +533,7 @@ function diffLabel(w: number | null, pw: number | null, r: number, pr: number, u
 function Section({ title, info, children }: { title: string; info?: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <div className="mb-1.5 flex items-center gap-1.5">
+      <div className="mb-2 flex items-center gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">{title}</p>
         {info && <InfoButton title={title}>{info}</InfoButton>}
       </div>
@@ -544,7 +544,7 @@ function Section({ title, info, children }: { title: string; info?: string; chil
 
 function NudgeButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="rounded-lg border border-[var(--border-panel)] px-2 py-1 tabular-nums hover:bg-[var(--bg-panel)]">
+    <button type="button" onClick={onClick} className="rounded-control border border-[var(--border-panel)] px-2 py-1 tabular-nums hover:bg-[var(--bg-panel)]">
       {children}
     </button>
   )
@@ -578,10 +578,10 @@ function ExerciseBreakdown({
           const prev = previous.get(exercise)
           return (
             <div key={exercise}>
-              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold">{exercise}</p>
                 {prev && (
-                  <p className="text-[11px] text-[var(--text-tertiary)]">
+                  <p className="text-xs text-[var(--text-tertiary)]">
                     last: {new Date(`${prev.day}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ·{' '}
                     {prev.sets.filter((x) => !x.isWarmup).map((x) => `${formatWeight(x.weight, units, 0)}×${x.reps}`).join(', ')}
                   </p>
@@ -603,19 +603,19 @@ function ExerciseBreakdown({
                       onClick={() => onSelect(i)}
                       className={`cursor-pointer border-t border-[var(--border-panel)] ${i === selectedIndex ? 'bg-rose-500/10' : 'hover:bg-[var(--bg-panel)]'}`}
                     >
-                      <td className="py-1.5 pr-2">
+                      <td className="py-2 pr-2">
                         {s.setNumberInExercise}
                         {s.set.isWarmup ? ' WU' : ''}
-                        {s.set.setType === 'drop' && <span className="ml-1 rounded bg-orange-500/15 px-1 text-[10px] text-orange-400">drop</span>}
-                        {s.supersetGroup != null && <span className="ml-1 rounded bg-violet-500/15 px-1 text-[10px] text-violet-400">SS{s.supersetGroup}</span>}
-                        {s.set.editedFields?.length ? <span className="ml-1 text-[10px] text-sky-400" title="Edited in review">✎</span> : null}
+                        {s.set.setType === 'drop' && <span className="ml-1 rounded-full bg-orange-500/15 px-1 text-xs text-orange-400">drop</span>}
+                        {s.supersetGroup != null && <span className="ml-1 rounded-full bg-teal-500/15 px-1 text-xs text-teal-400">SS{s.supersetGroup}</span>}
+                        {s.set.editedFields?.length ? <span className="ml-1 text-xs text-sky-400" title="Edited in review">edited</span> : null}
                         {s.confidence === 'low' || s.confidence === 'none' ? <span className="ml-1 text-amber-400">•</span> : null}
                       </td>
-                      <td className="py-1.5 pr-2">
+                      <td className="py-2 pr-2">
                         {formatWeight(s.set.weight, units, 1)} × {s.set.reps}
                       </td>
-                      <td className="py-1.5 pr-2 tabular-nums">{s.stats.avg != null ? `${s.stats.avg} / ${s.stats.peak}` : '—'}</td>
-                      <td className="py-1.5 pr-2 tabular-nums">{s.restAfter ? duration(s.restAfter.durationMs) : '—'}</td>
+                      <td className="py-2 pr-2 tabular-nums">{s.stats.avg != null ? `${s.stats.avg} / ${s.stats.peak}` : '—'}</td>
+                      <td className="py-2 pr-2 tabular-nums">{s.restAfter ? duration(s.restAfter.durationMs) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -624,7 +624,7 @@ function ExerciseBreakdown({
           )
         })}
       </div>
-      <p className="mt-3 text-[11px] text-[var(--text-tertiary)]">Tap a row to inspect it. • = low confidence or no HR samples for that set.</p>
+      <p className="mt-3 text-xs text-[var(--text-tertiary)]">Tap a row to inspect it. • = low confidence or no HR samples for that set.</p>
     </Card>
   )
 }
@@ -636,7 +636,7 @@ function EffortBands({ bandsMs }: { bandsMs: number[] }) {
   const colors = ['#38bdf8', '#34d399', '#f5a623', '#fb8a3c', '#fb4a59']
   return (
     <Card>
-      <div className="mb-2 flex items-center gap-1.5">
+      <div className="mb-2 flex items-center gap-2">
         <p className="font-semibold">Effort through the session</p>
         <InfoButton title="Effort bands">
           Time at each band of heart rate relative to this session's own peak — a self-comparison, not an age-based zone system.
@@ -648,8 +648,8 @@ function EffortBands({ bandsMs }: { bandsMs: number[] }) {
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)]">
         {labels.map((label, i) =>
           bandsMs[i] > 0 ? (
-            <span key={label} className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: colors[i] }} />
+            <span key={label} className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors[i] }} />
               {label}: {duration(bandsMs[i])}
             </span>
           ) : null,
@@ -674,7 +674,7 @@ function DataQualityCard({
   const offsetLabel = clockOffsetMs === 0 ? 'none' : `${clockOffsetMs > 0 ? '+' : '−'}${duration(Math.abs(clockOffsetMs))}`
   return (
     <Card>
-      <div className="mb-2 flex items-center gap-1.5">
+      <div className="mb-2 flex items-center gap-2">
         <p className="font-semibold">Data quality</p>
         <InfoButton title="Data quality">
           How much of this analysis rests on measured data. If every set looks shifted against the heart-rate trace (for example after
@@ -694,7 +694,7 @@ function DataQualityCard({
           ))}
         </ul>
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
         <span className="text-[var(--text-tertiary)]">Clock offset: {offsetLabel}</span>
         <NudgeButton onClick={() => onOffset(clockOffsetMs - 3_600_000)}>−1h</NudgeButton>
         <NudgeButton onClick={() => onOffset(clockOffsetMs - 10_000)}>−10s</NudgeButton>

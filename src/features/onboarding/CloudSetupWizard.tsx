@@ -3,6 +3,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useData } from '../../app/DataProvider'
 import { cn } from '../../lib/cn'
+import { CheckIcon } from '../../app/icons'
 import { CopyField } from './CopyField'
 import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import workerCode from '../../../worker/dashboard-worker.js?raw'
@@ -250,9 +251,9 @@ function ConnectStep({ workerUrl, token, onConnected }: { workerUrl: string; tok
   return (
     <>
       <P>Everything's in place. Connect this app to your Worker:</P>
-      <p className="break-all rounded-[var(--radius-control)] bg-black/20 px-3 py-2 font-mono text-xs">{workerUrl || 'no Worker address yet: go back to step 3'}</p>
+      <p className="break-all rounded-control bg-black/20 px-3 py-2 font-mono text-xs">{workerUrl || 'no Worker address yet: go back to step 3'}</p>
       {error && <p className="text-sm text-rose-400">{error}</p>}
-      <Button
+      <Button loading={status === 'connecting'}
         disabled={!workerUrl || status === 'connecting'}
         onClick={async () => {
           setStatus('connecting')
@@ -291,7 +292,7 @@ function WorkerCheck({ url }: { url: string }) {
   }, [url])
   if (result === 'checking') return <p className="text-xs text-[var(--text-tertiary)]">Checking the Worker…</p>
   return result === 'ok' ? (
-    <p className="text-xs text-emerald-400">✓ Worker is up and protected.</p>
+    <p className="text-xs text-emerald-400">Worker is up and protected.</p>
   ) : (
     <p className="text-xs text-amber-400">Can't confirm the Worker yet. Check the address, and that you deployed the new code.</p>
   )
@@ -307,7 +308,7 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center justify-between gap-2 rounded-[var(--radius-control)] border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]"
+      className="flex items-center justify-between gap-2 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]"
     >
       {children}
       <span className="text-[var(--accent)]">↗</span>
@@ -329,12 +330,12 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
         Your watch only uploads through the <b>Garmin Connect</b> app. Until it runs, there's nothing new to sync. Do these on your iPhone:
       </P>
       <P>
-        <b>1. Notifications</b> ⭐. In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
+        <b>1. Notifications</b> (recommended). In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
         alerts stays connected, so Garmin Connect syncs in the background much more often. Also keep Background App Refresh on, Low Power Mode off, and
         don't swipe the app closed.
       </P>
       <P>
-        <b>2. The Shortcut</b> ⭐. In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
+        <b>2. The Shortcut</b> (recommended). In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
       </P>
       <ol className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
         <li>
@@ -357,15 +358,15 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
         </li>
       </ol>
       <label className="flex items-center justify-between gap-3 text-sm">
-        Make Sync now run this Shortcut ⭐ recommended
+        Make Sync now run this Shortcut (recommended)
         <input type="checkbox" checked={shortcutOn} onChange={(e) => setShortcutSync(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
       </label>
       <P>
-        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: ⭐ <b>Sleep → Wake Up</b>, ⭐ <b>App → Is
+        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: <b>Sleep → Wake Up</b> and <b>App → Is
         Opened</b> (an app you use a few times a day), and optionally <b>Charger → Connected</b>.
       </P>
       <P>
-        <b>4. Where to open BetterGarmin.</b> ⭐ Recommended: a <b>Safari tab</b> with the{' '}
+        <b>4. Where to open BetterGarmin.</b> Recommended: a <b>Safari tab</b> with the{' '}
         <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio extension</Ext> (allowed only on this site) for live heart rate. Set
         Settings → Apps → Safari → Tabs → <b>Compact</b> so the address bar shrinks when you scroll, or use <b>Hide Toolbar</b> from the page menu.
         Prefer always-fullscreen? <b>Share → Add to Home Screen</b> works too, but extensions don't run there, so live heart rate needs its{' '}
@@ -381,9 +382,9 @@ function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () =>
 
 function SecretRow({ name, value, copy }: { name: string; value: string; copy?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-[var(--radius-control)] border border-[var(--border-panel)] px-3 py-2">
+    <div className="flex flex-col gap-1 rounded-control border border-[var(--border-panel)] px-3 py-2">
       <div className="flex items-center justify-between gap-2">
-        <code className="text-[13px] font-semibold">{name}</code>
+        <code className="text-sm font-semibold">{name}</code>
         <CopyButton text={name.split(' ')[0]} label="Copy name" />
       </div>
       <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-tertiary)]">
@@ -399,7 +400,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       type="button"
-      className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium text-[var(--accent)] hover:bg-white/10"
+      className="shrink-0 rounded-control px-2 py-1 text-xs font-medium text-[var(--accent)] hover:bg-white/10"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text)
@@ -417,7 +418,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 
 function CopyBlock({ text, label }: { text: string; label: string }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-[var(--radius-control)] bg-black/25 px-3 py-2">
+    <div className="flex items-center justify-between gap-2 rounded-control bg-black/25 px-3 py-2">
       <span className="text-xs text-[var(--text-tertiary)]">{text.split('\n').length} lines of code</span>
       <CopyButton text={text} label={label} />
     </div>
@@ -451,11 +452,11 @@ function Input({
           autoCorrect="off"
           spellCheck={false}
           className={cn(
-            'w-full rounded-[var(--radius-control)] border bg-[var(--bg-panel)] px-3 py-2.5 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]',
+            'w-full rounded-control border bg-[var(--bg-panel)] px-3 py-3 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]',
             status === 'bad' ? 'border-amber-400/60' : 'border-[var(--border-panel)]',
           )}
         />
-        {status === 'ok' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400">✓</span>}
+        {status === 'ok' && <CheckIcon width={16} height={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400" aria-label="Valid" />}
       </span>
       {hint && <span className="text-xs text-amber-400">{hint}</span>}
     </label>

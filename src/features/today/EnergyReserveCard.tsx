@@ -59,7 +59,7 @@ export function EnergyReserveCard({
 
   return (
     <Card>
-      <div className="mb-2 flex items-center gap-1.5">
+      <div className="mb-2 flex items-center gap-2">
         <p className="font-semibold">Energy Reserve</p>
         <InfoButton title="Energy Reserve">
           BetterGarmin's own estimate of your energy reserves across the day, from your stress samples. Not
@@ -69,18 +69,18 @@ export function EnergyReserveCard({
       <Chart option={option} height={180} />
       <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
         {biggestDrain && (
-          <div className="rounded-xl bg-[var(--bg-panel)] p-2.5">
+          <div className="rounded-control bg-[var(--bg-panel)] p-3">
             <p className="font-medium text-rose-400">Biggest drain</p>
-            <p className="mt-0.5 text-[var(--text-secondary)]">
+            <p className="mt-1 text-[var(--text-secondary)]">
               {formatTime(biggestDrain.startTimestamp)} – {formatTime(biggestDrain.endTimestamp)} ·{' '}
               {Math.round(biggestDrain.delta)} pts
             </p>
           </div>
         )}
         {bestRecharge && (
-          <div className="rounded-xl bg-[var(--bg-panel)] p-2.5">
+          <div className="rounded-control bg-[var(--bg-panel)] p-3">
             <p className="font-medium text-emerald-400">Best recharge</p>
-            <p className="mt-0.5 text-[var(--text-secondary)]">
+            <p className="mt-1 text-[var(--text-secondary)]">
               {formatTime(bestRecharge.startTimestamp)} – {formatTime(bestRecharge.endTimestamp)} · +
               {Math.round(bestRecharge.delta)} pts
             </p>

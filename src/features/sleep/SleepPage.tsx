@@ -258,7 +258,7 @@ export function SleepPage() {
         }}
       />
 
-      <p className="text-center text-[11px] text-[var(--text-tertiary)]">
+      <p className="text-center text-xs text-[var(--text-tertiary)]">
         Stages and scores are Garmin's estimates.
       </p>
     </div>

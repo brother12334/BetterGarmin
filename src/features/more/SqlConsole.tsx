@@ -58,7 +58,7 @@ export function SqlConsole() {
         <select
           value={selectedKind ?? ''}
           onChange={(e) => setKind(e.target.value as DbKind)}
-          className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
+          className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
         >
           {loadedKinds.map((k) => (
             <option key={k} value={k}>
@@ -72,10 +72,10 @@ export function SqlConsole() {
         onChange={(e) => setSql(e.target.value)}
         rows={4}
         spellCheck={false}
-        className="w-full rounded-xl border border-[var(--border-panel)] bg-[var(--bg-panel)] p-3 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-sky-400/50"
+        className="w-full rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-3 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-sky-400/50"
       />
       <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={run} disabled={running || !selectedKind}>
+        <Button loading={running} variant="secondary" onClick={run} disabled={running || !selectedKind}>
           {running ? 'Running…' : 'Run query'}
         </Button>
         {result && result.rows.length > 0 && (
@@ -91,12 +91,12 @@ export function SqlConsole() {
       {error && <p className="text-sm text-rose-400">{error}</p>}
 
       {result && (
-        <div className="overflow-x-auto rounded-xl border border-[var(--border-panel)]">
+        <div className="overflow-x-auto rounded-control border border-[var(--border-panel)]">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--border-panel)] bg-[var(--bg-panel)] text-[var(--text-tertiary)]">
                 {result.columns.map((c) => (
-                  <th key={c} className="px-2 py-1.5 font-medium">
+                  <th key={c} className="px-2 py-2 font-medium">
                     {c}
                   </th>
                 ))}
@@ -106,7 +106,7 @@ export function SqlConsole() {
               {shownRows.map((row, i) => (
                 <tr key={i} className="border-b border-[var(--border-panel)] last:border-0">
                   {row.map((cell, j) => (
-                    <td key={j} className="px-2 py-1.5 tabular-nums">
+                    <td key={j} className="px-2 py-2 tabular-nums">
                       {cell == null ? '—' : String(cell)}
                     </td>
                   ))}

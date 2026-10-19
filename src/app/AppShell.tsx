@@ -9,15 +9,38 @@ import { PageBackdrop } from '../components/ui/MountainBackdrop'
 import { Logo } from './icons'
 
 
+const TITLES: [RegExp, string][] = [
+  [/^\/$/, 'Today'],
+  [/^\/health/, 'Health'],
+  [/^\/training\/strength\/workout\/[^/]+\/review/, 'Review import'],
+  [/^\/training\/strength\/workout/, 'Workout'],
+  [/^\/training\/strength/, 'Strength'],
+  [/^\/training/, 'Training'],
+  [/^\/sleep/, 'Sleep'],
+  [/^\/insights/, 'Insights'],
+  [/^\/customize/, 'Customize'],
+  [/^\/more/, 'More'],
+]
+
+/** Keeps the browser tab title in step with the current screen. */
+function useDocumentTitle() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    const name = TITLES.find(([re]) => re.test(pathname))?.[1]
+    document.title = name ? `${name} · BetterGarmin` : 'BetterGarmin'
+  }, [pathname])
+}
+
 export function AppShell() {
   useEffect(() => installAutoFullscreen(), [])
   useToolbarTint()
+  useDocumentTitle()
   return (
     <div className="flex min-h-screen w-full">
       <PageBackdrop />
       <aside className="sticky top-0 hidden h-screen w-56 flex-col gap-1 border-r border-[var(--border-panel)] p-4 md:flex">
         <div className="mb-6 flex items-center gap-2 px-2">
-          <Logo size={32} className="rounded-xl" />
+          <Logo size={32} className="rounded-control" />
           <span className="text-lg font-bold">BetterGarmin</span>
         </div>
         {TABS.map((tab) => (
@@ -27,7 +50,7 @@ export function AppShell() {
             end={tab.to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-control px-3 py-3 text-sm font-medium transition-colors',
                 isActive ? 'bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
               )
             }

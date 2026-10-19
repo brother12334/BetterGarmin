@@ -93,7 +93,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <p className="font-semibold">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
             <InfoButton title="Sleep stages">
               Stages are Garmin's estimates from heart rate, heart-rate variability and movement. The typical ranges are
@@ -101,7 +101,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
             </InfoButton>
           </div>
           {bed && wake && (
-            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
               {bed} → {wake}
             </p>
           )}
@@ -118,18 +118,18 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
         {minutes.map((s) => {
           const pct = Math.round((s.min / inBed) * 100)
           return (
-            <div key={s.key} className="rounded-[var(--radius-control)] bg-[var(--bg-panel)] px-3 py-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+            <div key={s.key} className="rounded-control bg-[var(--bg-panel)] px-3 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}
               </div>
               <p className="mt-1 text-lg font-bold tabular-nums">
                 {formatHoursMinutes(s.min)} <span className="text-xs font-medium text-[var(--text-tertiary)]">{pct}%</span>
               </p>
-              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[var(--ring-track)]">
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[var(--ring-track)]">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: s.color }} />
               </div>
-              <p className="mt-1 text-[10px] text-[var(--text-tertiary)]">{s.typical}</p>
+              <p className="mt-1 text-xs text-[var(--text-tertiary)]">{s.typical}</p>
             </div>
           )
         })}
@@ -170,7 +170,7 @@ function StageTimeline({ events }: { events: SleepEventRow[] }) {
 
   return (
     <div className="mt-4 flex gap-2">
-      <div className="flex flex-col justify-between py-0.5 text-[10px] text-[var(--text-tertiary)]" style={{ gap: GAP }}>
+      <div className="flex flex-col justify-between py-1 text-xs text-[var(--text-tertiary)]" style={{ gap: GAP }}>
         {STAGES.map((s) => (
           <span key={s.key} style={{ height: ROW_H, lineHeight: `${ROW_H}px` }}>
             {s.label}

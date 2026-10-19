@@ -88,7 +88,7 @@ export function ExperimentsCard({ dataset }: { dataset: AnalyticsDataset }) {
   const spec = TEMPLATES[template]
   return (
     <Card>
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <p className="font-semibold">Personal experiments</p>
         <InfoButton title="Personal experiments">
           Pick a question and BetterGarmin turns it into measurable variables and a fixed comparison. "Exploratory" looks back at all your
@@ -98,7 +98,7 @@ export function ExperimentsCard({ dataset }: { dataset: AnalyticsDataset }) {
       </div>
 
       <div className="mt-2 flex flex-col gap-2 text-sm">
-        <select value={template} onChange={(e) => setTemplate(e.target.value as ExperimentTemplate)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1.5">
+        <select value={template} onChange={(e) => setTemplate(e.target.value as ExperimentTemplate)} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-2">
           {(Object.keys(TEMPLATES) as ExperimentTemplate[]).map((k) => (
             <option key={k} value={k}>
               {TEMPLATES[k].question}
@@ -114,13 +114,13 @@ export function ExperimentsCard({ dataset }: { dataset: AnalyticsDataset }) {
           <dd>{spec.needs}</dd>
         </dl>
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <label className="flex items-center gap-1.5">
+          <label className="flex items-center gap-2">
             <input type="radio" checked={!prospective} onChange={() => setProspective(false)} /> Exploratory (all history)
           </label>
-          <label className="flex items-center gap-1.5">
+          <label className="flex items-center gap-2">
             <input type="radio" checked={prospective} onChange={() => setProspective(true)} /> Prospective (from today)
           </label>
-          <Button variant="secondary" className="ml-auto px-3 py-1.5 text-xs" onClick={add}>
+          <Button variant="secondary" className="ml-auto px-3 py-2 text-xs" onClick={add}>
             Add
           </Button>
         </div>
@@ -148,7 +148,7 @@ export function ExperimentsCard({ dataset }: { dataset: AnalyticsDataset }) {
 function ExperimentResult({ experiment, dataset, onDelete }: { experiment: Experiment; dataset: AnalyticsDataset; onDelete: () => void }) {
   const results = useMemo(() => TEMPLATES[experiment.template].run(dataset, experiment.startDay ?? undefined), [experiment, dataset])
   return (
-    <div className="rounded-2xl border border-[var(--border-panel)] p-3">
+    <div className="rounded-control border border-[var(--border-panel)] p-3">
       <div className="mb-2 flex items-start justify-between gap-2 text-xs">
         <div>
           <p className="text-sm font-semibold">{experiment.question}</p>

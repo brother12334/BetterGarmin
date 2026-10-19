@@ -6,7 +6,7 @@ export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     return (
       <div
         ref={ref}
-        className={cn('glass-panel rounded-[var(--radius-card)] p-5', className)}
+        className={cn('glass-panel rounded-card p-5', className)}
         {...props}
       />
     )

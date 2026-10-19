@@ -146,9 +146,9 @@ export function CompareWorkoutsPage() {
               ] as const
             ).map(([label, x, y]) => (
               <tr key={label} className="border-t border-[var(--border-panel)]">
-                <td className="py-1.5 text-xs text-[var(--text-tertiary)]">{label}</td>
-                <td className="py-1.5">{x}</td>
-                <td className="py-1.5">{y}</td>
+                <td className="py-2 text-xs text-[var(--text-tertiary)]">{label}</td>
+                <td className="py-2">{x}</td>
+                <td className="py-2">{y}</td>
               </tr>
             ))}
           </tbody>
@@ -157,7 +157,7 @@ export function CompareWorkoutsPage() {
 
       {hrOption && (
         <Card>
-          <div className="mb-1 flex items-center gap-1.5">
+          <div className="mb-1 flex items-center gap-2">
             <p className="font-semibold">Heart rate, minutes from start</p>
             <InfoButton title="Overlay">Both sessions on the same scale, aligned at their start. Different exercise order or rest lengths shift the shapes.</InfoButton>
           </div>
@@ -191,12 +191,12 @@ export function CompareWorkoutsPage() {
             <tbody className="tabular-nums">
               {r.pairs.map((p, i) => (
                 <tr key={i} className="border-t border-[var(--border-panel)]">
-                  <td className="py-1.5 pr-2">
+                  <td className="py-2 pr-2">
                     {p.label}
                   </td>
-                  <td className="py-1.5 pr-2">{cell(p.a, p.aa, units)}</td>
-                  <td className="py-1.5 pr-2">{cell(p.b, p.ba, units)}</td>
-                  <td className="py-1.5">{p.a && p.b ? change(p.a, p.b, units) : '—'}</td>
+                  <td className="py-2 pr-2">{cell(p.a, p.aa, units)}</td>
+                  <td className="py-2 pr-2">{cell(p.b, p.ba, units)}</td>
+                  <td className="py-2">{p.a && p.b ? change(p.a, p.b, units) : '—'}</td>
                 </tr>
               ))}
             </tbody>

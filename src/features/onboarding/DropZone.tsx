@@ -47,18 +47,18 @@ export function DropZone() {
     >
       <motion.div
         animate={isDragging ? { scale: 1.08 } : { scale: 1 }}
-        className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400/20 to-indigo-500/20 text-sky-400"
+        className="flex h-14 w-14 items-center justify-center rounded-control bg-[var(--bg-panel)] text-[var(--accent)]"
       >
         <UploadIcon width={26} height={26} />
       </motion.div>
       <div>
         <p className="font-semibold text-[var(--text-primary)]">Drop your GarminDB files here</p>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          From <code className="rounded bg-black/30 px-1 py-0.5 text-xs">~/HealthData/DBs</code> — drag in the whole folder, or
+          From <code className="rounded-full bg-black/30 px-1 py-1 text-xs">~/HealthData/DBs</code> — drag in the whole folder, or
           pick files below.
         </p>
       </div>
-      <Button type="button" variant="secondary" onClick={() => inputRef.current?.click()} disabled={loading}>
+      <Button loading={loading} type="button" variant="secondary" onClick={() => inputRef.current?.click()} disabled={loading}>
         {loading ? 'Loading…' : 'Choose files'}
       </Button>
       <input
@@ -71,7 +71,7 @@ export function DropZone() {
       />
 
       {loadedKinds.length > 0 && (
-        <div className="mt-2 flex w-full flex-col gap-1.5 text-left">
+        <div className="mt-2 flex w-full flex-col gap-2 text-left">
           {loadedKinds.map((kind) => (
             <div key={kind} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
               <CheckIcon width={15} height={15} className="text-emerald-400" />

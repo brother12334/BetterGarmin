@@ -6,6 +6,16 @@
   Each health metric owns one signature hue, used everywhere that metric appears
   (ring color, chart gradient, badge, icon tint).
 */
+/*
+  Design system rules (applied everywhere; don't add one-off values):
+  - Spacing: 4px scale only (Tailwind 1, 2, 3, 4, 5, 6, 8, 10, 12…). No half steps, no arbitrary px.
+  - Type: one family (Manrope, or the user's Customize choice) for headings and body. Ramp: text-xs 12/16 (captions,
+    .eyebrow labels), text-sm 14/20 (secondary), text-base 16/24 (body), text-lg 18/28, text-2xl 24/32 (page titles),
+    text-3xl/4xl/5xl for display numbers only. Weights: 400 body, 600 labels/buttons, 700 headings, 800 display numbers.
+  - Radius: rounded-card for cards and sheets, rounded-control for buttons, inputs and inner tiles, rounded-full for
+    pills, dots and progress bars.
+  - Elevation: one card shadow (--shadow-panel) and one floating shadow (--shadow-float) for the tab bar and sheets.
+*/
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
@@ -15,7 +25,7 @@
   --color-metric-stress: #f5a623;
   --color-metric-energy-from: #34d399;
   --color-metric-energy-to: #38bdf8;
-  --color-metric-training: #a78bfa;
+  --color-metric-training: #2dd4bf;
   --color-metric-readiness: #38bdf8;
   --color-metric-neutral: #9aa3b2;
 }
@@ -32,7 +42,8 @@
   --text-primary: #f4f5f7;
   --text-secondary: #9aa3b2;
   --text-tertiary: #636b7a;
-  --shadow-panel: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-panel: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.45);
   --ring-track: rgba(255, 255, 255, 0.08);
   color-scheme: dark;
 }
@@ -46,7 +57,8 @@
     --text-primary: #16181d;
     --text-secondary: #565d6b;
     --text-tertiary: #8a909c;
-    --shadow-panel: 0 8px 30px rgba(20, 20, 30, 0.08);
+    --shadow-panel: 0 8px 24px rgba(20, 20, 30, 0.08);
+    --shadow-float: 0 12px 32px rgba(20, 20, 30, 0.16);
     --ring-track: rgba(10, 11, 15, 0.08);
     color-scheme: light;
   }
@@ -60,9 +72,28 @@
   --text-primary: #16181d;
   --text-secondary: #565d6b;
   --text-tertiary: #8a909c;
-  --shadow-panel: 0 8px 30px rgba(20, 20, 30, 0.08);
+  --shadow-panel: 0 8px 24px rgba(20, 20, 30, 0.08);
+  --shadow-float: 0 12px 32px rgba(20, 20, 30, 0.16);
   --ring-track: rgba(10, 11, 15, 0.08);
   color-scheme: light;
+}
+
+@utility rounded-card {
+  border-radius: var(--radius-card);
+}
+@utility rounded-control {
+  border-radius: var(--radius-control);
+}
+@utility shadow-float {
+  box-shadow: var(--shadow-float);
+}
+/* Small uppercase label above a value or section. */
+@utility eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 html,

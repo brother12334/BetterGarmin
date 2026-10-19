@@ -99,7 +99,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
             type="date"
             value={day}
             onChange={(e) => setDay(e.target.value)}
-            className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1.5 text-[var(--text-primary)]"
+            className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-2 text-[var(--text-primary)]"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -107,7 +107,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
           <select
             value={split}
             onChange={(e) => setSplit(e.target.value as StrengthSplit | 'custom')}
-            className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1.5 text-[var(--text-primary)]"
+            className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-2 text-[var(--text-primary)]"
           >
             {SPLITS.map((s) => (
               <option key={s} value={s}>
@@ -120,7 +120,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
       </div>
 
       <div>
-        <p className="mb-1.5 text-xs text-[var(--text-tertiary)]">Quick-fill a template, then edit the numbers below</p>
+        <p className="mb-2 text-xs text-[var(--text-tertiary)]">Quick-fill a template, then edit the numbers below</p>
         <div className="flex flex-wrap gap-2">
           {SPLITS.map((s) => (
             <Button key={s} variant="secondary" onClick={() => quickFill(s)} className="text-xs">
@@ -133,7 +133,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
       <div className="flex flex-col gap-2">
         {sets.length === 0 && <p className="text-sm text-[var(--text-tertiary)]">No sets yet. Quick-fill a template or add one below.</p>}
         {sets.map((s) => (
-          <div key={s.key} className="flex flex-col gap-2 rounded-xl bg-[var(--bg-panel)] p-2.5">
+          <div key={s.key} className="flex flex-col gap-2 rounded-control bg-[var(--bg-panel)] p-3">
             <div className="flex items-center gap-2">
               <select
                 value={s.exercise}
@@ -141,7 +141,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
                   const match = EXERCISE_CATALOG.find((ex) => ex.name === e.target.value)
                   updateSet(s.key, { exercise: e.target.value, category: match?.category ?? s.category })
                 }}
-                className="min-w-0 flex-1 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-1.5 text-sm text-[var(--text-primary)]"
+                className="min-w-0 flex-1 rounded-control border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-2 text-sm text-[var(--text-primary)]"
               >
                 {EXERCISE_CATALOG.map((ex) => (
                   <option key={ex.name} value={ex.name}>
@@ -164,7 +164,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
                 value={s.reps}
                 min={1}
                 onChange={(e) => updateSet(s.key, { reps: Math.max(1, Number(e.target.value)) })}
-                className="w-16 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                className="w-16 rounded-control border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)]"
                 aria-label="Reps"
               />
               <span className="text-xs text-[var(--text-tertiary)]">reps</span>
@@ -175,7 +175,7 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
                 min={0}
                 step={0.5}
                 onChange={(e) => updateSet(s.key, { weight: e.target.value === '' ? null : Number(e.target.value) })}
-                className="w-20 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)]"
+                className="w-20 rounded-control border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)]"
                 aria-label="Weight"
               />
               <span className="text-xs text-[var(--text-tertiary)]">kg</span>
@@ -197,12 +197,12 @@ export function LogWorkoutForm({ existing, onSave, onCancel }: LogWorkoutFormPro
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] p-2 text-sm text-[var(--text-primary)]"
+          className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-2 text-sm text-[var(--text-primary)]"
         />
       </label>
 
       <div className="flex gap-2">
-        <Button onClick={handleSave} disabled={saving || sets.length === 0}>
+        <Button loading={saving} onClick={handleSave} disabled={saving || sets.length === 0}>
           {saving ? 'Saving…' : 'Save workout'}
         </Button>
         <Button variant="ghost" onClick={onCancel}>

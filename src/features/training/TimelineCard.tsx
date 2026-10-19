@@ -102,7 +102,7 @@ export function TimelineCard({
       groups.set(st.supersetGroup, { start: Math.min(g?.start ?? Infinity, st.startMs), end: Math.max(g?.end ?? -Infinity, st.endMs) })
     }
     const supersetAreas = [...groups.values()].map((g) => [
-      { xAxis: g.start, itemStyle: { color: 'rgba(167,139,250,0.12)', borderColor: 'rgba(167,139,250,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#a78bfa' } },
+      { xAxis: g.start, itemStyle: { color: 'rgba(45,212,191,0.12)', borderColor: 'rgba(45,212,191,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#a78bfa' } },
       { xAxis: g.end },
     ])
     const hasDrop = timeline.sets.some((st) => st.set.setType === 'drop')
@@ -245,14 +245,14 @@ export function TimelineCard({
 
   return (
     <Card>
-      <div className="mb-2 flex items-center gap-1.5">
+      <div className="mb-2 flex items-center gap-2">
         <p className="font-semibold">Workout timeline</p>
         <InfoButton title="How this timeline is built">{explainer(hrSource)}</InfoButton>
-        {hrSource === 'monitoring' && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-400">coarse HR</span>}
+        {hrSource === 'monitoring' && <span className="rounded-full bg-amber-500/15 px-2 py-1 text-xs text-amber-400">coarse HR</span>}
         <span className="flex-1" />
         <button
           type="button"
-          className={`rounded-full px-2.5 py-1 text-xs ${replay ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+          className={`rounded-full px-3 py-1 text-xs ${replay ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
           onClick={() => {
             setReplay((r) => !r)
             setPlaying(false)
@@ -264,7 +264,7 @@ export function TimelineCard({
       </div>
 
       {replay && (
-        <div className="mb-2 rounded-2xl bg-[var(--bg-panel)] p-3 text-xs">
+        <div className="mb-2 rounded-control bg-[var(--bg-panel)] p-3 text-xs">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-sm font-semibold">
               {cursorSeg
@@ -273,7 +273,7 @@ export function TimelineCard({
                   : SEGMENT_LABELS[cursorSeg.type as SegmentType]
                 : '—'}
               {cursorSeg?.type === 'set' && cursorSeg.setIndex != null && timeline.sets[cursorSeg.setIndex].startSource !== 'corrected' && (
-                <span className="ml-1.5 font-normal text-[var(--text-tertiary)]">(start estimated)</span>
+                <span className="ml-2 font-normal text-[var(--text-tertiary)]">(start estimated)</span>
               )}
             </p>
             <p className="tabular-nums">
@@ -297,12 +297,12 @@ export function TimelineCard({
                 if (!playing && cursor >= timeline.windowEnd) setCursor(timeline.windowStart)
                 setPlaying((p) => !p)
               }}
-              className="rounded-lg border border-[var(--border-panel)] px-3 py-1"
+              className="rounded-control border border-[var(--border-panel)] px-3 py-1"
             >
               {playing ? 'Pause' : cursor >= timeline.windowEnd ? 'Restart' : 'Play'}
             </button>
             {SPEEDS.map((s) => (
-              <button key={s} type="button" onClick={() => setSpeed(s)} className={`rounded-lg px-2 py-1 ${speed === s ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)]'}`}>
+              <button key={s} type="button" onClick={() => setSpeed(s)} className={`rounded-control px-2 py-1 ${speed === s ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)]'}`}>
                 {s}×
               </button>
             ))}
@@ -313,7 +313,7 @@ export function TimelineCard({
                 setCursor(Number(e.target.value))
                 setPlaying(false)
               }}
-              className="ml-auto rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1"
+              className="ml-auto rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1"
             >
               <option value="">Jump to…</option>
               {exercises.map(([ex, t]) => (
@@ -340,27 +340,27 @@ export function TimelineCard({
           if (d?.setIndex != null) onSelect(d.setIndex)
         }}
       />
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--text-tertiary)]">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[var(--text-tertiary)]">
         {(Object.keys(SEGMENT_LABELS) as SegmentType[]).map((t) => (
-          <span key={t} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: SEGMENT_COLORS[t] }} />
+          <span key={t} className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: SEGMENT_COLORS[t] }} />
             {SEGMENT_LABELS[t]}
           </span>
         ))}
         {base.hasDrop && (
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: DROP_COLOR }} />
+          <span className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: DROP_COLOR }} />
             Drop set
           </span>
         )}
         {base.hasSuperset && (
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: SUPERSET_COLOR }} />
+          <span className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: SUPERSET_COLOR }} />
             Superset
           </span>
         )}
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: GAP_COLOR }} />
+        <span className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: GAP_COLOR }} />
           No HR data
         </span>
       </div>

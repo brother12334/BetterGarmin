@@ -15,7 +15,7 @@ const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(un
 
 export function EvidenceChip({ evidence }: { evidence: Evidence }) {
   const s = EVIDENCE_STYLE[evidence]
-  return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${s.className}`}>{s.label}</span>
+  return <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${s.className}`}>{s.label}</span>
 }
 
 export function FindingCard({
@@ -40,11 +40,11 @@ export function FindingCard({
         <p className="font-semibold leading-snug">{finding.title}</p>
         <EvidenceChip evidence={finding.evidence} />
       </div>
-      <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{finding.summary}</p>
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">{finding.summary}</p>
       <p className="mt-2 text-xs text-[var(--text-tertiary)]">
         {shortDate(finding.startDay)} – {shortDate(finding.endDay)} · {finding.n} {finding.nLabel}
         {finding.effectLabel ? ` · ${finding.effectLabel}` : ''}
-        {updated && <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-400">Updated</span>}
+        {updated && <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-1 text-amber-400">Updated</span>}
       </p>
       {finding.needs && <p className="mt-1 text-xs text-[var(--text-tertiary)]">Needs: {finding.needs}.</p>}
 
@@ -58,7 +58,7 @@ export function FindingCard({
               {finding.metrics.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {finding.metrics.map((m) => (
-                    <div key={m.label} className="rounded-xl bg-[var(--bg-panel)] p-2">
+                    <div key={m.label} className="rounded-control bg-[var(--bg-panel)] p-2">
                       <p className="text-[var(--text-tertiary)]">{m.label}</p>
                       <p className="font-semibold text-[var(--text-primary)]">{m.value}</p>
                     </div>
@@ -71,7 +71,7 @@ export function FindingCard({
               {finding.alternatives.length > 0 && (
                 <div>
                   <b>Other possible explanations</b>
-                  <ul className="mt-0.5 list-disc pl-4">
+                  <ul className="mt-1 list-disc pl-4">
                     {finding.alternatives.map((a) => (
                       <li key={a}>{a}</li>
                     ))}
@@ -96,7 +96,7 @@ export function FindingCard({
           <span className="flex-1" />
           {onUseful && (
             <button type="button" onClick={onUseful} className={useful ? 'text-emerald-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}>
-              {useful ? '✓ Useful' : 'Useful'}
+              {useful ? 'Marked useful' : 'Useful'}
             </button>
           )}
           {onDismiss && (

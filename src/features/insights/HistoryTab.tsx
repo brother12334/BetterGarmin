@@ -86,7 +86,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
       yAxisIndex: vi,
       barMaxWidth: 10,
       data: workoutsInRange.map((s) => ({ value: [x(s.day), Math.round(s.volumeKg / 100) / 10], workoutId: s.workoutId, timed: s.timed, title: s.title })),
-      itemStyle: { color: '#a78bfa', borderRadius: [3, 3, 0, 0] },
+      itemStyle: { color: '#2dd4bf', borderRadius: [4, 4, 0, 0] },
     })
 
     return {
@@ -113,7 +113,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
     <div className="flex flex-col gap-4">
       <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <p className="font-semibold">Physiological history</p>
             <InfoButton title="History">
               Each metric has its own panel and scale on a shared time axis — lines moving together is not evidence that they're related
@@ -130,7 +130,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
                   setCustom(null)
                   setRangeDays(r.days)
                 }}
-                className={`rounded-full px-2.5 py-1 ${!custom && rangeDays === r.days ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`rounded-full px-3 py-1 ${!custom && rangeDays === r.days ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 {r.label}
               </button>
@@ -139,9 +139,9 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
           <span>Custom:</span>
-          <input type="date" value={from} min={dataset.firstDay} max={to} onChange={(e) => e.target.value && setCustom({ from: e.target.value, to })} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-[var(--text-primary)]" />
+          <input type="date" value={from} min={dataset.firstDay} max={to} onChange={(e) => e.target.value && setCustom({ from: e.target.value, to })} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-[var(--text-primary)]" />
           <span>to</span>
-          <input type="date" value={to} min={from} max={dataset.lastDay} onChange={(e) => e.target.value && setCustom({ from, to: e.target.value })} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-[var(--text-primary)]" />
+          <input type="date" value={to} min={from} max={dataset.lastDay} onChange={(e) => e.target.value && setCustom({ from, to: e.target.value })} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-[var(--text-primary)]" />
         </div>
         <Chart
           option={option}

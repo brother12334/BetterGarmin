@@ -19,12 +19,12 @@ export function RangeBar({ label, value, displayValue, min = 0, max = 100, statu
   const pct = value == null ? 0 : Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
 
   return (
-    <div className="py-2.5">
+    <div className="py-3">
       <div className="flex items-end justify-between gap-2">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
           {status && (
-            <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: STATUS_COLORS[status] }}>
+            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: STATUS_COLORS[status] }}>
               {STATUS_LABELS[status]}
             </span>
           )}
@@ -34,7 +34,7 @@ export function RangeBar({ label, value, displayValue, min = 0, max = 100, statu
           {displayValue ?? (value == null ? '—' : Math.round(value))}
         </span>
       </div>
-      <div className="relative mt-2.5 h-1.5 w-full rounded-full bg-[var(--ring-track)]">
+      <div className="relative mt-3 h-1.5 w-full rounded-full bg-[var(--ring-track)]">
         <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: `${pct}%`, backgroundColor: color }} />
         {value != null && (
           <div

@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react'
+import { Badge } from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
 import { cn } from '../../lib/cn'
 import type { HrSample } from './workoutTimeline'
@@ -15,7 +16,7 @@ const BAND_COLORS = ['#7d8aa3', '#4f8dff', '#2fd08a', '#ffc24b', '#ff4d6d']
 function GradeChip({ grade }: { grade: Grade | undefined }) {
   if (!grade) return null
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2.5 py-1 text-xs font-bold text-[var(--text-primary)]">
+    <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-1 text-xs font-bold text-[var(--text-primary)]">
       <span style={{ color: GRADE_COLOR(grade.letter) }}>{grade.letter}</span> {grade.title}
     </span>
   )
@@ -60,13 +61,13 @@ function Spark({ series, color }: { series: HrSample[]; color: string }) {
 /** A story card in the user's own card style (glass, liquid, solid, outline), washed with the card's colour. */
 function Slide({ tint, label, children, footer }: { tint: string; label: string; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="glass-panel relative flex w-[86%] shrink-0 snap-center flex-col justify-between gap-4 overflow-hidden rounded-[var(--radius-card)] p-5 sm:w-[360px]" style={{ minHeight: 300 }}>
+    <div className="glass-panel relative flex w-[86%] shrink-0 snap-center flex-col justify-between gap-4 overflow-hidden rounded-card p-5 sm:w-[360px]" style={{ minHeight: 300 }}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{ background: `radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, ${tint} 26%, transparent), transparent 70%), linear-gradient(160deg, color-mix(in srgb, ${tint} 10%, transparent), transparent)` }}
       />
-      <p className="relative text-[11px] font-semibold uppercase tracking-[0.09em]" style={{ color: tint }}>
+      <p className="relative text-xs font-semibold uppercase tracking-[0.09em]" style={{ color: tint }}>
         {label}
       </p>
       <div className="relative flex flex-col gap-2">{children}</div>
@@ -81,7 +82,7 @@ const Sub = ({ children }: { children: ReactNode }) => <p className="text-sm tex
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</p>
       <p className="text-lg font-bold tabular-nums">{value}</p>
     </div>
   )
@@ -142,7 +143,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
             {s.hrMin != null ? ` · lowest ${s.hrMin}` : ''}
           </Sub>
           {s.effortBandsMin && (
-            <div className="mt-1 flex h-2.5 gap-0.5 overflow-hidden rounded-full">
+            <div className="mt-1 flex h-2.5 gap-1 overflow-hidden rounded-full">
               {s.effortBandsMin.map((m, i) => (
                 <i key={i} style={{ flex: Math.max(m, 0.2), background: BAND_COLORS[i] }} />
               ))}
@@ -154,7 +155,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       )}
     </Slide>,
 
-    <Slide key="strength" tint="#8b7bf6" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
+    <Slide key="strength" tint="#2dd4bf" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
       <Big>
         {s.volumeKg.toLocaleString()}
         <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">kg moved</span>
@@ -167,7 +168,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
           <li key={t.exercise} className="flex justify-between gap-3">
             <span className="min-w-0 truncate">
               {t.exercise}
-              {t.pr && <span className="ml-1 font-bold text-amber-500">★ PR</span>}
+              {t.pr && <Badge tone="warning" className="ml-2">PR</Badge>}
             </span>
             <b className="shrink-0 tabular-nums">
               {weight(t.weight)} × {t.reps}
@@ -199,7 +200,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
 
     ...(s.vsLast.length
       ? [
-          <Slide key="vs" tint="#9b7bff" label="You vs last time">
+          <Slide key="vs" tint="var(--accent)" label="You vs last time">
             {s.vsLast.map((c) => (
               <div key={c.label} className="flex items-baseline justify-between">
                 <span className="text-base">{c.label}</span>
@@ -278,28 +279,28 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
           <div className="flex flex-col divide-y divide-[var(--border-panel)]">
             {s.grades.map((g) => (
               <div key={g.area} className="flex items-center gap-3 py-3">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-xl font-extrabold" style={{ color: GRADE_COLOR(g.letter), background: `${GRADE_COLOR(g.letter)}22` }}>
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-control text-xl font-extrabold" style={{ color: GRADE_COLOR(g.letter), background: `${GRADE_COLOR(g.letter)}22` }}>
                   {g.letter}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{g.title}</p>
                   <p className="text-xs text-[var(--text-tertiary)]">{g.basis}</p>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--ring-track)]">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--ring-track)]">
                     <i className="block h-full rounded-full" style={{ width: `${g.score}%`, background: GRADE_COLOR(g.letter) }} />
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-3 rounded-[var(--radius-control)] bg-emerald-500/10 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-400">Next up</p>
+          <div className="mt-3 rounded-control bg-emerald-500/10 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-400">Next up</p>
             <ul className="mt-1 list-disc pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
               {s.nextUp.map((n) => (
                 <li key={n}>{n}</li>
               ))}
             </ul>
           </div>
-          <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">Grades and recovery time are BetterGarmin estimates from this workout's data, not Garmin's.</p>
+          <p className="mt-2 text-xs text-[var(--text-tertiary)]">Grades and recovery time are BetterGarmin estimates from this workout's data, not Garmin's.</p>
         </Card>
       )}
     </div>

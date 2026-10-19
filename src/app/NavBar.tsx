@@ -14,7 +14,7 @@ const spring = { type: 'spring', stiffness: 420, damping: 34 } as const
 /** The phone tab bar: a floating smoked-glass capsule. Pure presentation: the caller decides what is active and what a tap does. */
 export function NavBar({ active, onSelect, layoutKey }: Props) {
   return (
-    <div className="flex h-[76px] w-full max-w-md items-center gap-1 rounded-full border border-white/15 bg-black/35 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+    <div className="flex h-[76px] w-full max-w-md items-center gap-1 rounded-full border border-white/15 bg-black/35 p-2 shadow-float backdrop-blur-2xl">
       {TABS.map((t, i) => {
         const on = i === active
         const C = t.icon

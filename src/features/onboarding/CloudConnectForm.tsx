@@ -36,7 +36,7 @@ export function CloudConnectForm({ onConnected }: { onConnected?: () => void }) 
           placeholder="https://bettergarmin-sync.your-name.workers.dev"
           value={workerUrl}
           onChange={(e) => setWorkerUrl(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-sky-400"
+          className="mt-1 w-full rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-sky-400"
         />
       </div>
       <div>
@@ -49,11 +49,11 @@ export function CloudConnectForm({ onConnected }: { onConnected?: () => void }) 
           placeholder="the token you set with wrangler secret put ACCESS_TOKEN"
           value={token}
           onChange={(e) => setToken(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-sky-400"
+          className="mt-1 w-full rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-sky-400"
         />
       </div>
       {error && <p className="text-sm text-rose-400">{error}</p>}
-      <Button onClick={handleConnect} disabled={status === 'connecting' || !workerUrl.trim() || !token.trim()}>
+      <Button loading={status === 'connecting'} onClick={handleConnect} disabled={status === 'connecting' || !workerUrl.trim() || !token.trim()}>
         {status === 'connecting' ? 'Connecting…' : 'Connect'}
       </Button>
       <p className="text-xs leading-relaxed text-[var(--text-tertiary)]">

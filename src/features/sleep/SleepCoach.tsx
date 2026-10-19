@@ -63,7 +63,7 @@ export function SleepCoach({ nights, usualWake }: { nights: SleepRow[]; usualWak
 
   return (
     <Card className="p-5">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <p className="font-semibold">Sleep coach</p>
         <InfoButton title="Sleep coach">
           BetterGarmin's estimate: 8 hours, plus half of your shortfall over the last 3 nights, adjusted for your recent sleep scores. The bedtime window
@@ -116,7 +116,7 @@ export function SleepCoach({ nights, usualWake }: { nights: SleepRow[]; usualWak
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between rounded-[var(--radius-control)] bg-[var(--bg-elevated)] px-4 py-3">
+      <div className="mt-4 flex items-center justify-between rounded-control bg-[var(--bg-elevated)] px-4 py-3">
         <div>
           <p className="font-semibold">Sleep history</p>
           <p className="text-xs text-[var(--text-tertiary)]">{plan.historyNote}</p>
@@ -140,7 +140,7 @@ function Tick({ at, label, bold, side }: { at: string; label: string; bold?: boo
   return (
     <div className="absolute top-0 -translate-x-1/2 text-center" style={{ left: at }}>
       <span className={bold ? 'whitespace-nowrap text-sm font-bold' : 'text-xs text-[var(--text-secondary)]'}>{label}</span>
-      <span className="mx-auto mt-0.5 block h-6 w-0.5 bg-[var(--text-primary)]" />
+      <span className="mx-auto mt-1 block h-6 w-0.5 bg-[var(--text-primary)]" />
     </div>
   )
 }

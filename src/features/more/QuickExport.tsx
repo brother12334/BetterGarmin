@@ -56,17 +56,17 @@ export function QuickExport() {
   return (
     <div className="flex flex-wrap gap-2">
       {hasGarmin && (
-        <Button variant="secondary" onClick={exportDailySummary} disabled={busy === 'daily'}>
+        <Button loading={busy === 'daily'} variant="secondary" onClick={exportDailySummary} disabled={busy === 'daily'}>
           {busy === 'daily' ? 'Exporting…' : 'Export daily summary'}
         </Button>
       )}
       {hasGarmin && (
-        <Button variant="secondary" onClick={exportSleep} disabled={busy === 'sleep'}>
+        <Button loading={busy === 'sleep'} variant="secondary" onClick={exportSleep} disabled={busy === 'sleep'}>
           {busy === 'sleep' ? 'Exporting…' : 'Export sleep'}
         </Button>
       )}
       {hasActivities && (
-        <Button variant="secondary" onClick={exportActivities} disabled={busy === 'activities'}>
+        <Button loading={busy === 'activities'} variant="secondary" onClick={exportActivities} disabled={busy === 'activities'}>
           {busy === 'activities' ? 'Exporting…' : 'Export activities'}
         </Button>
       )}

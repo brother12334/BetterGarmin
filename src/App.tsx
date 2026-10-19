@@ -44,7 +44,7 @@ export default function App() {
   if (status === 'restoring') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-9 w-9 animate-pulse rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-500" />
+        <div className="h-9 w-9 animate-pulse rounded-control bg-[var(--accent)]" />
       </div>
     )
   }

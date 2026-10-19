@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { BAND_CAPS, band, cancelBandAlert, listBandFiles, testBandAlert, useBand, type FileListing } from '../../lib/band/bandStore'
 
@@ -81,7 +82,7 @@ export function BandCard() {
             Disconnect
           </Button>
         ) : (
-          <Button variant="secondary" onClick={() => connect(false)} disabled={!supported || working}>
+          <Button loading={working} variant="secondary" onClick={() => connect(false)} disabled={!supported || working}>
             {working ? STATE_TEXT[b.state] : 'Connect'}
           </Button>
         )}
@@ -94,7 +95,7 @@ export function BandCard() {
       )}
 
       {b.state === 'error' && b.error && (
-        <div className="rounded-[var(--radius-control)] border border-amber-400/30 p-3 text-xs text-[var(--text-secondary)]">
+        <div className="rounded-control border border-amber-400/30 p-3 text-xs text-[var(--text-secondary)]">
           <p>
             Couldn't connect. The browser said: <code className="text-[var(--text-primary)]">{b.error.raw}</code>
           </p>
@@ -111,7 +112,7 @@ export function BandCard() {
 
       {ready && (
         <>
-          <div className="flex flex-wrap gap-2 text-[11px]">
+          <div className="flex flex-wrap gap-2 text-xs">
             <Cap on={b.configBits.includes(BAND_CAPS.FIND_MY_WATCH)} label="Alert" />
             <Cap on={b.configBits.includes(BAND_CAPS.FILE_ACCESS)} label="File access" />
           </div>
@@ -125,17 +126,17 @@ export function BandCard() {
             </Button>
           </div>
           {alertResult && <p className="text-xs text-[var(--text-secondary)]">{alertResult}</p>}
-          <p className="text-[11px] text-[var(--text-tertiary)]">
+          <p className="text-xs text-[var(--text-tertiary)]">
             Uses the band's Find My Watch alert. It isn't a custom vibration or an alarm.
           </p>
 
           <div className="border-t border-[var(--border-panel)] pt-3">
             <p className="text-sm font-semibold">Direct sync (experimental)</p>
-            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
               Lists the files on the band without changing anything. Downloading and importing them isn't available yet: the band's file-transfer
               channel hasn't been verified, so BetterGarmin won't try it.
             </p>
-            <Button variant="secondary" className="mt-2" onClick={list} disabled={busy}>
+            <Button loading={busy} variant="secondary" className="mt-2" onClick={list} disabled={busy}>
               {busy ? 'Listing…' : 'List files on band'}
             </Button>
             {listError && <p className="mt-2 text-xs text-rose-400">{listError}</p>}
@@ -148,7 +149,7 @@ export function BandCard() {
                 </p>
                 <details className="mt-1">
                   <summary className="cursor-pointer text-[var(--text-tertiary)]">Raw response</summary>
-                  <pre className="mt-1 max-h-60 overflow-auto whitespace-pre-wrap break-all text-[10px]">{JSON.stringify(listing, null, 1)}</pre>
+                  <pre className="mt-1 max-h-60 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(listing, null, 1)}</pre>
                 </details>
               </div>
             )}
@@ -161,7 +162,7 @@ export function BandCard() {
           {showLog ? 'Hide' : 'Show'} protocol log ({b.log.length})
         </button>
         {showLog && (
-          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-all text-[10px] text-[var(--text-secondary)]">
+          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-all text-xs text-[var(--text-secondary)]">
             {b.log.map((e) => `${new Date(e.t).toLocaleTimeString()} ${e.dir === 'out' ? '→' : e.dir === 'in' ? '←' : e.dir === 'error' ? '✕' : '·'} ${e.text}`).join('\n')}
           </pre>
         )}
@@ -171,5 +172,10 @@ export function BandCard() {
 }
 
 function Cap({ on, label }: { on: boolean; label: string }) {
-  return <span className={on ? 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-400' : 'rounded-full bg-slate-500/20 px-2 py-0.5 text-[var(--text-tertiary)]'}>{on ? '✓' : '✕'} {label}</span>
+  return (
+    <Badge tone={on ? 'success' : 'neutral'}>
+      <span className={on ? 'h-2 w-2 rounded-full bg-emerald-500' : 'h-2 w-2 rounded-full bg-[var(--text-tertiary)]'} />
+      {label}
+    </Badge>
+  )
 }

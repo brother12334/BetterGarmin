@@ -156,7 +156,7 @@ export function ActivityDetailPage() {
           </p>
         </div>
         {isStrength && (
-          <Link to="/training/strength" className="shrink-0 text-sm text-violet-300 hover:text-violet-200">
+          <Link to="/training/strength" className="shrink-0 text-sm text-[var(--accent)] hover:opacity-80">
             View sets →
           </Link>
         )}
@@ -236,21 +236,21 @@ export function ActivityDetailPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-xs text-[var(--text-tertiary)]">
-                <th className="py-1.5 pr-3 font-medium">#</th>
-                <th className="py-1.5 pr-3 font-medium">Distance</th>
-                <th className="py-1.5 pr-3 font-medium">Time</th>
-                <th className="py-1.5 pr-3 font-medium">Avg HR</th>
-                <th className="py-1.5 font-medium">Pace</th>
+                <th className="py-2 pr-3 font-medium">#</th>
+                <th className="py-2 pr-3 font-medium">Distance</th>
+                <th className="py-2 pr-3 font-medium">Time</th>
+                <th className="py-2 pr-3 font-medium">Avg HR</th>
+                <th className="py-2 font-medium">Pace</th>
               </tr>
             </thead>
             <tbody>
               {laps.map((lap) => (
                 <tr key={lap.lap} className="border-t border-[var(--border-panel)]">
-                  <td className="py-1.5 pr-3">{lap.lap}</td>
-                  <td className="py-1.5 pr-3">{formatDistance(lap.distance, units, 2)}</td>
-                  <td className="py-1.5 pr-3">{formatHoursMinutes(hmsToMinutes(lap.elapsed_time))}</td>
-                  <td className="py-1.5 pr-3">{lap.avg_hr ?? '—'}</td>
-                  <td className="py-1.5">{formatSpeed(lap.avg_speed, units)}</td>
+                  <td className="py-2 pr-3">{lap.lap}</td>
+                  <td className="py-2 pr-3">{formatDistance(lap.distance, units, 2)}</td>
+                  <td className="py-2 pr-3">{formatHoursMinutes(hmsToMinutes(lap.elapsed_time))}</td>
+                  <td className="py-2 pr-3">{lap.avg_hr ?? '—'}</td>
+                  <td className="py-2">{formatSpeed(lap.avg_speed, units)}</td>
                 </tr>
               ))}
             </tbody>

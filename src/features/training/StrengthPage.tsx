@@ -64,16 +64,15 @@ export function StrengthPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <Link to="/training" className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-            ← Training
-          </Link>
-          <h1 className="text-2xl font-bold">Strength</h1>
-        </div>
-        {!formOpen && (
-          <div className="flex items-center gap-2">
-            <ImportElement26Button onImported={refresh} />
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <Link to="/training" className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+              ← Training
+            </Link>
+            <h1 className="text-2xl font-bold">Strength</h1>
+          </div>
+          {!formOpen && (
             <Button
               onClick={() => {
                 setEditing(null)
@@ -82,8 +81,9 @@ export function StrengthPage() {
             >
               Log workout
             </Button>
-          </div>
-        )}
+          )}
+        </div>
+        {!formOpen && <ImportElement26Button onImported={refresh} />}
       </div>
 
       {formOpen && (
@@ -109,7 +109,7 @@ export function StrengthPage() {
       </div>
 
       <Card>
-        <div className="mb-3 flex items-center gap-1.5">
+        <div className="mb-3 flex items-center gap-2">
           <TrophyIcon width={18} height={18} className="text-amber-400" />
           <p className="font-semibold">Personal records</p>
           <InfoButton title="Personal records">
@@ -122,10 +122,10 @@ export function StrengthPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {prs.slice(0, 9).map((pr) => (
-              <div key={pr.exercise} className="rounded-xl p-3" style={{ backgroundColor: `${MUSCLE_GROUP_COLORS[pr.category]}14` }}>
+              <div key={pr.exercise} className="rounded-control p-3" style={{ backgroundColor: `${MUSCLE_GROUP_COLORS[pr.category]}14` }}>
                 <p className="truncate text-xs text-[var(--text-tertiary)]">{pr.exercise}</p>
                 <p className="mt-1 text-lg font-bold tabular-nums">{Math.round(pr.e1rm)} kg</p>
-                <p className="text-[11px] text-[var(--text-tertiary)]">
+                <p className="text-xs text-[var(--text-tertiary)]">
                   e1RM · {pr.weight}kg × {pr.reps}
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function StrengthPage() {
           <ul className="flex flex-col gap-2">
             {prEvents.slice(0, 5).map((e, i) => (
               <li key={i} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-2">
                   <TrophyIcon width={14} height={14} className="shrink-0 text-amber-400" />
                   {e.exercise}
                 </span>
@@ -155,7 +155,7 @@ export function StrengthPage() {
 
       {weeklyVolume.length > 0 && (
         <Card>
-          <div className="mb-2 flex items-center gap-1.5">
+          <div className="mb-2 flex items-center gap-2">
             <p className="font-semibold">Weekly volume</p>
             <InfoButton title="Training volume">
               Total weight × reps lifted per week across working sets (warmups excluded), broken down by muscle
@@ -226,7 +226,7 @@ export function StrengthPage() {
             <select
               value={selectedExercise ?? ''}
               onChange={(e) => setExercise(e.target.value)}
-              className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
+              className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
             >
               {exerciseOptions.map((name) => (
                 <option key={name} value={name}>
@@ -252,7 +252,7 @@ export function StrengthPage() {
                     smooth: true,
                     symbol: 'circle',
                     symbolSize: 6,
-                    lineStyle: { color: '#a78bfa', width: 2 },
+                    lineStyle: { color: '#2dd4bf', width: 2 },
                     areaStyle: { color: 'rgba(167, 139, 250, 0.1)' },
                   },
                 ],

@@ -1,3 +1,4 @@
+import { GripIcon } from '../../app/icons'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Reorder, useDragControls } from 'framer-motion'
@@ -88,7 +89,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <Card>
       <p className="font-semibold">{title}</p>
-      {hint && <p className="mb-4 mt-0.5 text-xs text-[var(--text-tertiary)]">{hint}</p>}
+      {hint && <p className="mb-4 mt-1 text-xs text-[var(--text-tertiary)]">{hint}</p>}
       {!hint && <div className="mb-3" />}
       {children}
     </Card>
@@ -98,13 +99,13 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 /** A miniature of the current look: backdrop, a card and a button. */
 function LivePreview() {
   return (
-    <div className="relative h-44 overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-panel)]">
+    <div className="relative h-44 overflow-hidden rounded-card border border-[var(--border-panel)]">
       <div className="absolute inset-0">
         <MountainBackdrop height={176} />
       </div>
       <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3">
-        <div className="glass-panel rounded-[var(--radius-card)] px-4 py-3">
-          <p className="text-[11px] font-medium text-[var(--text-tertiary)]">Steps</p>
+        <div className="glass-panel rounded-card px-4 py-3">
+          <p className="text-xs font-medium text-[var(--text-tertiary)]">Steps</p>
           <p className="text-xl font-bold tabular-nums">8,432</p>
         </div>
         <Button tabIndex={-1}>Sync now</Button>
@@ -128,13 +129,13 @@ function PresetTile({ name, patch, active }: { name: string; patch: Partial<Appe
     <button
       onClick={() => updateAppearance(patch)}
       className={cn(
-        'group relative h-24 overflow-hidden rounded-[var(--radius-control)] border-2 text-left transition-transform active:scale-[0.97]',
+        'group relative h-24 overflow-hidden rounded-control border-2 text-left transition-transform active:opacity-80',
         active ? 'border-[var(--accent)]' : 'border-transparent',
       )}
       style={{ background: bg }}
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-      <span className="absolute bottom-2 left-2.5 flex items-center gap-1.5 text-sm font-semibold text-white">
+      <span className="absolute bottom-2 left-2.5 flex items-center gap-2 text-sm font-semibold text-white">
         <span className="h-2.5 w-2.5 rounded-full" style={{ background: patch.accent }} />
         {name}
       </span>
@@ -158,7 +159,7 @@ function BackgroundSection() {
 
   const tile = (active: boolean) =>
     cn(
-      'relative aspect-square overflow-hidden rounded-[var(--radius-control)] border-2 transition-transform active:scale-[0.97]',
+      'relative aspect-square overflow-hidden rounded-control border-2 transition-transform active:opacity-80',
       active ? 'border-[var(--accent)]' : 'border-transparent',
     )
 
@@ -171,7 +172,7 @@ function BackgroundSection() {
               <img key={p.src} src={`${base}${p.src}`} alt="" className="h-full w-full object-cover" />
             ))}
           </div>
-          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-0.5 text-[9px] font-semibold text-white">Daily</span>
+          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-xs font-semibold text-white">Daily</span>
         </button>
 
         {BACKGROUND_PHOTOS.map((src) => (
@@ -283,24 +284,24 @@ function LayoutRow({ slot, layout }: { slot: WidgetSlot; layout: WidgetSlot[] })
       value={slot}
       dragListener={false}
       dragControls={controls}
-      className="flex items-center gap-3 rounded-[var(--radius-control)] border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-3 py-2.5"
+      className="flex items-center gap-3 rounded-control border border-[var(--border-panel)] bg-[var(--bg-elevated)] px-3 py-3"
     >
       <button
         aria-label={`Drag ${label}`}
         onPointerDown={(e) => controls.start(e)}
         className="cursor-grab touch-none px-1 text-lg leading-none text-[var(--text-tertiary)] active:cursor-grabbing"
       >
-        ⠿
+        <GripIcon width={16} height={16} />
       </button>
       <span className={cn('flex-1 text-sm', !slot.visible && 'text-[var(--text-tertiary)] line-through')}>{label}</span>
-      <button aria-label="Move up" disabled={index === 0} onClick={() => move(-1)} className="px-1.5 text-[var(--text-tertiary)] disabled:opacity-30">
+      <button aria-label="Move up" disabled={index === 0} onClick={() => move(-1)} className="px-2 text-[var(--text-tertiary)] disabled:opacity-30">
         ↑
       </button>
       <button
         aria-label="Move down"
         disabled={index === layout.length - 1}
         onClick={() => move(1)}
-        className="px-1.5 text-[var(--text-tertiary)] disabled:opacity-30"
+        className="px-2 text-[var(--text-tertiary)] disabled:opacity-30"
       >
         ↓
       </button>
@@ -336,7 +337,7 @@ function StyleSection() {
                   aria-label={`Accent ${c}`}
                   onClick={() => updateAppearance({ accent: c })}
                   className={cn(
-                    'h-8 w-8 rounded-full border-2 transition-transform active:scale-90',
+                    'h-8 w-8 rounded-full border-2 transition-transform active:opacity-80',
                     a.accent === c ? 'border-[var(--text-primary)]' : 'border-transparent',
                   )}
                   style={{ background: c }}
@@ -439,13 +440,13 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function Segmented<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) {
   return (
-    <div className="flex rounded-[var(--radius-control)] border border-[var(--border-panel)] bg-[var(--bg-panel)] p-1">
+    <div className="flex rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-1">
       {options.map(([v, label]) => (
         <button
           key={v}
           onClick={() => onChange(v)}
           className={cn(
-            'flex-1 rounded-[calc(var(--radius-control)-4px)] px-2 py-1.5 text-xs font-semibold transition-colors',
+            'flex-1 rounded-[calc(var(--radius-control)-4px)] px-2 py-2 text-xs font-semibold transition-colors',
             value === v ? 'bg-[var(--accent)] text-black/85' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
           )}
         >

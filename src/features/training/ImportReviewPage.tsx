@@ -122,7 +122,7 @@ export function ImportReviewPage() {
       <SyncFirstCard />
 
       <Card>
-        <div className="mb-2 flex items-center gap-1.5">
+        <div className="mb-2 flex items-center gap-2">
           <p className="font-semibold">Things to check</p>
           <InfoButton title="Review">
             Every change here is stored as a correction on top of the import. The original file is kept untouched — "Reset all edits" or
@@ -130,7 +130,7 @@ export function ImportReviewPage() {
             assistant.
           </InfoButton>
         </div>
-        <ul className="flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
+        <ul className="flex flex-col gap-2 text-sm text-[var(--text-secondary)]">
           {parsedWarnings.map((w) => (
             <li key={w} className="text-amber-400">
               • {w}
@@ -159,10 +159,10 @@ export function ImportReviewPage() {
           <span className="text-[var(--text-tertiary)]">
             Units fix{settings.weightScale !== 1 ? ` (active: ×${settings.weightScale.toFixed(4)})` : ''}:
           </span>
-          <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={async () => { await saveWeightScale(workout.id, LB_TO_KG); await load() }}>
+          <Button variant="secondary" className="px-3 py-1 text-xs" onClick={async () => { await saveWeightScale(workout.id, LB_TO_KG); await load() }}>
             Weights were really lb
           </Button>
-          <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={async () => { await saveWeightScale(workout.id, 1 / LB_TO_KG); await load() }}>
+          <Button variant="secondary" className="px-3 py-1 text-xs" onClick={async () => { await saveWeightScale(workout.id, 1 / LB_TO_KG); await load() }}>
             Weights were really kg
           </Button>
           {settings.weightScale !== 1 && (
@@ -223,11 +223,11 @@ export function ImportReviewPage() {
                 const f = fieldsById.get(s.id) ?? {}
                 return (
                   <tr key={s.id} className={`border-t border-[var(--border-panel)] ${e.excluded ? 'opacity-40' : ''} ${duplicates.has(s.id) ? 'bg-amber-500/5' : ''}`}>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2 pr-2">
                       {e.exercise}
-                      {s.atEpochMs != null && <span className="block text-[10px] text-[var(--text-tertiary)]">{formatTime(s.atEpochMs, { seconds: true })}</span>}
+                      {s.atEpochMs != null && <span className="block text-xs text-[var(--text-tertiary)]">{formatTime(s.atEpochMs, { seconds: true })}</span>}
                     </td>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2 pr-2">
                       <NumberCell
                         key={`w-${e.weight}`}
                         value={e.weight != null ? Math.round(convertWeight(e.weight, units) * 10) / 10 : null}
@@ -239,14 +239,14 @@ export function ImportReviewPage() {
                         }}
                       />
                     </td>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2 pr-2">
                       <NumberCell key={`r-${e.reps}`} value={e.reps} integer edited={f.reps !== undefined} was={f.reps !== undefined ? `${s.reps}` : undefined} onCommit={(v) => setFields(s.id, { reps: v == null || v === s.reps ? undefined : v })} />
                     </td>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2 pr-2">
                       <input type="checkbox" checked={e.isWarmup} onChange={(ev) => setFields(s.id, { isWarmup: ev.target.checked === s.isWarmup ? undefined : ev.target.checked })} aria-label="Warm-up" />
-                      {f.isWarmup !== undefined && <span className="ml-1 text-sky-400">✎</span>}
+                      {f.isWarmup !== undefined && <span className="ml-1 text-xs text-sky-400">edited</span>}
                     </td>
-                    <td className="py-1.5 pr-2">
+                    <td className="py-2 pr-2">
                       <input type="checkbox" checked={!!e.excluded} onChange={(ev) => setFields(s.id, { excluded: ev.target.checked ? true : undefined })} aria-label="Exclude set" />
                       {duplicates.has(s.id) && <span className="ml-1 text-amber-400">dup?</span>}
                     </td>
@@ -269,7 +269,7 @@ export function ImportReviewPage() {
             </button>
           )}
         </div>
-        {showRaw && importRecord && <pre className="mt-2 max-h-80 overflow-auto rounded-2xl bg-[var(--bg-panel)] p-3 text-[11px]">{JSON.stringify(importRecord.raw, null, 2)}</pre>}
+        {showRaw && importRecord && <pre className="mt-2 max-h-80 overflow-auto rounded-control bg-[var(--bg-panel)] p-3 text-xs">{JSON.stringify(importRecord.raw, null, 2)}</pre>}
       </Card>
     </div>
   )
@@ -299,19 +299,19 @@ function ExerciseRow({
   const listId = `ex-${original.replace(/\W/g, '')}`
   const dirty = name.trim() !== current || category !== currentCategory
   return (
-    <div className="flex flex-col gap-1.5 rounded-2xl border border-[var(--border-panel)] p-3 text-sm">
+    <div className="flex flex-col gap-2 rounded-control border border-[var(--border-panel)] p-3 text-sm">
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-xs text-[var(--text-tertiary)]">
           Imported as <b className="text-[var(--text-secondary)]">{original}</b> ({MUSCLE_GROUP_LABELS[originalCategory]})
         </p>
-        {!known && <span className="rounded bg-amber-500/15 px-1.5 text-[10px] text-amber-400">unrecognized</span>}
+        {!known && <span className="rounded-full bg-amber-500/15 px-2 text-xs text-amber-400">unrecognized</span>}
       </div>
       <div className="flex flex-wrap gap-2">
         <input
           list={listId}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1"
+          className="min-w-0 flex-1 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1"
           aria-label={`Exercise name for ${original}`}
         />
         <datalist id={listId}>
@@ -319,7 +319,7 @@ function ExerciseRow({
             <option key={s} value={s} />
           ))}
         </datalist>
-        <select value={category} onChange={(e) => setCategory(e.target.value as MuscleGroup)} className="rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1" aria-label="Muscle group">
+        <select value={category} onChange={(e) => setCategory(e.target.value as MuscleGroup)} className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1" aria-label="Muscle group">
           {MUSCLE_GROUPS.map((g) => (
             <option key={g} value={g}>
               {MUSCLE_GROUP_LABELS[g]}
@@ -343,7 +343,7 @@ function ExerciseRow({
           Did you mean “{suggestion}”? (matching names keeps its history together)
         </button>
       )}
-      {(current !== original || currentCategory !== originalCategory) && <p className="text-[11px] text-sky-400">✎ Shown as {current} ({MUSCLE_GROUP_LABELS[currentCategory]})</p>}
+      {(current !== original || currentCategory !== originalCategory) && <p className="text-xs text-sky-400">Shown as {current} ({MUSCLE_GROUP_LABELS[currentCategory]})</p>}
     </div>
   )
 }
@@ -376,10 +376,10 @@ function NumberCell({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-        className={`w-16 rounded-md border bg-[var(--bg-panel)] px-1.5 py-0.5 tabular-nums ${edited ? 'border-sky-400/60' : 'border-[var(--border-panel)]'}`}
+        className={`w-16 rounded-control border bg-[var(--bg-panel)] px-2 py-1 tabular-nums ${edited ? 'border-sky-400/60' : 'border-[var(--border-panel)]'}`}
       />
       {edited && was && (
-        <button type="button" title={`Imported: ${was}. Click to restore.`} className="text-[10px] text-sky-400" onClick={() => onCommit(null)}>
+        <button type="button" title={`Imported: ${was}. Click to restore.`} className="text-xs text-sky-400" onClick={() => onCommit(null)}>
           was {was}
         </button>
       )}

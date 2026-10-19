@@ -14,7 +14,6 @@ import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { getDailySummary, getHrv, getLatestDay, getSleep } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
-import { SparkleIcon } from '../../app/icons'
 import { useData } from '../../app/DataProvider'
 import { Button } from '../../components/ui/Button'
 import { formatRelativeTime } from '../../lib/relativeTime'
@@ -150,11 +149,8 @@ export function TodayPage() {
       <>
       {insights.length > 0 && (
         <Card>
-          <div className="mb-3 flex items-center gap-2">
-            <SparkleIcon width={16} height={16} className="text-sky-400" />
-            <p className="font-semibold">Today's insights</p>
-          </div>
-          <ul className="flex flex-col gap-2.5">
+          <p className="mb-3 font-semibold">Today's insights</p>
+          <ul className="flex flex-col gap-3">
             {insights.map((insight, i) => (
               <motion.li
                 key={i}
@@ -204,7 +200,7 @@ function ReadinessHero({
   const fullPage = usesFullBackdrop(useAppearance())
 
   return (
-    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-[calc(1.5rem+env(safe-area-inset-top))] rounded-b-[2rem] pt-[env(safe-area-inset-top)]' : 'rounded-[2rem]')}>
+    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-[calc(1.5rem+env(safe-area-inset-top))] rounded-b-card pt-[env(safe-area-inset-top)]' : 'rounded-card')}>
       {!fullPage && (
         <div className="absolute inset-0">
           <MountainBackdrop height={320} />
@@ -220,8 +216,8 @@ function ReadinessHero({
           <div className="rounded-full" style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.45))' }}>
             <Ring value={score} metric="readiness" size={176} strokeWidth={14} />
           </div>
-          <div className="flex max-w-xs flex-col items-center gap-1.5">
-            <div className="flex items-center gap-1.5">
+          <div className="flex max-w-xs flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color }}>
                 {status ? STATUS_LABELS[status] : 'Readiness'}
               </span>
@@ -231,7 +227,10 @@ function ReadinessHero({
                   : "BetterGarmin's recovery/readiness score, combining sleep, resting heart rate, training load, and stress. Needs a bit more history to establish your personal baseline."}
               </InfoButton>
             </div>
-            {recommendation && <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{recommendation}</p>}
+            {recommendation && (
+              // Without a full-page photo this line sits where the hero fades into the page, so it uses the theme's text colour.
+              <p className={cn('text-sm leading-relaxed', fullPage ? 'text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]' : 'text-[var(--text-secondary)]')}>{recommendation}</p>
+            )}
           </div>
         </div>
       </div>
@@ -294,7 +293,7 @@ function SyncBar() {
             ? garminPull.message
             : `Synced ${formatRelativeTime(lastSynced)}`}
       </span>
-      <Button variant="secondary" onClick={() => pullFromGarmin()} disabled={!online || running || cloudStatus === 'syncing'} className="shrink-0">
+      <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={!online || running || cloudStatus === 'syncing'} className="shrink-0">
         {running ? 'Syncing…' : 'Sync now'}
       </Button>
     </div>

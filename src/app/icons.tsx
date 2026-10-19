@@ -115,11 +115,10 @@ export function UploadIcon(props: IconProps) {
   )
 }
 
-export function SparkleIcon(props: IconProps) {
+export function GripIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>
-      <path d="M12 3l1.8 4.6L18 9.3l-4.2 1.7L12 15.6l-1.8-4.6L6 9.3l4.2-1.7L12 3z" />
-      <path d="M19 15l.9 2.3L22 18l-2.1.7L19 21l-.9-2.3L16 18l2.1-.7L19 15z" />
+      <path d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01" strokeWidth={3} />
     </svg>
   )
 }

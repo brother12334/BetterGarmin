@@ -64,13 +64,13 @@ export function OnboardingFlow() {
               exit={{ opacity: 0, y: -12 }}
               className="flex flex-col items-center gap-6 text-center"
             >
-              <Logo size={72} className="rounded-3xl shadow-lg shadow-indigo-500/30" />
+              <Logo size={72} className="rounded-control" />
 
               <div>
                 <h1 className="text-2xl font-bold">Welcome to BetterGarmin</h1>
                 <p className="mt-2 text-[var(--text-secondary)]">
-                  A sleeker, deeper look at your Garmin health data. Runs locally in your browser by
-                  default — your data stays on your device unless you opt into automatic cloud sync below.
+                  See your Garmin sleep, heart rate, training and recovery in one place. Everything runs in your browser, and
+                  your data stays on this device unless you set up cloud sync.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-3">
@@ -79,7 +79,7 @@ export function OnboardingFlow() {
                   Try demo mode first
                 </Button>
                 <Button variant="ghost" onClick={() => setStep('cloud')}>
-                  ⭐ Set up automatic sync (recommended, guided, ~15 min)
+                  Set up automatic sync (recommended, about 15 min)
                 </Button>
               </div>
               {demoError && <p className="text-sm text-rose-400">Couldn't load the demo data. Please try again.</p>}

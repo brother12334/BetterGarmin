@@ -29,7 +29,7 @@ export function BigStat({
 }) {
   return (
     <Card className="flex flex-col gap-1 p-4">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
         <span className="text-xs font-semibold text-[var(--text-secondary)]">{label}</span>
         {info && <InfoButton title={label}>{info}</InfoButton>}
@@ -72,11 +72,11 @@ export function DetailChart({
   return (
     <Card className="p-4">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <p className="font-semibold">{title}</p>
           {info && <InfoButton title={title}>{info}</InfoButton>}
         </div>
-        {hint && <span className="text-[11px] text-[var(--text-tertiary)]">{hint}</span>}
+        {hint && <span className="text-xs text-[var(--text-tertiary)]">{hint}</span>}
       </div>
       <Chart height={height} option={option} />
     </Card>
@@ -118,7 +118,7 @@ export function Dial({ label, value, max = 100, color, caption }: { label: strin
           ],
         }}
       />
-      {caption && <span className="-mt-3 text-[11px] text-[var(--text-tertiary)]">{caption}</span>}
+      {caption && <span className="-mt-3 text-xs text-[var(--text-tertiary)]">{caption}</span>}
     </Card>
   )
 }
@@ -129,7 +129,7 @@ export function ClockRing({ title, perHour, color, unit, highlightAbove, info }:
   const lo = values.length ? Math.max(0, Math.min(...values) - 15) : 0
   return (
     <Card className="p-4">
-      <div className="mb-1 flex items-center gap-1.5">
+      <div className="mb-1 flex items-center gap-2">
         <p className="font-semibold">{title}</p>
         {info && <InfoButton title={title}>{info}</InfoButton>}
       </div>

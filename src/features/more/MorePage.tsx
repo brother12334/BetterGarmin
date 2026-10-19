@@ -33,7 +33,7 @@ export function MorePage() {
 
       <Link to="/customize">
         <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-[var(--accent)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-[var(--accent)]">
             <CustomizeIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -160,7 +160,7 @@ export function MorePage() {
             {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">Downloading from Garmin… usually about 2 minutes.</p>}
             {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
+              <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
                 {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
               </Button>
               <Button variant="ghost" onClick={disconnectCloud}>
@@ -215,9 +215,18 @@ export function MorePage() {
           </a>{' '}
           project (GPL-2.0).
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin" target="_blank" rel="noreferrer">
+            Source on GitHub
+          </a>
+          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin#readme" target="_blank" rel="noreferrer">
+            Setup guide
+          </a>
+          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin/issues" target="_blank" rel="noreferrer">
+            Report a problem
+          </a>
+        </div>
       </Card>
-
-      <p className="text-center text-xs text-[var(--text-tertiary)]">Custom, drag-and-drop dashboard layouts are coming in a later update.</p>
 
       <p className="text-center text-xs tabular-nums text-[var(--text-tertiary)]">
         BetterGarmin v{__APP_VERSION__} · build {__APP_COMMIT__} · {new Date(__APP_BUILD_DATE__).toLocaleDateString(undefined, { dateStyle: 'medium' })}

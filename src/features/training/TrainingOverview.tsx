@@ -7,7 +7,7 @@ import type { ActivityRow } from '../../db/types'
 import { hmsToMinutes } from '../../lib/duration'
 
 const TRAIN = METRIC_COLORS.training.solid
-const SPORT_COLORS = ['#a78bfa', '#fb4a59', '#34d399', '#38bdf8', '#f5a623', '#f472b6']
+const SPORT_COLORS = ['#2dd4bf', '#fb4a59', '#34d399', '#38bdf8', '#f5a623', '#94a3b8']
 const DAY = 86_400_000
 
 const dayStart = (ts: string) => {

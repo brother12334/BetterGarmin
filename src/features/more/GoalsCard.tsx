@@ -99,7 +99,7 @@ function GoalInput({
           const v = Number(e.target.value)
           if (!Number.isNaN(v) && v >= 0) onChange(v)
         }}
-        className="w-24 rounded-lg border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-right text-[var(--text-primary)]"
+        className="w-24 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-right text-[var(--text-primary)]"
       />
     </label>
   )

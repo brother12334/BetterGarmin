@@ -17,7 +17,7 @@ export function LiveHeartRateCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400"
+              className="flex h-12 w-12 items-center justify-center rounded-control bg-rose-500/10 text-rose-400"
             >
               <HealthIcon width={22} height={22} />
             </div>
@@ -60,7 +60,7 @@ export function LiveHeartRateCard() {
             Or connect your watch directly for live, second-by-second updates — turn on{' '}
             <strong>Broadcast Heart Rate</strong> in its sensor settings first.
           </p>
-          <Button variant="secondary" onClick={live.connect} disabled={live.status === 'connecting'} className="shrink-0">
+          <Button loading={live.status === 'connecting'} variant="secondary" onClick={live.connect} disabled={live.status === 'connecting'} className="shrink-0">
             {live.status === 'connecting' ? 'Connecting…' : 'Connect'}
           </Button>
         </div>
@@ -91,7 +91,7 @@ function LatestReading({ latest }: { latest: ReturnType<typeof useLatestHeartRat
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-rose-500/10 text-rose-400">
           <HealthIcon width={22} height={22} />
         </div>
         <div>
@@ -104,7 +104,7 @@ function LatestReading({ latest }: { latest: ReturnType<typeof useLatestHeartRat
           </p>
         </div>
       </div>
-      <Button variant="secondary" onClick={latest.refresh} disabled={latest.loading}>
+      <Button loading={latest.loading} variant="secondary" onClick={latest.refresh} disabled={latest.loading}>
         {latest.loading ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>

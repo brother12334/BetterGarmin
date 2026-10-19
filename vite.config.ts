@@ -19,6 +19,14 @@ function gitCommit(): string {
 // taken from the repo name in CI (forks under another name just work); BASE_PATH overrides it.
 const REPO_NAME = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'BetterGarmin'
 const REPO_BASE = process.env.BASE_PATH ?? `/${REPO_NAME}/`
+const REPO_OWNER = (process.env.GITHUB_REPOSITORY?.split('/')[0] ?? 'brother12334').toLowerCase()
+// Absolute site URL for social previews (og:image must be absolute). SITE_URL overrides it for custom domains.
+const SITE_URL = process.env.SITE_URL ?? `https://${REPO_OWNER}.github.io${REPO_BASE}`
+
+const siteUrlInHtml = {
+  name: 'site-url',
+  transformIndexHtml: (html: string) => html.replaceAll('%SITE_URL%', SITE_URL),
+}
 
 // GitHub Pages only serves real files, so reloading a screen like /insights would hit its 404 page. Serving the
 // app itself as 404.html lets the router take over and show the right screen.
@@ -40,7 +48,7 @@ export default defineConfig(({ command }) => ({
     __APP_COMMIT__: JSON.stringify(gitCommit()),
     __APP_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
   },
-  plugins: [
+  plugins: [siteUrlInHtml, 
     spaFallback,
     react(),
     tailwindcss(),
@@ -50,7 +58,7 @@ export default defineConfig(({ command }) => ({
       manifest: {
         name: 'BetterGarmin',
         short_name: 'BetterGarmin',
-        description: 'A sleeker, deeper dashboard for your Garmin health data — 100% local, nothing ever uploaded.',
+        description: 'Sleep, heart rate, training load and recovery from your Garmin watch in one fast dashboard. Runs in your browser; optional cloud sync you host yourself.',
         theme_color: '#0a0b0f',
         background_color: '#0a0b0f',
         display: 'standalone',

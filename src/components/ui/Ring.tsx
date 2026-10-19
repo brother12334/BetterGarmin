@@ -56,12 +56,9 @@ export function Ring({ value, metric, size = 140, strokeWidth = 12, label, subla
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference, filter: `drop-shadow(0 0 0 ${color.solid}00)` }}
-            animate={{
-              strokeDashoffset: dashOffset,
-              filter: `drop-shadow(0 0 6px ${color.solid}66)`,
-            }}
-            transition={reduceMotion ? { duration: 0 } : { duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: dashOffset }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           />
         )}
       </svg>
@@ -70,7 +67,7 @@ export function Ring({ value, metric, size = 140, strokeWidth = 12, label, subla
         <span className="text-3xl font-bold tabular-nums text-[var(--text-primary)]">
           {value == null ? '—' : Math.round(value)}
         </span>
-        {sublabel && <span className="text-[11px] text-[var(--text-tertiary)]">{sublabel}</span>}
+        {sublabel && <span className="text-xs text-[var(--text-tertiary)]">{sublabel}</span>}
       </div>
     </div>
   )

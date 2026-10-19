@@ -72,8 +72,8 @@ export function TrainingFeedPage() {
   // Strength (and Element 26 import) works without any Garmin activities, so it is always reachable.
   const strengthLink = (
       <Link to="/training/strength">
-        <Card className="flex items-center gap-4 border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-sky-500/5 transition-colors hover:from-violet-500/15">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+        <Card className="flex items-center gap-4 border-teal-500/30 transition-colors hover:border-teal-500/60">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-teal-500/15 text-teal-400">
             <TrainingIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export function TrainingFeedPage() {
           <p className="mb-3 font-semibold">Personal records</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {records.map((r) => (
-              <div key={r.sport} className="rounded-xl bg-[var(--bg-panel)] p-3">
+              <div key={r.sport} className="rounded-control bg-[var(--bg-panel)] p-3">
                 <p className="text-xs capitalize text-[var(--text-tertiary)]">{r.sport.replace(/_/g, ' ')}</p>
                 <p className="mt-1 text-sm font-semibold">
                   {r.longestDistance?.distance != null ? `${formatDistance(r.longestDistance.distance, units)} longest` : `${r.count} ${r.count === 1 ? 'activity' : 'activities'}`}
@@ -157,7 +157,7 @@ export function TrainingFeedPage() {
         {activities.map((activity) => (
           <Link key={activity.activity_id} to={`/training/${activity.activity_id}`}>
             <Card className="flex items-center gap-4 transition-colors hover:bg-white/5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-400">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-teal-500/10 text-teal-400">
                 <TrainingIcon width={20} height={20} />
               </div>
               <div className="min-w-0 flex-1">
