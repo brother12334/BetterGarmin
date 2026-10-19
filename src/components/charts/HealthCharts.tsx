@@ -156,6 +156,10 @@ export function DetailChart({
   const xAxis = {
     ...baseX,
     ...(active?.from != null ? { min: active.from, max: active.to } : {}),
+    ...(!intraday && allPts.length > 0 && {
+      // At most about four date labels whatever the span, so dates never run into each other.
+      minInterval: Math.max(1, Math.ceil(((active?.to ?? max) - (active?.from ?? min)) / DAY / 4)) * DAY,
+    }),
     ...(intraday && {
       // Whole hours only ("6 AM"), spaced so labels never collide.
       // Ticks every 2 hours, labelled only at 6 AM, 12 PM and 6 PM so the times never crowd.
