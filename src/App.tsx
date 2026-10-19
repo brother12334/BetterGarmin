@@ -10,6 +10,9 @@ const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({
 const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ default: m.MorePage })))
 const WorkoutHistoryPage = lazy(() => import('./features/history/WorkoutHistoryPage').then((m) => ({ default: m.WorkoutHistoryPage })))
 const BandWorkoutPage = lazy(() => import('./features/history/BandWorkoutPage').then((m) => ({ default: m.BandWorkoutPage })))
+const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage').then((m) => ({ default: m.RoutinesPage })))
+const RoutineEditPage = lazy(() => import('./features/routines/RoutineEditPage').then((m) => ({ default: m.RoutineEditPage })))
+const RunRoutinePage = lazy(() => import('./features/routines/RunRoutinePage').then((m) => ({ default: m.RunRoutinePage })))
 const HealthPage = lazy(() => import('./features/health/HealthPage').then((m) => ({ default: m.HealthPage })))
 const SleepPage = lazy(() => import('./features/sleep/SleepPage').then((m) => ({ default: m.SleepPage })))
 const TrainingFeedPage = lazy(() =>
@@ -64,6 +67,9 @@ export default function App() {
           <Route path="training" element={<TrainingFeedPage />} />
           <Route path="training/history" element={<WorkoutHistoryPage />} />
           <Route path="training/history/:key" element={<BandWorkoutPage />} />
+          <Route path="training/routines" element={<RoutinesPage />} />
+          <Route path="training/routines/:id/edit" element={<RoutineEditPage />} />
+          <Route path="training/routines/:id/run" element={<RunRoutinePage />} />
           <Route path="training/strength" element={<StrengthPage />} />
           <Route path="training/strength/workout/:workoutId" element={<WorkoutTimelinePage />} />
           <Route path="training/strength/compare/:a/:b" element={<CompareWorkoutsPage />} />
