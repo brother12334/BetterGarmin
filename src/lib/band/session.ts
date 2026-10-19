@@ -145,7 +145,9 @@ export class BandSession {
       this.device = await navigator.bluetooth.requestDevice(
         opts.showAll
           ? { acceptAllDevices: true, optionalServices }
-          : { filters: [{ namePrefix: 'CIRQA' }, { services: [BAND_UUIDS.MULTILINK_SERVICE] }], optionalServices },
+          : // Same request as the tested Protocol Lab: a name-prefix filter only. Adding a service filter left
+            // Bluefy's chooser empty, because the band doesn't advertise the MultiLink service.
+            { filters: [{ namePrefix: 'CIRQA' }], optionalServices },
       )
       this.deviceName = this.device.name ?? 'Garmin band'
       this.device.addEventListener('gattserverdisconnected', this.handleDisconnect)
