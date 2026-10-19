@@ -4,6 +4,8 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTheme } from '../../app/theme'
 import { useUnits } from '../../app/units'
+import { BackupCard } from './BackupCard'
+import { RemindersCard } from './RemindersCard'
 import { BandCard } from '../band/BandCard'
 import { setClockFormat, useClockFormat } from '../../lib/clock'
 import { fullscreenSupported, setFullscreenPref, useFullscreenPref } from '../../lib/fullscreen'
@@ -185,6 +187,9 @@ export function MorePage() {
         <p className="mb-3 text-xs text-[var(--text-tertiary)]">Download your history as CSV files you can open in a spreadsheet.</p>
         <QuickExport />
       </Card>
+
+      <BackupCard />
+      <RemindersCard />
 
       <Card>
         <p className="mb-1 font-semibold">SQL console</p>

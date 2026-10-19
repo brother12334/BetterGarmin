@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 export const TODAY_WIDGETS = [
   { id: 'hero', label: 'Readiness & backdrop' },
   { id: 'sync', label: 'Sync now bar' },
+  { id: 'training', label: 'Training (pinned routines, latest workout)' },
   { id: 'heartRate', label: 'Heart rate' },
   { id: 'bars', label: 'Sleep / Stress / Energy bars' },
   { id: 'energy', label: 'Energy Reserve curve' },
@@ -115,7 +116,15 @@ function normalizeLayout(layout: WidgetSlot[] | undefined): WidgetSlot[] {
   const known = new Set<string>(TODAY_WIDGETS.map((w) => w.id))
   const kept = (layout ?? []).filter((s) => known.has(s.id))
   const seen = new Set(kept.map((s) => s.id))
-  return [...kept, ...TODAY_WIDGETS.filter((w) => !seen.has(w.id)).map((w) => ({ id: w.id, visible: true }))]
+  // New widgets slot in after the widget that precedes them in the default order, not at the very end.
+  const out = [...kept]
+  TODAY_WIDGETS.forEach((w, i) => {
+    if (seen.has(w.id)) return
+    const prev = i > 0 ? out.findIndex((s) => s.id === TODAY_WIDGETS[i - 1].id) : -1
+    out.splice(prev + 1, 0, { id: w.id, visible: true })
+    seen.add(w.id)
+  })
+  return out
 }
 
 function load(): Appearance {

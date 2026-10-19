@@ -23,6 +23,7 @@ import { LiveHeartRateCard } from './LiveHeartRateCard'
 import { HowYouSlept } from './HowYouSlept'
 import { useReadiness } from './useReadiness'
 import { useEnergyReserve } from './useEnergyReserve'
+import { TrainingWidget } from './TrainingWidget'
 import { EnergyReserveCard } from './EnergyReserveCard'
 import { STATUS_COLORS, STATUS_LABELS, statusForInverseScore, statusForScore } from '../../lib/statusWords'
 
@@ -101,6 +102,7 @@ export function TodayPage() {
   const widgets: Record<WidgetId, ReactNode> = {
     hero: <ReadinessHero atTop={layout.find((w) => w.visible)?.id === 'hero'} formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
     sync: <SyncBar />,
+    training: <TrainingWidget />,
     heartRate: <LiveHeartRateCard />,
     bars: (
       <Card className="divide-y divide-[var(--border-panel)] py-1">

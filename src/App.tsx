@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { useReminderScheduler } from './features/more/reminders'
 import { useData } from './app/DataProvider'
 import { AppShell } from './app/AppShell'
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow'
@@ -45,6 +46,7 @@ function RouteFallback() {
 export default function App() {
   const { status } = useData()
   useApplyAppearance()
+  useReminderScheduler()
 
   if (status === 'restoring') {
     return (

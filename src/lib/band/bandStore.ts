@@ -288,6 +288,7 @@ export interface BandSnapshot {
   configBits: number[]
   protocolVersion: number | null
   routingHandle: number | null
+  batteryPercent: number | null
   activity: ActivityState
 }
 
@@ -301,6 +302,7 @@ function getSnapshot(): BandSnapshot {
     configBits: band.bandConfigBits,
     protocolVersion: band.bandProtocolVersion,
     routingHandle: band.routingHandle,
+    batteryPercent: band.batteryPercent,
     activity,
   }
   if (snapshot && (Object.keys(next) as (keyof BandSnapshot)[]).every((k) => snapshot![k] === next[k])) return snapshot

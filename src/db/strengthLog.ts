@@ -313,3 +313,27 @@ export async function resetWorkoutEdits(workoutId: string): Promise<void> {
     if (c.id === `workout:${workoutId}` && (c.weightScale ?? 1) !== 1) await updateCorrection(c.id, workoutId, (x) => ({ ...x, weightScale: 1 }))
   }
 }
+
+/** Every raw record in the strength log (workouts, sets, original imports, corrections), for a backup file. */
+export async function exportStrengthLog(): Promise<Record<string, unknown[]>> {
+  const db = await getDb()
+  const out: Record<string, unknown[]> = {}
+  for (const name of ALL_STORES) out[name] = await db.getAll(name)
+  return out
+}
+
+/** Restores a backup made by exportStrengthLog. Records with the same ID are replaced; nothing else is removed. */
+export async function importStrengthLog(data: Record<string, unknown[]>): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction(ALL_STORES, 'readwrite')
+  let n = 0
+  for (const name of ALL_STORES) {
+    for (const rec of data[name] ?? []) {
+      await tx.objectStore(name).put(rec)
+      n++
+    }
+  }
+  await tx.done
+  notifyChanged()
+  return n
+}

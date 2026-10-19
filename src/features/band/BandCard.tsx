@@ -4,20 +4,34 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { BAND_CAPS, band, cancelBandAlert, testBandAlert, useBand } from '../../lib/band/bandStore'
 import { BandSyncPanel } from './BandSyncPanel'
+import { BandTroubleshooting } from './BandTroubleshooting'
+import { useLastBandSync } from './useLastBandSync'
+import { formatRelativeTime } from '../../lib/relativeTime'
 
 const STATE_TEXT: Record<string, string> = {
   idle: 'Not connected',
   connecting: 'Connecting…',
-  registering: 'Registering…',
-  handshaking: 'Handshaking…',
+  registering: 'Connecting…',
+  handshaking: 'Connecting…',
   ready: 'Connected',
+  reconnecting: 'Reconnecting…',
   disconnected: 'Disconnected',
   error: 'Connection failed',
+}
+
+const STATE_DOT: Record<string, string> = {
+  ready: 'bg-emerald-500',
+  connecting: 'bg-amber-400 animate-pulse',
+  registering: 'bg-amber-400 animate-pulse',
+  handshaking: 'bg-amber-400 animate-pulse',
+  reconnecting: 'bg-amber-400 animate-pulse',
+  error: 'bg-rose-500',
 }
 
 /** Direct Bluetooth connection to a Garmin CIRQA band: status, test alert, experimental file listing and a protocol log. */
 export function BandCard() {
   const b = useBand()
+  const lastSync = useLastBandSync()
   const [alertResult, setAlertResult] = useState<string | null>(null)
   const [showLog, setShowLog] = useState(false)
   const supported = typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -55,12 +69,14 @@ export function BandCard() {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-semibold">Garmin band (CIRQA) · experimental</p>
-          <p className="text-xs text-[var(--text-tertiary)]">
+          <p className="font-semibold">Garmin band (CIRQA)</p>
+          <p className="flex items-center gap-2 text-sm text-[var(--text-secondary)]" role="status" aria-live="polite">
+            <span className={`h-2.5 w-2.5 rounded-full ${STATE_DOT[b.state] ?? 'bg-[var(--text-tertiary)]'}`} aria-hidden />
             {STATE_TEXT[b.state]}
             {b.deviceName ? ` · ${b.deviceName}` : ''}
-            {ready && b.protocolVersion != null ? ` · protocol ${b.protocolVersion}` : ''}
+            {ready && b.batteryPercent != null ? ` · battery ${b.batteryPercent}%` : ''}
           </p>
+          <p className="text-xs text-[var(--text-tertiary)]">Last successful sync: {lastSync ? formatRelativeTime(new Date(lastSync)) : 'never'}</p>
         </div>
         {ready ? (
           <Button variant="ghost" onClick={() => band.disconnect()}>
@@ -77,6 +93,13 @@ export function BandCard() {
         <p className="text-xs text-[var(--text-tertiary)]">
           Needs Web Bluetooth: Chrome or Edge, or Bluefy on iPhone.
         </p>
+      )}
+
+      {b.state === 'reconnecting' && (
+        <p className="text-xs text-[var(--text-secondary)]">The band dropped out. Trying to reconnect on its own; keep it close to your phone.</p>
+      )}
+      {b.state === 'disconnected' && (
+        <p className="text-xs text-[var(--text-secondary)]">Couldn't get back to the band. Tap Connect when it's nearby. Anything already downloaded is safe on this phone, and nothing on the band was deleted.</p>
       )}
 
       {b.state === 'error' && b.error && (
@@ -119,6 +142,8 @@ export function BandCard() {
       )}
 
       <BandSyncPanel ready={ready} />
+
+      <BandTroubleshooting onShowAll={() => connect(true)} />
 
       <div className="border-t border-[var(--border-panel)] pt-2">
         <button className="text-xs text-[var(--text-tertiary)] underline" onClick={() => setShowLog((v) => !v)}>
