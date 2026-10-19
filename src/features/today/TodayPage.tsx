@@ -287,7 +287,7 @@ function SyncBar() {
         {running
           ? garminPull.via === 'band'
             ? 'Syncing from your band…'
-            : 'Downloading from Garmin… about 2 minutes'
+            : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… about 2 minutes'
           : !online && garminPull.status !== 'error'
           ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
           : garminPull.status === 'error'

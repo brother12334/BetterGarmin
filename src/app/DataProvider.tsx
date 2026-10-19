@@ -43,7 +43,7 @@ interface DataContextValue {
   refreshBandData: () => Promise<WellnessSummary | null>
 }
 
-export type GarminPullState = { status: 'idle'; note?: string } | { status: 'running'; startedAt: Date; via?: 'band' | 'cloud' } | { status: 'error'; message: string }
+export type GarminPullState = { status: 'idle'; note?: string } | { status: 'running'; startedAt: Date; via?: 'band' | 'cloud'; afterBand?: boolean } | { status: 'error'; message: string }
 
 const DataContext = createContext<DataContextValue | null>(null)
 const SOURCE_KEY = 'bettergarmin:dataSource'
@@ -470,7 +470,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
             try {
               const startedAt = await startCloudSync(config)
               savePendingPull(startedAt)
-              await watchForPull(config, startedAt)
+              const watching = watchForPull(config, startedAt)
+              setGarminPull({ status: 'running', startedAt, via: 'cloud', afterBand: true })
+              await watching
               setGarminPull({ status: 'idle', note: `${bandNote} · Garmin cloud refreshed` })
             } catch {
               setGarminPull({ status: 'idle', note: `${bandNote} · Garmin cloud refresh failed` })
