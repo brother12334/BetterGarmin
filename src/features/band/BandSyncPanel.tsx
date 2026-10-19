@@ -3,6 +3,8 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { band } from '../../lib/band/bandStore'
 import { indexedDbBandStore, type BandFileRecord } from '../../lib/band/bandFileStore'
+import { useData } from '../../app/DataProvider'
+import type { WellnessSummary } from '../../lib/band/bandWellness'
 import { syncBand, type SyncProgress, type SyncReport } from '../../lib/band/bandSync'
 
 const fmtDuration = (s: number | null) => (s == null ? '—' : `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, '0')}s`)
@@ -17,6 +19,8 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
   const [error, setError] = useState<string | null>(null)
   const [records, setRecords] = useState<BandFileRecord[] | null>(null)
   const [open, setOpen] = useState<string | null>(null)
+  const [wellness, setWellness] = useState<WellnessSummary | null>(null)
+  const { refreshBandData } = useData()
 
   const refresh = () =>
     indexedDbBandStore
@@ -32,7 +36,11 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
     setError(null)
     setReport(null)
     try {
-      setReport(await syncBand(band, indexedDbBandStore, setProgress))
+      const r = await syncBand(band, indexedDbBandStore, setProgress)
+      setReport(r)
+      const w = await refreshBandData()
+      setWellness(w)
+      band.addLog('info', `All-day data: ${w ? `${w.files} files, ${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate samples, ${w.nights} nights; messages ${JSON.stringify(w.counts)}` : 'none found'}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -52,7 +60,7 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
         <div>
           <p className="text-sm font-semibold">Sync from band</p>
           <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-            Downloads new files over Bluetooth, checks each one, and imports activities. Nothing on the band is deleted or changed. Experimental: not yet
+            Downloads new files over Bluetooth, checks each one, and imports stress, energy, heart rate, sleep and activities. Nothing on the band is deleted or changed. Experimental: not yet
             confirmed on a real band.
           </p>
         </div>
@@ -81,9 +89,14 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
           <div className="flex flex-wrap gap-2">
             <Badge tone="success">{counts.imported ?? 0} imported</Badge>
             <Badge>{counts['skipped-duplicate'] ?? 0} already synced</Badge>
-            {counts.unsupported ? <Badge>{counts.unsupported} not imported (type not supported yet)</Badge> : null}
+            {counts.unsupported ? <Badge>{counts.unsupported} other files</Badge> : null}
             {counts.failed ? <Badge tone="danger">{counts.failed} failed</Badge> : null}
           </div>
+          <p>
+            {wellness
+              ? `All-day data: ${wellness.stress.toLocaleString()} stress, ${wellness.bodyBattery.toLocaleString()} energy and ${wellness.hr.toLocaleString()} heart-rate readings, ${wellness.nights} night${wellness.nights === 1 ? '' : 's'} of sleep.`
+              : 'No stress, energy, heart-rate or sleep data found in the synced files yet.'}
+          </p>
           {report.outcomes
             .filter((o) => o.result === 'failed')
             .slice(0, 5)

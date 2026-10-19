@@ -51,6 +51,11 @@ class SqliteClient {
     return this.call({ type: 'rawQuery', kind, sql })
   }
 
+  /** Applies band rows to a database now and after every later load of it. */
+  overlay(kind: DbKind, schema: string, statements: { sql: string; params: (string | number | null)[] }[]): Promise<null> {
+    return this.call({ type: 'overlay', kind, schema, statements })
+  }
+
   hasKind(kind: DbKind): Promise<boolean> {
     return this.call({ type: 'hasKind', kind })
   }

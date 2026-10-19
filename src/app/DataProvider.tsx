@@ -5,6 +5,8 @@ import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { setSleepTimesUtc } from '../features/training/matchGarminActivity'
 import { getShortcutSync, runSyncShortcut } from '../lib/shortcutSync'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig, startCloudSync } from '../db/cloudSync'
+import { indexedDbBandStore } from '../lib/band/bandFileStore'
+import { applyBandWellness, type WellnessSummary } from '../lib/band/bandWellness'
 import { deleteWorkout, getAllWorkoutsWithSets, hasAnyWorkouts, seedDemoWorkouts, type SetRecord, type WorkoutRecord } from '../db/strengthLog'
 
 type DataStatus = 'restoring' | 'empty' | 'ready'
@@ -36,6 +38,8 @@ interface DataContextValue {
   garminPull: GarminPullState
   /** Whether the device currently has a connection. */
   online: boolean
+  /** Feeds all-day data synced from the band (stress, Body Battery, heart rate, sleep) into the dashboard. */
+  refreshBandData: () => Promise<WellnessSummary | null>
 }
 
 export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date } | { status: 'error'; message: string }
@@ -483,6 +487,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [cloudConfigured, status, watchForPull])
 
+  const refreshBandData = useCallback(async () => {
+    const summary = await applyBandWellness(indexedDbBandStore).catch(() => null)
+    if (summary) {
+      setLoadedKinds((prev) => Array.from(new Set<DbKind>([...prev, 'garmin', 'monitoring'])))
+      setStatus((s) => (s === 'empty' ? 'ready' : s))
+      setLastSynced(new Date()) // re-runs every screen's queries
+    }
+    return summary
+  }, [])
+
+  useEffect(() => {
+    void refreshBandData()
+  }, [refreshBandData])
+
   const syncNow = useCallback(async () => {
     if (cloudConfigRef.current) await syncFromCloud(cloudConfigRef.current, { force: true })
   }, [syncFromCloud])
@@ -505,6 +523,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       pullFromGarmin,
       garminPull,
       online,
+      refreshBandData,
     }),
     [
       status,
@@ -523,6 +542,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       pullFromGarmin,
       garminPull,
       online,
+      refreshBandData,
     ],
   )
 

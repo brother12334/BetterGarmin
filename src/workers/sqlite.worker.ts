@@ -51,7 +51,17 @@ interface RawQueryRequest {
   sql: string
 }
 
+/** Rows from the band, re-applied on top of whatever copy of the database is loaded (cloud refreshes included). */
+interface OverlayRequest {
+  id: number
+  type: 'overlay'
+  kind: DbKind
+  schema: string
+  statements: { sql: string; params: (string | number | null)[] }[]
+}
+
 type Request =
+  | OverlayRequest
   | LoadFileRequest
   | LoadKnownRequest
   | QueryRequest
@@ -72,6 +82,23 @@ function getSqlJs(): Promise<SqlJsStatic> {
     })
   }
   return sqlJsPromise
+}
+
+const overlays = new Map<DbKind, { schema: string; statements: { sql: string; params: (string | number | null)[] }[] }>()
+
+function applyOverlay(kind: DbKind, db: Database) {
+  const o = overlays.get(kind)
+  if (!o) return
+  db.exec(o.schema)
+  db.run('BEGIN')
+  for (const st of o.statements) {
+    try {
+      db.run(st.sql, st.params)
+    } catch {
+      // a column this copy of the database doesn't have; skip that row
+    }
+  }
+  db.run('COMMIT')
 }
 
 function tableNamesOf(db: Database): string[] {
@@ -134,6 +161,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
         }
         databases.get(kind)?.close()
         databases.set(kind, db)
+        applyOverlay(kind, db)
         self.postMessage({ id: msg.id, ok: true, result: { kind, fileName: msg.fileName } })
         return
       }
@@ -143,7 +171,21 @@ self.onmessage = async (event: MessageEvent<Request>) => {
         normalizeDateColumns(db)
         databases.get(msg.kind)?.close()
         databases.set(msg.kind, db)
+        applyOverlay(msg.kind, db)
         self.postMessage({ id: msg.id, ok: true, result: { kind: msg.kind } })
+        return
+      }
+      case 'overlay': {
+        overlays.set(msg.kind, { schema: msg.schema, statements: msg.statements })
+        let db = databases.get(msg.kind)
+        if (!db) {
+          // No cloud copy: the band's data alone becomes this database.
+          const SQL = await getSqlJs()
+          db = new SQL.Database()
+          databases.set(msg.kind, db)
+        }
+        applyOverlay(msg.kind, db)
+        self.postMessage({ id: msg.id, ok: true, result: null })
         return
       }
       case 'query': {
@@ -179,6 +221,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       case 'clear': {
         for (const db of databases.values()) db.close()
         databases.clear()
+        overlays.clear()
         self.postMessage({ id: msg.id, ok: true, result: null })
         return
       }

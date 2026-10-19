@@ -1,0 +1,162 @@
+import type { SleepStage, TimedValue, WellnessData } from './wellness'
+
+/**
+ * Turns band wellness data into rows in the same GarminDB tables the dashboard already reads, so Today, Sleep and
+ * Health pick it up with no other changes. Band values take precedence over the cloud copy for the same day, since
+ * they're fresher; anything the band didn't report keeps the cloud value.
+ */
+
+export interface SqlStatement {
+  sql: string
+  params: (string | number | null)[]
+}
+
+export interface Overlay {
+  /** CREATE TABLE IF NOT EXISTS statements, for when no cloud copy of that database is loaded. */
+  schema: string
+  statements: SqlStatement[]
+}
+
+const pad = (n: number) => String(n).padStart(2, '0')
+/** Local wall-clock time, the format GarminDB stores. */
+export function localTs(t: number): string {
+  const d = new Date(t)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+const localDay = (t: number) => localTs(t).slice(0, 10)
+export function hms(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds))
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
+}
+
+const GARMIN_SCHEMA = `
+  CREATE TABLE IF NOT EXISTS stress (timestamp TEXT PRIMARY KEY, stress INTEGER);
+  CREATE TABLE IF NOT EXISTS sleep (day TEXT PRIMARY KEY, start TEXT, end TEXT, total_sleep TEXT, deep_sleep TEXT, light_sleep TEXT,
+    rem_sleep TEXT, awake TEXT, avg_spo2 REAL, avg_rr REAL, avg_stress REAL, score INTEGER, qualifier TEXT);
+  CREATE TABLE IF NOT EXISTS sleep_events (timestamp TEXT PRIMARY KEY, event TEXT, duration TEXT);
+  CREATE TABLE IF NOT EXISTS resting_hr (day TEXT PRIMARY KEY, resting_heart_rate REAL);
+  CREATE TABLE IF NOT EXISTS daily_summary (day TEXT PRIMARY KEY, hr_min INTEGER, hr_max INTEGER, rhr INTEGER, stress_avg INTEGER,
+    step_goal INTEGER, steps INTEGER, floors_up REAL, floors_goal REAL, distance REAL, calories_total INTEGER, calories_bmr INTEGER,
+    calories_active INTEGER, calories_goal INTEGER, bb_charged INTEGER, bb_max INTEGER, bb_min INTEGER, spo2_avg REAL, spo2_min REAL,
+    rr_waking_avg REAL, moderate_activity_time TEXT, vigorous_activity_time TEXT, intensity_time_goal TEXT, description TEXT);
+`
+const MONITORING_SCHEMA = `
+  CREATE TABLE IF NOT EXISTS monitoring_hr (timestamp TEXT PRIMARY KEY, heart_rate INTEGER);
+  CREATE TABLE IF NOT EXISTS monitoring (timestamp TEXT, activity_type TEXT, intensity INTEGER, duration TEXT, distance REAL,
+    active_calories INTEGER, steps INTEGER, PRIMARY KEY (timestamp, activity_type));
+`
+
+interface DayStats {
+  stress: number[]
+  hr: number[]
+  bb: TimedValue[]
+  rhr: number | null
+  stepsByType: Map<string, number>
+}
+
+function byDay(w: WellnessData): Map<string, DayStats> {
+  const days = new Map<string, DayStats>()
+  const get = (t: number) => {
+    const k = localDay(t)
+    let d = days.get(k)
+    if (!d) days.set(k, (d = { stress: [], hr: [], bb: [], rhr: null, stepsByType: new Map() }))
+    return d
+  }
+  for (const s of w.stress) if (s.v >= 0 && s.v <= 100) get(s.t).stress.push(s.v)
+  for (const s of w.hr) get(s.t).hr.push(s.v)
+  for (const s of w.bodyBattery) get(s.t).bb.push(s)
+  for (const s of w.restingHr) get(s.t).rhr = s.v
+  // Step counters are cumulative per activity type and reset at midnight: a day's total is the sum of each type's peak.
+  for (const s of w.steps) {
+    const d = get(s.t)
+    d.stepsByType.set(s.type, Math.max(d.stepsByType.get(s.type) ?? 0, s.total))
+  }
+  return days
+}
+
+export interface Night {
+  day: string
+  start: number
+  end: number
+  stages: { t: number; stage: SleepStage; seconds: number }[]
+  score: number | null
+}
+
+/** Splits sleep-level samples into nights (a gap of over 2 hours starts a new one). */
+export function nights(w: WellnessData): Night[] {
+  const levels = w.sleepLevels.filter((l) => l.stage != null) as { t: number; stage: SleepStage }[]
+  const groups: (typeof levels)[] = []
+  for (const l of levels) {
+    const g = groups[groups.length - 1]
+    if (g && l.t - g[g.length - 1].t <= 2 * 3600_000) g.push(l)
+    else groups.push([l])
+  }
+  return groups
+    .filter((g) => g.length > 1)
+    .map((g) => {
+      // Each level holds until the next sample; the last one is closed with the typical one-minute epoch.
+      const stages = g.map((l, i) => ({ ...l, seconds: ((g[i + 1]?.t ?? l.t + 60_000) - l.t) / 1000 }))
+      const start = g[0].t
+      const end = g[g.length - 1].t + 60_000
+      const score = w.sleepScores.filter((s) => s.t >= start - 3600_000 && s.t <= end + 12 * 3600_000).pop()?.v ?? null
+      return { day: localDay(end), start, end, stages, score }
+    })
+}
+
+export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring: Overlay } {
+  const g: SqlStatement[] = []
+  const m: SqlStatement[] = []
+
+  for (const s of w.stress) g.push({ sql: 'INSERT OR REPLACE INTO stress (timestamp, stress) VALUES (?, ?)', params: [localTs(s.t), s.v] })
+  for (const s of w.hr) m.push({ sql: 'INSERT OR REPLACE INTO monitoring_hr (timestamp, heart_rate) VALUES (?, ?)', params: [localTs(s.t), s.v] })
+  for (const s of w.steps)
+    m.push({ sql: 'INSERT OR REPLACE INTO monitoring (timestamp, activity_type, steps) VALUES (?, ?, ?)', params: [localTs(s.t), s.type, s.total] })
+
+  for (const [day, d] of byDay(w)) {
+    const mean = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null)
+    const bbVals = d.bb.map((b) => b.v)
+    let charged = 0
+    for (let i = 1; i < d.bb.length; i++) charged += Math.max(0, d.bb[i].v - d.bb[i - 1].v)
+    const steps = d.stepsByType.size ? [...d.stepsByType.values()].reduce((a, b) => a + b, 0) : null
+    g.push({ sql: 'INSERT OR IGNORE INTO daily_summary (day) VALUES (?)', params: [day] })
+    g.push({
+      sql: `UPDATE daily_summary SET stress_avg = COALESCE(?, stress_avg), hr_min = COALESCE(?, hr_min), hr_max = COALESCE(?, hr_max),
+        rhr = COALESCE(?, rhr), steps = COALESCE(?, steps), bb_max = COALESCE(?, bb_max), bb_min = COALESCE(?, bb_min),
+        bb_charged = COALESCE(?, bb_charged) WHERE day = ?`,
+      params: [
+        mean(d.stress),
+        d.hr.length ? Math.min(...d.hr) : null,
+        d.hr.length ? Math.max(...d.hr) : null,
+        d.rhr,
+        steps,
+        bbVals.length ? Math.max(...bbVals) : null,
+        bbVals.length ? Math.min(...bbVals) : null,
+        d.bb.length > 1 ? charged : null,
+        day,
+      ],
+    })
+    if (d.rhr != null) g.push({ sql: 'INSERT OR REPLACE INTO resting_hr (day, resting_heart_rate) VALUES (?, ?)', params: [day, d.rhr] })
+  }
+
+  for (const n of nights(w)) {
+    const total = (stage: SleepStage) => n.stages.filter((s) => s.stage === stage).reduce((a, s) => a + s.seconds, 0)
+    const asleep = total('light') + total('deep') + total('rem')
+    g.push({
+      sql: `INSERT OR REPLACE INTO sleep (day, start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      params: [n.day, localTs(n.start), localTs(n.end), hms(asleep), hms(total('deep')), hms(total('light')), hms(total('rem')), hms(total('awake')), n.score],
+    })
+    // Sleep events are stage changes, each lasting until the next change.
+    let i = 0
+    while (i < n.stages.length) {
+      let j = i
+      let seconds = 0
+      while (j < n.stages.length && n.stages[j].stage === n.stages[i].stage) seconds += n.stages[j++].seconds
+      const event = n.stages[i].stage === 'deep' ? 'deep_sleep' : n.stages[i].stage === 'light' ? 'light_sleep' : n.stages[i].stage === 'rem' ? 'rem_sleep' : 'awake'
+      g.push({ sql: 'INSERT OR REPLACE INTO sleep_events (timestamp, event, duration) VALUES (?, ?, ?)', params: [localTs(n.stages[i].t), event, hms(seconds)] })
+      i = j
+    }
+  }
+
+  return { garmin: { schema: GARMIN_SCHEMA, statements: g }, monitoring: { schema: MONITORING_SCHEMA, statements: m } }
+}
