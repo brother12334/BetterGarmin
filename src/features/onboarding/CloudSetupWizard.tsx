@@ -5,7 +5,6 @@ import { useData } from '../../app/DataProvider'
 import { cn } from '../../lib/cn'
 import { CheckIcon } from '../../app/icons'
 import { CopyField } from './CopyField'
-import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import workerCode from '../../../worker/dashboard-worker.js?raw'
 
 /**
@@ -207,7 +206,7 @@ export function CloudSetupWizard({ onDone }: { onDone?: () => void }) {
           </>
         )
       case 8:
-        return <AutoSyncStep workerUrl={s.workerUrl} onDone={onDone} />
+        return <AutoSyncStep onDone={onDone} />
     }
   })()
 
@@ -321,52 +320,16 @@ function Missing() {
 }
 
 /** Your watch only uploads through the Garmin Connect app, so this step makes the phone side as hands-off as iOS allows. */
-function AutoSyncStep({ workerUrl, onDone }: { workerUrl: string; onDone?: () => void }) {
-  const shortcutOn = useShortcutSync()
-  const syncUrl = workerUrl ? `${workerUrl.replace(/\/+$/, '')}/sync` : 'your Worker address + /sync'
+function AutoSyncStep({ onDone }: { onDone?: () => void }) {
   return (
     <>
       <P>
-        Your watch only uploads through the <b>Garmin Connect</b> app. Until it runs, there's nothing new to sync. Do these on your iPhone:
+        <b>Sync now</b> pulls straight from your band over Bluetooth, so nothing has to wait for Garmin Connect. The cloud copy set up here is the backup
+        for when the band isn't nearby. To keep that backup fresh, in Garmin Connect open your device → <b>Notifications &amp; Alerts</b> and turn every
+        toggle on, and keep Background App Refresh on.
       </P>
       <P>
-        <b>1. Notifications</b> (recommended). In Garmin Connect, open your device → <b>Notifications &amp; Alerts</b> and turn <b>every</b> toggle on. A watch that gets
-        alerts stays connected, so Garmin Connect syncs in the background much more often. Also keep Background App Refresh on, Low Power Mode off, and
-        don't swipe the app closed.
-      </P>
-      <P>
-        <b>2. The Shortcut</b> (recommended). In the Shortcuts app, make one named exactly <b>{SHORTCUT_NAME}</b>:
-      </P>
-      <ol className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
-        <li>
-          Tap ⓘ → turn on <b>Show in Share Sheet</b>, and set the Receive block at the top to <b>Text</b>
-        </li>
-        <li>
-          <b>Open App</b> → Connect
-        </li>
-        <li>
-          <b>Wait</b> → 5 seconds
-        </li>
-        <li>
-          <b>Get Contents of URL</b> → method <b>POST</b>, header <code>Authorization</code> = <code>Bearer</code> + your access token, URL:
-        </li>
-      </ol>
-      <SecretRow name="URL" value={syncUrl} copy={workerUrl ? syncUrl : undefined} />
-      <ol start={5} className="ml-5 list-decimal text-sm text-[var(--text-secondary)]">
-        <li>
-          <b>If</b> Shortcut Input <b>is</b> <code>app</code> → <b>Open App</b> <b>Safari</b> (or Bluefy if you use that); <b>Otherwise</b> → <b>Go to Home Screen</b>
-        </li>
-      </ol>
-      <label className="flex items-center justify-between gap-3 text-sm">
-        Make Sync now run this Shortcut (recommended)
-        <input type="checkbox" checked={shortcutOn} onChange={(e) => setShortcutSync(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
-      </label>
-      <P>
-        <b>3. Automations.</b> In Shortcuts → Automation, add <b>Run Shortcut → {SHORTCUT_NAME}</b> (Run Immediately, Notify When Run off) for: <b>Sleep → Wake Up</b> and <b>App → Is
-        Opened</b> (an app you use a few times a day), and optionally <b>Charger → Connected</b>.
-      </P>
-      <P>
-        <b>4. Where to open BetterGarmin.</b> Recommended: a <b>Safari tab</b> with the{' '}
+        <b>Where to open BetterGarmin.</b> Recommended: a <b>Safari tab</b> with the{' '}
         <Ext href="https://apps.apple.com/tt/app/ioswebble/id6761301368">beacio extension</Ext> (allowed only on this site) for live heart rate. Set
         Settings → Apps → Safari → Tabs → <b>Compact</b> so the address bar shrinks when you scroll, or use <b>Hide Toolbar</b> from the page menu.
         Prefer always-fullscreen? <b>Share → Add to Home Screen</b> works too, but extensions don't run there, so live heart rate needs its{' '}

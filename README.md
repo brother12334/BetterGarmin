@@ -22,7 +22,8 @@ Not affiliated with Garmin. Not medical advice.
 - **Strength training**: log workouts, or import them from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
 - **Insights**: findings that link training with sleep, resting HR and HRV, with sample sizes and evidence levels instead of overconfident claims. Also history charts, personal experiments, and an optional Gemini assistant that uses your own API key.
 - **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge; on iPhone, Safari with the beacio extension or Bluefy).
-- **Automatic sync** (optional): a scheduled job pulls from Garmin every 30 minutes, and **Sync now** pulls on demand.
+- **Sync straight from the band**: **Sync now** downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. No Garmin Connect or Garmin cloud needed.
+- **Cloud sync** (optional backup): a scheduled job pulls from Garmin every 30 minutes, used when the band isn't nearby.
 - **Power tools**: units, goals, CSV export and an SQL console.
 
 ## Quick start
@@ -31,7 +32,8 @@ Not affiliated with Garmin. Not medical advice.
 | --- | --- |
 | Look around | Open the app and tap **Try demo mode**. |
 | Use my data privately | Run GarminDB on your computer and drop the `.db` files in. See [Getting your data](#getting-your-data). |
-| Have it update itself | [Fork it and host your own copy](docs/self-hosting.md), then set up [cloud sync](docs/cloud-sync.md). |
+| Sync from my band | Open the app in Bluefy (or Chrome/Edge) and tap **Sync now**. See [Syncing from the band](#syncing-from-the-band). |
+| Have a cloud backup | [Fork it and host your own copy](docs/self-hosting.md), then set up [cloud sync](docs/cloud-sync.md). |
 | Fix a problem | See [troubleshooting](docs/troubleshooting.md). |
 
 ## Recommended setup (iPhone)
@@ -43,10 +45,7 @@ details and the alternatives.
 | --- | --- | --- |
 | **How to open the app** | A **Safari tab** with the beacio extension and the [Compact tab layout](#making-safari-look-like-an-app): live heart rate works and the address bar shrinks out of the way | Safari **Home Screen app** (always full screen, no live heart rate), [Bluefy or WebBLE](#choosing-a-browser-iphone) |
 | **Live heart rate over Bluetooth** | The **beacio** Safari extension in a Safari tab (the Home Screen app's **Open in Safari** button takes you there) | [Bluefy](#choosing-a-browser-iphone) |
-| **Getting your data in** | [Cloud sync](docs/cloud-sync.md): updates itself every 30 min | [Drop in GarminDB files](#getting-your-data) by hand |
-| **Watch → Garmin** | [Every Garmin notification on](#1-turn-on-every-garmin-notification) + the [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | [Other options](#other-options) |
-| **Automatic syncs** | [Sleep → Wake Up](#3-run-it-automatically) and **App → Is Opened** automations | Charger, NFC tag, backup times |
-| **Sync now button** | **Sync through iPhone Shortcut** on (More → Cloud sync) | Off: starts the cloud sync only |
+| **Getting your data in** | [**Sync now** straight from the band](#syncing-from-the-band) | [Cloud sync](docs/cloud-sync.md) backup, or [drop in GarminDB files](#getting-your-data) |
 | **Look** | The **Glacier** preset (default) | 7 other presets in Customize |
 | **Clock and units** | Whatever your phone uses (default) | More → Clock / Units |
 
@@ -95,11 +94,9 @@ videos), but you can get close:
    show as a dark strip. Steps 1 and 2 are what really get it out of the way.
 
 The Home Screen app keeps its own storage, so connect cloud sync once more
-inside it (Worker address and access token). In your Shortcut, set the last
-**Open App** to **Safari** (Home Screen web apps usually aren't in the Open App
-list; Safari brings you back to your BetterGarmin tab).
+inside it (Worker address and access token).
 
-## Garmin band direct connection (experimental)
+## Syncing from the band
 
 BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
 (Bluefy on iPhone, or Chrome/Edge), without Garmin Connect or Garmin's cloud.
@@ -109,10 +106,13 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   [docs/band-protocol.md](docs/band-protocol.md).
 - **Test band alert:** makes the band buzz (Find My Watch). It's a test, not a
   custom vibration or an alarm.
-- **Direct sync (experimental):** **Sync** downloads new files from the band
-  over Bluetooth, checks them, and imports activities (duration, calories,
-  heart rate, training effect). Health, sleep and monitoring files aren't
-  imported yet. It's tested in a simulator, not yet on a real band.
+- **Sync now** (Today, More, and the band card) is the main way data gets
+  in. It connects to the band, downloads new files, checks each one with
+  Garmin's FIT SDK and imports stress, energy (Body Battery), heart rate,
+  steps, sleep stages and sleep score, plus activities. Files are never
+  deleted or changed on the band, and nothing is imported twice. If the band
+  can't be reached and cloud sync is set up, Sync now falls back to the cloud
+  copy. Tested in a simulator; still being confirmed on a real band.
 - **Wake-up alarms:** not available yet.
 
 **Connect:** More → **Garmin band** → **Connect**, then choose your CIRQA.
@@ -180,28 +180,12 @@ secret), so the doc explains exactly what changes before you turn it on.
 The in-app onboarding flow walks through the same steps with copy-to-clipboard
 buttons.
 
-### Keeping your watch synced (iPhone)
+### Keeping the cloud backup fresh (iPhone)
 
-BetterGarmin reads your data from Garmin's servers, and only the official
-**Garmin Connect** app can move it there from your watch. If Garmin Connect
-hasn't run in a while, BetterGarmin has nothing new to fetch. These three
-steps make syncing as hands-off as an iPhone allows.
-
-**All the ways to keep it synced, at a glance**
-
-| Method | Effort | What it covers |
-| --- | --- | --- |
-| ⭐ [Garmin notifications on](#1-turn-on-every-garmin-notification) | One-time, 1 min | More frequent background syncs all day |
-| ⭐ [BetterGarmin Sync Shortcut](#2-create-the-bettergarmin-sync-shortcut) | One-time, 5 min | One tap: watch uploads **and** cloud sync starts right away |
-| ⭐ [Shortcut automations](#3-run-it-automatically) | One-time, 2 min each | Syncs on wake-up, when you open an app, when you charge, or with an NFC tap |
-| [Garmin Connect widget](#other-options) | One-time | Gives the app extra chances to sync |
-| [Garmin Express while charging](#other-options) | Plug in at a computer | Full sync every time you charge there |
-| [Wi-Fi upload](#other-options) | Watches with Wi-Fi only | Uploads activities without the phone |
-| [Spare Android phone](#other-options) | Advanced | Fully automatic syncing at home |
-| Cloud sync schedule | Automatic | BetterGarmin pulls from Garmin every 30 minutes |
-
-The in-app setup (**More → Cloud sync → Set up**) walks through the first
-three as its last step. ⭐ = recommended.
+Only needed for the optional cloud backup: **Sync now** reads straight from
+the band and doesn't depend on any of this. The cloud copy comes from
+Garmin's servers, and only the Garmin Connect app moves data there, so it
+helps to keep Connect syncing in the background.
 
 #### 1. Turn on every Garmin notification
 
@@ -214,98 +198,6 @@ A watch that gets alerts keeps a live Bluetooth link to your phone, and iOS
 wakes Garmin Connect more often to serve it, so it syncs in the background
 far more often. Also keep Background App Refresh on for Garmin Connect, keep
 Low Power Mode off, and don't swipe the app closed.
-
-#### 2. Create the "BetterGarmin Sync" Shortcut
-
-This one Shortcut opens Garmin Connect so your watch uploads, then tells
-BetterGarmin's cloud sync to run **straight away**, so new data shows up in
-about 2–3 minutes instead of waiting for the 30-minute schedule.
-
-In the **Shortcuts** app, tap **+** and rename it exactly
-**BetterGarmin Sync** (the button looks for that name). Then:
-
-1. **Let it accept input:** tap **ⓘ** at the bottom, turn on **Show in Share
-   Sheet**, and tap **Done**. A **Receive … input from Share Sheet** block
-   appears at the top. Tap its blue type word and choose **Text** only.
-2. **Open App** → **Connect**
-3. **Wait** → **5** seconds (a sync takes about 3 seconds; the rest is a buffer)
-4. **Get Contents of URL**
-   - URL: your Worker address followed by `/sync`, for example
-     `https://bettergarmin-sync.yourname.workers.dev/sync`
-   - Tap **›** (Show More) on the action
-   - Method: **POST**
-   - Headers → **Add new header**: key `Authorization`, value
-     `Bearer YOUR_ACCESS_TOKEN` (the word Bearer, a space, then your token)
-5. **If** → tap *Condition* → **Shortcut Input** → **is** → type `app`
-   (if Shortcut Input isn't listed, tap **Select Variable** and tap the
-   Receive block at the top)
-   - Inside the If: **Open App** → **Safari** (or Bluefy if that's where you
-     use BetterGarmin). This is where Sync now brings you back to.
-   - Under **Otherwise**: **Go to Home Screen**
-6. Tap **Done**.
-
-The finished Shortcut reads:
-
-```
-Receive Text input from Share Sheet
-Open App  Connect
-Wait  5 seconds
-Get Contents of URL  https://…workers.dev/sync  (POST, Authorization: Bearer …)
-If  Shortcut Input  is  app
-    Open App  Safari
-Otherwise
-    Go to Home Screen
-End If
-```
-
-**Where to find your Worker info**
-
-- **Worker address:** Cloudflare dashboard → **Workers & Pages** → your
-  worker. It ends in `.workers.dev`, and it's the same address you entered in
-  BetterGarmin.
-- **Access token:** the `ACCESS_TOKEN` secret you saved in Cloudflare (and
-  typed into BetterGarmin). Cloudflare hides secrets after saving, so if you
-  forgot it, set a new one under your worker → **Settings → Variables and
-  Secrets**, then enter the new value in BetterGarmin (More → Cloud sync →
-  Disconnect, connect again) and in the Shortcut.
-
-Your token stays inside the Shortcut on your phone. Don't share the Shortcut,
-and crop the header row out of any screenshots.
-
-**Turn it on in BetterGarmin:** go to **More → Cloud sync** and switch on
-**Sync through iPhone Shortcut**. Sync now will then run the Shortcut: Garmin
-Connect flashes open, your watch uploads, you land back in BetterGarmin, and
-the new data appears a couple of minutes later. The first time, iOS asks for
-permission to open Connect and your browser and to run the Shortcut; choose
-**Always Allow**.
-
-**Check that it worked**
-
-- **Quick check:** temporarily add a **Show Content** action (called Show Result on older iOS; Quick Look also works) right after
-  *Get Contents of URL* and run the Shortcut. `{"started":"…"}` means the
-  cloud sync was started. `Unauthorized` means the token or the `Bearer `
-  part is wrong; a "server not found" error means the address is wrong.
-  Remove it afterwards.
-- **On GitHub:** open your repository → **Actions** → **Sync Garmin data**.
-  A new run should appear within seconds of running the Shortcut.
-- **In BetterGarmin:** about 2–3 minutes later, **Last synced** on the More
-  page updates and your newest data shows up.
-
-#### 3. Run it automatically
-
-In **Shortcuts → Automation → +**, pick a trigger, choose **Run
-Immediately**, turn off **Notify When Run**, and add one action: **Run
-Shortcut** → BetterGarmin Sync. Good triggers:
-
-- ⭐ **Sleep → Wake Up** (or **Alarm → When stopped**): syncs last night's sleep
-  as soon as you get up. This is the most important one.
-- ⭐ **App → Is Opened**: pick an app you open a few times a day, like
-  Instagram or Messages. Avoid one you open constantly.
-- **Charger → Connected**: catches the end of the day when you plug in.
-- **NFC**: stick a cheap NFC tag on your nightstand or desk and tap your
-  phone on it.
-- Optional backup **Time of Day** runs at 7:30 AM, 12:30 PM, 5:00 PM and
-  9:30 PM. These only run if the phone is unlocked at that minute.
 
 #### Other options
 
@@ -328,11 +220,6 @@ Shortcut** → BetterGarmin Sync. Good triggers:
 - **What doesn't work:** Garmin's LiveTrack only runs during recorded
   activities and still needs the phone app. Open-source replacements like
   Gadgetbridge are Android-only.
-
-> Yes, it's annoying to set up, but it's the only option available at the
-> moment. Garmin doesn't let other apps pull data from the watch or tell
-> Garmin Connect to sync, and bands without Wi-Fi (like the CIRQA) can only
-> upload through the phone app.
 
 ## Privacy
 

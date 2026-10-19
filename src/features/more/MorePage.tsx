@@ -7,7 +7,6 @@ import { useUnits } from '../../app/units'
 import { BandCard } from '../band/BandCard'
 import { setClockFormat, useClockFormat } from '../../lib/clock'
 import { fullscreenSupported, setFullscreenPref, useFullscreenPref } from '../../lib/fullscreen'
-import { SHORTCUT_NAME, setShortcutSync, useShortcutSync } from '../../lib/shortcutSync'
 import { useData } from '../../app/DataProvider'
 import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
 import { CloudConnectForm } from '../onboarding/CloudConnectForm'
@@ -22,7 +21,6 @@ export function MorePage() {
   const { units, setUnits } = useUnits()
   const clock = useClockFormat()
   const fullscreen = useFullscreenPref()
-  const shortcutSync = useShortcutSync()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } = useData()
   const [confirming, setConfirming] = useState(false)
   const [showConnectForm, setShowConnectForm] = useState(false)
@@ -142,9 +140,9 @@ export function MorePage() {
       </Card>
 
       <Card>
-        <p className="mb-1 font-semibold">Cloud sync</p>
+        <p className="mb-1 font-semibold">Cloud sync (backup)</p>
         <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          Optional. Keeps your data current automatically via a scheduled sync you host yourself — no manual file drops. Requires a one-time setup with your own
+          Optional backup. Sync now pulls straight from your band over Bluetooth first; the cloud copy is only used when the band can't be reached. Keeps data current via a scheduled sync you host yourself — no manual file drops. Requires a one-time setup with your own
           free Cloudflare account; see <code>docs/cloud-sync.md</code> for the full walkthrough and what it changes about privacy.
         </p>
 
@@ -157,7 +155,7 @@ export function MorePage() {
               <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
             </div>
             {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
-            {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">Downloading from Garmin… usually about 2 minutes.</p>}
+            {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
             {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
             <div className="flex gap-2">
               <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
@@ -167,20 +165,6 @@ export function MorePage() {
                 Disconnect
               </Button>
             </div>
-            <label className="flex items-start justify-between gap-4 border-t border-[var(--border-panel)] pt-3">
-              <span>
-                <span className="block text-sm">Sync through iPhone Shortcut</span>
-                <span className="block text-xs text-[var(--text-tertiary)]">
-                  Sync now runs your "{SHORTCUT_NAME}" Shortcut, which opens Garmin Connect so your watch uploads first. Set it up using the README.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={shortcutSync}
-                onChange={(e) => setShortcutSync(e.target.checked)}
-                className="mt-1 h-5 w-5 accent-[var(--accent)]"
-              />
-            </label>
           </div>
         ) : showConnectForm ? (
           <div className="flex flex-col gap-3">

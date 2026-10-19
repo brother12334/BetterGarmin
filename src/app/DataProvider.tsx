@@ -3,7 +3,8 @@ import { sqliteClient } from '../db/client'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { setSleepTimesUtc } from '../features/training/matchGarminActivity'
-import { getShortcutSync, runSyncShortcut } from '../lib/shortcutSync'
+import { band } from '../lib/band/bandStore'
+import { syncBand } from '../lib/band/bandSync'
 import { fetchManifest, fetchCloudFile, testCloudConfig, type CloudConfig, startCloudSync } from '../db/cloudSync'
 import { indexedDbBandStore } from '../lib/band/bandFileStore'
 import { applyBandWellness, type WellnessSummary } from '../lib/band/bandWellness'
@@ -42,7 +43,7 @@ interface DataContextValue {
   refreshBandData: () => Promise<WellnessSummary | null>
 }
 
-export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date } | { status: 'error'; message: string }
+export type GarminPullState = { status: 'idle' } | { status: 'running'; startedAt: Date; via?: 'band' | 'cloud' } | { status: 'error'; message: string }
 
 const DataContext = createContext<DataContextValue | null>(null)
 const SOURCE_KEY = 'bettergarmin:dataSource'
@@ -399,6 +400,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSource((prev) => (prev === 'cloud' ? 'user' : prev))
   }, [])
 
+  const refreshBandData = useCallback(async () => {
+    const summary = await applyBandWellness(indexedDbBandStore).catch(() => null)
+    if (summary) {
+      setLoadedKinds((prev) => Array.from(new Set<DbKind>([...prev, 'garmin', 'monitoring'])))
+      setStatus((s) => (s === 'empty' ? 'ready' : s))
+      setLastSynced(new Date()) // re-runs every screen's queries
+    }
+    return summary
+  }, [])
+
+  useEffect(() => {
+    void refreshBandData()
+  }, [refreshBandData])
+
   const [garminPull, setGarminPull] = useState<GarminPullState>({ status: 'idle' })
 
   // Set synchronously on tap, so a double tap can't start two GitHub runs before the button re-renders as disabled.
@@ -407,7 +422,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   /** Polls storage until the cloud job has uploaded something newer than `startedAt`, then loads it. */
   const watchForPull = useCallback(
     async (config: CloudConfig, startedAt: Date) => {
-      setGarminPull({ status: 'running', startedAt })
+      setGarminPull({ status: 'running', startedAt, via: 'cloud' })
       // The job takes about a minute and a half; watch storage closely until it has uploaded something newer.
       const deadline = startedAt.getTime() + PULL_TIMEOUT_MS
       while (Date.now() < deadline) {
@@ -428,33 +443,38 @@ export function DataProvider({ children }: { children: ReactNode }) {
   )
 
   const pullFromGarmin = useCallback(async () => {
+    if (pullInFlight.current) return
     const config = cloudConfigRef.current
-    if (!config || pullInFlight.current) return
-    if (!navigator.onLine) {
-      setGarminPull({ status: 'error', message: "You're offline. Showing the data saved on this device." })
-      return
-    }
+    const bluetooth = typeof navigator !== 'undefined' && 'bluetooth' in navigator
     pullInFlight.current = true
     try {
-      let startedAt = new Date()
-      setGarminPull({ status: 'running', startedAt })
-      if (getShortcutSync()) {
-        // The Shortcut opens Garmin Connect and starts the cloud sync itself. iOS often unloads this page while it
-        // runs, so remember the pull and pick it back up when the page returns.
-        savePendingPull(startedAt)
-        runSyncShortcut()
-      } else {
-        startedAt = await startCloudSync(config)
+      // Primary: straight from the band over Bluetooth. connect() runs first, inside the tap, as the browser requires.
+      if (bluetooth) {
+        setGarminPull({ status: 'running', startedAt: new Date(), via: 'band' })
+        try {
+          if (band.state !== 'ready') await band.connect()
+          await syncBand(band, indexedDbBandStore)
+          await refreshBandData()
+          setGarminPull({ status: 'idle' })
+          return
+        } catch (err) {
+          if (!config || !navigator.onLine) throw err
+          // Band unreachable: fall back to the cloud copy below.
+        }
       }
+      if (!config) throw new Error('Open this page in Bluefy to sync straight from your band.')
+      if (!navigator.onLine) throw new Error("You're offline. Showing the data saved on this device.")
+      const startedAt = await startCloudSync(config)
+      savePendingPull(startedAt)
       await watchForPull(config, startedAt)
     } catch (err) {
       setGarminPull({ status: 'error', message: err instanceof Error ? err.message : String(err) })
     } finally {
       pullInFlight.current = false
     }
-  }, [watchForPull])
+  }, [watchForPull, refreshBandData])
 
-  // Coming back from the Shortcut (or a reload mid-sync): resume watching for the pending pull.
+  // A reload mid-sync: resume watching for the pending pull.
   useEffect(() => {
     // Wait for the saved data to load first, so the resumed sync doesn't race the startup restore.
     if (!cloudConfigured || status !== 'ready') return
@@ -486,20 +506,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('pageshow', resume)
     }
   }, [cloudConfigured, status, watchForPull])
-
-  const refreshBandData = useCallback(async () => {
-    const summary = await applyBandWellness(indexedDbBandStore).catch(() => null)
-    if (summary) {
-      setLoadedKinds((prev) => Array.from(new Set<DbKind>([...prev, 'garmin', 'monitoring'])))
-      setStatus((s) => (s === 'empty' ? 'ready' : s))
-      setLastSynced(new Date()) // re-runs every screen's queries
-    }
-    return summary
-  }, [])
-
-  useEffect(() => {
-    void refreshBandData()
-  }, [refreshBandData])
 
   const syncNow = useCallback(async () => {
     if (cloudConfigRef.current) await syncFromCloud(cloudConfigRef.current, { force: true })

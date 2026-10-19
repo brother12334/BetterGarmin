@@ -277,23 +277,24 @@ function TodaySkeleton() {
   )
 }
 
-/** One-tap "pull from Garmin now", shown only with cloud sync. */
+/** One-tap sync: straight from the band over Bluetooth, with the cloud copy as the fallback. */
 function SyncBar() {
-  const { cloudConfigured, lastSynced, pullFromGarmin, garminPull, cloudStatus, online } = useData()
-  if (!cloudConfigured) return null
+  const { lastSynced, pullFromGarmin, garminPull, cloudStatus, online } = useData()
   const running = garminPull.status === 'running'
   return (
     <div className="-mt-2 flex items-center justify-between gap-3 text-sm">
       <span className={garminPull.status === 'error' ? 'text-rose-400' : 'text-[var(--text-tertiary)]'}>
-        {!online
+        {running
+          ? garminPull.via === 'band'
+            ? 'Syncing from your band…'
+            : 'Downloading from Garmin… about 2 minutes'
+          : !online && garminPull.status !== 'error'
           ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
-          : running
-          ? 'Downloading from Garmin… about 2 minutes'
           : garminPull.status === 'error'
             ? garminPull.message
             : `Synced ${formatRelativeTime(lastSynced)}`}
       </span>
-      <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={!online || running || cloudStatus === 'syncing'} className="shrink-0">
+      <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
         {running ? 'Syncing…' : 'Sync now'}
       </Button>
     </div>
