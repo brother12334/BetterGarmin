@@ -3,6 +3,7 @@ import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { BAND_CAPS, band, cancelBandAlert, testBandAlert, useBand } from '../../lib/band/bandStore'
+import { copyText } from '../../lib/download'
 import { BandSyncPanel } from './BandSyncPanel'
 import { RawFilesPanel } from './RawFilesPanel'
 import { BandTroubleshooting } from './BandTroubleshooting'
@@ -151,6 +152,14 @@ export function BandCard() {
         <button className="text-xs text-[var(--text-tertiary)] underline" onClick={() => setShowLog((v) => !v)}>
           {showLog ? 'Hide' : 'Show'} protocol log ({b.log.length})
         </button>
+        {showLog && (
+          <button
+            className="ml-3 text-xs text-[var(--accent)] underline"
+            onClick={() => void copyText(b.log.map((e) => `${new Date(e.t).toLocaleTimeString()} ${e.dir === 'out' ? '→' : e.dir === 'in' ? '←' : e.dir === 'error' ? '✕' : '·'} ${e.text}`).join('\n'))}
+          >
+            Copy log
+          </button>
+        )}
         {showLog && (
           <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-all text-xs text-[var(--text-secondary)]">
             {b.log.map((e) => `${new Date(e.t).toLocaleTimeString()} ${e.dir === 'out' ? '→' : e.dir === 'in' ? '←' : e.dir === 'error' ? '✕' : '·'} ${e.text}`).join('\n')}
