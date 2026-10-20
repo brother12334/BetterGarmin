@@ -36,6 +36,8 @@ export interface WellnessData {
    * CIRQA (2 = sleep stress, 4 = sleep score, 5 = HRV 5-minute high), which is what places this one; unconfirmed.
    */
   wakeEnergy: TimedValue[]
+  /** Blood oxygen readings (%, standard spo2_data message 269). */
+  spo2: TimedValue[]
   fbtNights: { start: number; end: number; score: number | null; deep: number; light: number; rem: number; awake: number }[]
   /** Overnight HRV summaries (Garmin's own figures, milliseconds). */
   hrvSummaries: { t: number; weekly: number | null; lastNight: number | null; high5min: number | null; baselineLow: number | null; baselineHigh: number | null; status: string | null }[]
@@ -43,7 +45,7 @@ export interface WellnessData {
   counts: Record<string, number>
 }
 
-const MESG = { MONITORING: 55, MONITORING_HR: 211, STRESS: 227, SLEEP_LEVEL: 275, SLEEP_ASSESSMENT: 346, HRV_SUMMARY: 370, FBT_SLEEP: 411, MORNING_REPORT: 369 }
+const MESG = { MONITORING: 55, MONITORING_HR: 211, STRESS: 227, SLEEP_LEVEL: 275, SLEEP_ASSESSMENT: 346, HRV_SUMMARY: 370, FBT_SLEEP: 411, MORNING_REPORT: 369, SPO2: 269 }
 /** Seconds between the Unix epoch and the FIT epoch (1989-12-31T00:00:00Z). */
 const FIT_EPOCH_S = 631065600
 
@@ -51,7 +53,7 @@ const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFi
 const ms = (v: unknown): number | null => (v instanceof Date ? v.getTime() : null)
 
 export function emptyWellness(): WellnessData {
-  return { stress: [], bodyBattery: [], hr: [], steps: [], restingHr: [], sleepLevels: [], sleepScores: [], hrvSummaries: [], fbtNights: [], wakeEnergy: [], counts: {} }
+  return { stress: [], bodyBattery: [], hr: [], steps: [], restingHr: [], sleepLevels: [], sleepScores: [], hrvSummaries: [], fbtNights: [], wakeEnergy: [], spo2: [], counts: {} }
 }
 
 /** Where the FIT header starts: 0 normally, or later if the transfer put extra bytes in front. -1 if there's no ".FIT". */
@@ -122,6 +124,12 @@ export function decodeWellnessDetailed(raw: Uint8Array): WellnessDecode {
         out.sleepLevels.push({ t: full, stage: s === 'awake' || s === 'light' || s === 'deep' || s === 'rem' ? s : null })
         return
       }
+      case MESG.SPO2: {
+        const v = num(m.readingSpo2)
+        const t = full
+        if (t != null && v != null && v >= 50 && v <= 100) out.spo2.push({ t, v })
+        return
+      }
       case MESG.MORNING_REPORT: {
         const v = num(m[7])
         if (full != null && v != null && v > 0 && v <= 100) out.wakeEnergy.push({ t: full, v })
@@ -186,6 +194,7 @@ export function mergeWellness(parts: WellnessData[]): WellnessData {
     all.sleepScores.push(...p.sleepScores)
     all.hrvSummaries.push(...p.hrvSummaries)
     all.wakeEnergy.push(...p.wakeEnergy)
+    all.spo2.push(...p.spo2)
     for (const n of p.fbtNights) if (!all.fbtNights.some((x) => x.start === n.start)) all.fbtNights.push(n)
     for (const [k, n] of Object.entries(p.counts)) all.counts[k] = (all.counts[k] ?? 0) + n
   }
@@ -194,5 +203,5 @@ export function mergeWellness(parts: WellnessData[]): WellnessData {
 }
 
 export function hasWellness(w: WellnessData): boolean {
-  return w.stress.length + w.bodyBattery.length + w.hr.length + w.steps.length + w.sleepLevels.length + w.hrvSummaries.length + w.fbtNights.length + w.wakeEnergy.length > 0
+  return w.stress.length + w.bodyBattery.length + w.hr.length + w.steps.length + w.sleepLevels.length + w.hrvSummaries.length + w.fbtNights.length + w.wakeEnergy.length + w.spo2.length > 0
 }

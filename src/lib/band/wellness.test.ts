@@ -21,6 +21,7 @@ function wellnessFit(): Uint8Array {
   const stages = ['light', 'deep', 'deep', 'rem', 'light', 'awake']
   for (let i = 0; i < 8 * 60; i++) e.onMesg(Profile.MesgNum.SLEEP_LEVEL, { timestamp: new Date(start.getTime() + 3600_000 + i * 60_000), sleepLevel: stages[Math.floor(i / 80)] })
   e.onMesg(Profile.MesgNum.SLEEP_ASSESSMENT, { overallSleepScore: 81 })
+  for (let i = 0; i < 4; i++) e.onMesg(Profile.MesgNum.SPO2_DATA, { timestamp: new Date(start.getTime() + 3600_000 + i * 600_000), readingSpo2: 94 + i, readingConfidence: 3 })
   e.onMesg(Profile.MesgNum.HRV_STATUS_SUMMARY, { timestamp: new Date(start.getTime() + 9 * 3600_000), weeklyAverage: 48, lastNightAverage: 52, lastNight5MinHigh: 70, baselineBalancedLower: 40, baselineBalancedUpper: 55, status: 'balanced' })
   return e.close()
 }
@@ -35,6 +36,7 @@ describe('band wellness files', () => {
     expect(w.stress.length).toBe(6)
     expect(w.sleepLevels.length).toBe(480)
     expect(w.sleepScores.map((s) => s.v)).toEqual([81])
+    expect(w.spo2.map((x) => x.v)).toEqual([94, 95, 96, 97])
     expect(w.hrvSummaries[0]).toMatchObject({ weekly: 48, lastNight: 52, high5min: 70, baselineLow: 40, baselineHigh: 55, status: 'balanced' })
   })
 

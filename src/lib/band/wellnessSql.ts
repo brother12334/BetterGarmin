@@ -49,6 +49,7 @@ const GARMIN_SCHEMA = `
 `
 const MONITORING_SCHEMA = `
   CREATE TABLE IF NOT EXISTS monitoring_hr (timestamp TEXT PRIMARY KEY, heart_rate INTEGER);
+  CREATE TABLE IF NOT EXISTS monitoring_pulse_ox (timestamp TEXT PRIMARY KEY, pulse_ox REAL);
   CREATE TABLE IF NOT EXISTS monitoring (timestamp TEXT, activity_type TEXT, intensity INTEGER, duration TEXT, distance REAL,
     active_calories INTEGER, steps INTEGER, PRIMARY KEY (timestamp, activity_type));
 `
@@ -115,6 +116,7 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
   const m: SqlStatement[] = []
 
   for (const s of w.stress) g.push({ sql: 'INSERT OR REPLACE INTO stress (timestamp, stress) VALUES (?, ?)', params: [localTs(s.t), s.v] })
+  for (const s of w.spo2) m.push({ sql: 'INSERT OR REPLACE INTO monitoring_pulse_ox (timestamp, pulse_ox) VALUES (?, ?)', params: [localTs(s.t), s.v] })
   for (const s of w.hr) m.push({ sql: 'INSERT OR REPLACE INTO monitoring_hr (timestamp, heart_rate) VALUES (?, ?)', params: [localTs(s.t), s.v] })
   for (const s of w.steps)
     m.push({ sql: 'INSERT OR REPLACE INTO monitoring (timestamp, activity_type, steps) VALUES (?, ?, ?)', params: [localTs(s.t), s.type, s.total] })
@@ -143,6 +145,17 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
       ],
     })
     if (d.rhr != null) g.push({ sql: 'INSERT OR REPLACE INTO resting_hr (day, resting_heart_rate) VALUES (?, ?)', params: [day, d.rhr] })
+  }
+
+  // Daily blood oxygen: average and lowest of the day's readings.
+  const spo2ByDay = new Map<string, number[]>()
+  for (const s of w.spo2) spo2ByDay.set(localDay(s.t), [...(spo2ByDay.get(localDay(s.t)) ?? []), s.v])
+  for (const [day, vals] of spo2ByDay) {
+    g.push({ sql: 'INSERT OR IGNORE INTO daily_summary (day) VALUES (?)', params: [day] })
+    g.push({
+      sql: 'UPDATE daily_summary SET spo2_avg = ?, spo2_min = ? WHERE day = ?',
+      params: [Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10, Math.min(...vals), day],
+    })
   }
 
   // Wake-up energy: kept apart from Garmin's daily high/low so it's never mistaken for them.
