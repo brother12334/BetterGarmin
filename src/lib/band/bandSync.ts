@@ -6,6 +6,10 @@ import { fileAccessCapabilities, fileListRequest, pullItemDataRequest } from './
 import { validateAndDecodeFit } from './fitImport'
 import type { BandFileStore } from './bandFileStore'
 import { markBandSynced, recordAttempt, recordSeen } from './bandIndex'
+import { WELLNESS_SUBTYPES, entryDate, parseDirectory, wellnessEntries } from './legacyFiles'
+
+/** Newest all-day files fetched per sync over the older transfer (each is small, but the link is slow). */
+const MAX_LEGACY_FILES = 40
 
 /**
  * Direct band → BetterGarmin sync over Bluetooth (experimental):
@@ -238,7 +242,62 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
       if (session.state !== 'ready') break // disconnected: stop; the next sync resumes with what's left
     }
   }
+  // All-day files (monitoring, sleep, HRV…) only show up in the band's directory file, read over the older transfer.
+  if (session.state === 'ready') outcomes.push(...(await syncLegacyWellness(session, store, deviceKey, onProgress)))
+
   if (!outcomes.some((o) => o.result === 'failed')) markBandSynced()
   onProgress({ phase: 'done' })
   return { listed: items.length, outcomes, nextTransactionId }
+}
+
+/**
+ * Reads the band's file directory (index 0) over the older GFDI transfer and downloads new all-day files. Failures here
+ * never fail the rest of the sync: if the band doesn't support this path, it's noted in the log and skipped.
+ */
+export async function syncLegacyWellness(session: BandSession, store: BandFileStore, deviceKey: string, onProgress: (p: SyncProgress) => void = () => {}): Promise<FileOutcome[]> {
+  let entries
+  try {
+    const dir = await session.legacyDownload(0)
+    entries = wellnessEntries(parseDirectory(dir))
+    session.addLog('info', `directory: ${parseDirectory(dir).length} files, ${entries.length} all-day (${[...new Set(entries.map((e) => WELLNESS_SUBTYPES[e.subType]))].join(', ') || 'none'})`)
+  } catch (e) {
+    session.addLog('info', `older file transfer unavailable: ${e instanceof Error ? e.message : String(e)}`)
+    return []
+  }
+  const outcomes: FileOutcome[] = []
+  const todo = []
+  for (const e of entries) {
+    const key = `${deviceKey}:legacy:${e.subType}:${e.fitTime}:${e.size}`
+    if (await store.has(key)) outcomes.push({ uidHex: null, dataType: `FIT_TYPE_${e.subType}`, result: 'skipped-duplicate' })
+    else todo.push({ e, key })
+  }
+  for (const [i, { e, key }] of todo.slice(0, MAX_LEGACY_FILES).entries()) {
+    const dataType = `FIT_TYPE_${e.subType}`
+    try {
+      onProgress({ phase: 'downloading', current: { index: i, total: Math.min(todo.length, MAX_LEGACY_FILES), dataType: WELLNESS_SUBTYPES[e.subType], received: 0, size: e.size, attempt: 1 } })
+      const bytes = await session.legacyDownload(e.fileIndex, (received) =>
+        onProgress({ phase: 'downloading', current: { index: i, total: Math.min(todo.length, MAX_LEGACY_FILES), dataType: WELLNESS_SUBTYPES[e.subType], received, size: e.size, attempt: 1 } }),
+      )
+      const fit = validateAndDecodeFit(bytes, e.size)
+      if (!fit.ok) throw new Error(fit.error)
+      await store.put({
+        key,
+        deviceKey,
+        uidHex: `legacy-${e.fileIndex}`,
+        dataType,
+        size: bytes.length,
+        modifiedTime: entryDate(e).getTime(),
+        syncedAt: Date.now(),
+        status: 'unsupported',
+        fileType: fit.fileType,
+        activity: null,
+        bytes,
+      })
+      outcomes.push({ uidHex: null, dataType, result: 'unsupported' })
+    } catch (err) {
+      outcomes.push({ uidHex: null, dataType, result: 'failed', error: err instanceof Error ? err.message : String(err) })
+      if (session.state !== 'ready') break
+    }
+  }
+  return outcomes
 }

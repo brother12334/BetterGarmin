@@ -17,6 +17,7 @@ import {
 } from './gfdi'
 import { BAND_UUIDS, GFDI_SERVICE, closeHandleRequest, fragment, isCloseHandleResponse, parseRegisterResponse, registerRequest, type RegisterResponse } from './multilink'
 import { decodeMessage, type ProtoField } from './proto'
+import { DOWNLOAD_STATUS, LEGACY_MSG, chunkCrc, downloadRequestPayload, parseDownloadStatus, parseTransferData, transferAckExtra } from './legacyFiles'
 
 export type SessionState = 'idle' | 'connecting' | 'registering' | 'handshaking' | 'ready' | 'reconnecting' | 'disconnected' | 'error'
 
@@ -116,6 +117,17 @@ export class BandSession {
   private registerWaiters = new Map<number, (r: RegisterResponse & { raw?: Uint8Array }) => void>()
   private closeWaiters = new Map<number, (r: { service: number; handle: number; status: number }) => void>()
   private smartListeners = new Set<(m: SmartMessage) => boolean | void>()
+  private legacy: {
+    index: number
+    size: number | null
+    parts: Uint8Array[]
+    received: number
+    crc: number
+    started: ReturnType<typeof deferred<number>>
+    done: ReturnType<typeof deferred<Uint8Array>>
+    onBytes: (n: number, total: number | null) => void
+    touched: number
+  } | null = null
 
   subscribe(l: Listener): () => void {
     this.listeners.add(l)
@@ -240,6 +252,10 @@ export class BandSession {
   }
 
   private cleanup() {
+    if (this.legacy) {
+      this.legacy.started.reject(new Error('Band disconnected'))
+      this.legacy.done.reject(new Error('Band disconnected'))
+    }
     this.notifyChar?.removeEventListener('characteristicvaluechanged', this.handleNotify)
     this.device?.removeEventListener('gattserverdisconnected', this.handleDisconnect)
     this.notifyChar = null
@@ -303,6 +319,66 @@ export class BandSession {
     if (this.routingHandle == null) throw new Error('Not registered')
     for (const w of fragment(this.routingHandle, cobsEncode(frame))) await this.writeRaw(w)
     this.addLog('out', label)
+  }
+
+  /**
+   * Downloads one file over the older GFDI file transfer (DownloadRequest 5002 → FileTransferData 5004). Each chunk's
+   * offset and running CRC are checked before it's acknowledged. Index 0 is the band's file directory.
+   */
+  async legacyDownload(index: number, onBytes: (n: number, total: number | null) => void = () => {}): Promise<Uint8Array> {
+    if (this.state !== 'ready') throw new Error('Band is not connected')
+    if (this.legacy) throw new Error('Another file transfer is running')
+    const t = { index, size: null as number | null, parts: [] as Uint8Array[], received: 0, crc: 0, started: deferred<number>(), done: deferred<Uint8Array>(), onBytes, touched: Date.now() }
+    this.legacy = t
+    t.started.promise.catch(() => {})
+    t.done.promise.catch(() => {})
+    try {
+      await this.sendFrame(encodeFrame(LEGACY_MSG.DOWNLOAD_REQUEST, downloadRequestPayload(index)), `5002 download file ${index}`)
+      t.size = await timeout(t.started.promise, STEP_TIMEOUT_MS, `the band to accept downloading file ${index}`)
+      if (t.size === 0) return new Uint8Array()
+      // Fail only on inactivity, however large the file.
+      for (;;) {
+        const r = await Promise.race([t.done.promise.then((b) => ({ b })), new Promise<null>((res) => setTimeout(() => res(null), 2000))])
+        if (r) return r.b
+        if (Date.now() - t.touched > 20_000) throw new Error(`File ${index} stopped arriving`)
+      }
+    } finally {
+      this.legacy = null
+    }
+  }
+
+  private async handleTransferData(payload: Uint8Array, tag: number | null) {
+    const t = this.legacy
+    const chunk = parseTransferData(payload)
+    if (!t || !chunk) {
+      // Not ours: refuse rather than silently accept (status 2 = abort).
+      await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(LEGACY_MSG.FILE_TRANSFER_DATA, 0, transferAckExtra(2, 0)), tag), '5000 ack 5004 (abort: no transfer)')
+      return
+    }
+    t.touched = Date.now()
+    if (chunk.offset !== t.received) {
+      await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(LEGACY_MSG.FILE_TRANSFER_DATA, 0, transferAckExtra(4, t.received)), tag), `5000 ack 5004 (offset ${chunk.offset}, want ${t.received})`)
+      return
+    }
+    const crc = chunkCrc(chunk.data, t.crc)
+    if (crc !== chunk.crc) {
+      await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(LEGACY_MSG.FILE_TRANSFER_DATA, 0, transferAckExtra(3, t.received)), tag), `5000 ack 5004 (CRC mismatch at ${chunk.offset})`)
+      return
+    }
+    t.crc = crc
+    t.parts.push(chunk.data)
+    t.received += chunk.data.length
+    t.onBytes(t.received, t.size)
+    await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(LEGACY_MSG.FILE_TRANSFER_DATA, 0, transferAckExtra(0, t.received)), tag), `5000 ack 5004 → ${t.received}${t.size ? `/${t.size}` : ''}`)
+    if (t.size != null && t.received >= t.size) {
+      const out = new Uint8Array(t.received)
+      let o = 0
+      for (const p of t.parts) {
+        out.set(p, o)
+        o += p.length
+      }
+      t.done.resolve(out)
+    }
   }
 
   /** Registers an extra MultiLink service (e.g. a reliable file pipe) and returns the band's response. */
@@ -467,11 +543,19 @@ export class BandSession {
           this.addLog('in', `ack 5043 #${requestId} (status ${status})`)
           this.pendingDelivery.get(requestId)?.resolve()
           this.pendingDelivery.delete(requestId)
+        } else if (original === LEGACY_MSG.DOWNLOAD_REQUEST && this.legacy) {
+          const st = parseDownloadStatus(payload)
+          this.addLog('in', `ack 5002 (status ${status}, download ${st ? (DOWNLOAD_STATUS[st.downloadStatus] ?? st.downloadStatus) : '?'}, ${st?.size ?? '?'} bytes)`)
+          if (st && st.status === 0 && st.downloadStatus === 0) this.legacy.started.resolve(st.size)
+          else this.legacy.started.reject(new Error(`The band refused the download (${st ? (DOWNLOAD_STATUS[st.downloadStatus] ?? `status ${st.downloadStatus}`) : 'no answer'})`))
         } else {
           this.addLog('in', `ack ${original} (status ${status})`)
         }
         return
       }
+      case LEGACY_MSG.FILE_TRANSFER_DATA:
+        await this.handleTransferData(payload, tag)
+        return
       case MSG.PROTOBUF_REQUEST:
       case MSG.PROTOBUF_RESPONSE: {
         const chunk = parseProtobufPayload(payload)

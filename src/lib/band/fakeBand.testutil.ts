@@ -12,6 +12,11 @@ export class FakeBand {
   private notifyListener: ((ev: Event) => void) | null = null
   private stream = new CobsStream()
   onProtobuf: (requestId: number, data: Uint8Array) => void = () => {}
+  /** Any other frame the host sends (e.g. legacy file transfer). */
+  onFrame: (messageId: number, payload: Uint8Array) => void = (id) => {
+    // By default the older file transfer is refused (download status 1 = index unknown).
+    if (id === 5002) this.sendFrame(encodeFrame(MSG.ACK, [...u16(5002), 0, 1, 0, 0, 0, 0]))
+  }
   /** Extra service registrations (file pipes): return [status, handle]. */
   onRegister: (service: number, options: number) => [number, number] = () => [1, 0]
   /** Packets written on a reliable handle (high bit set). */
@@ -65,6 +70,8 @@ export class FakeBand {
         const c = parseProtobufPayload(payload)!
         this.sendFrame(encodeFrame(MSG.ACK, [...u16(MSG.PROTOBUF_REQUEST), 0, ...u16(c.requestId), 0, 0, 0, 0, 0, 0]))
         this.onProtobuf(c.requestId, c.data)
+      } else {
+        this.onFrame(messageId, payload)
       }
     }
   }
