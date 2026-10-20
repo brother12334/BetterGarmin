@@ -12,6 +12,7 @@ const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ de
 const WorkoutHistoryPage = lazy(() => import('./features/history/WorkoutHistoryPage').then((m) => ({ default: m.WorkoutHistoryPage })))
 const BandWorkoutPage = lazy(() => import('./features/history/BandWorkoutPage').then((m) => ({ default: m.BandWorkoutPage })))
 const ProgressPage = lazy(() => import('./features/progress/ProgressPage').then((m) => ({ default: m.ProgressPage })))
+const IntelligencePage = lazy(() => import('./features/intelligence/IntelligencePage').then((m) => ({ default: m.IntelligencePage })))
 const HealthPage = lazy(() => import('./features/health/HealthPage').then((m) => ({ default: m.HealthPage })))
 const SleepPage = lazy(() => import('./features/sleep/SleepPage').then((m) => ({ default: m.SleepPage })))
 const TrainingFeedPage = lazy(() =>
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="training/:activityId" element={<ActivityDetailPage />} />
           <Route path="sleep" element={<SleepPage />} />
           <Route path="insights" element={<InsightsPage />} />
+          <Route path="insights/intelligence" element={<IntelligencePage />} />
           <Route path="more" element={<MorePage />} />
           <Route path="customize" element={<CustomizePage />} />
         </Route>

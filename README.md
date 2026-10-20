@@ -7,6 +7,12 @@ you turn on the optional [cloud sync](docs/cloud-sync.md).
 
 Not affiliated with Garmin. Not medical advice.
 
+> **Device support: Garmin CIRQA only, for now.** Direct Bluetooth sync,
+> band file decoding and the band-specific features are built and tested for
+> the Garmin **CIRQA Smart Band** only. Other Garmin watches and bands aren't
+> supported yet. Their data may still appear through the optional GarminDB
+> cloud sync, but nothing is promised for them.
+
 <p>
   <img src="docs/screenshots/today-desktop.png" alt="BetterGarmin Today screen, desktop, dark mode" width="100%" />
 </p>
@@ -24,6 +30,7 @@ Not affiliated with Garmin. Not medical advice.
 - **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge; on iPhone, Safari with the beacio extension or Bluefy).
 - **Sync straight from the band**: **Sync now** downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. No Garmin Connect or Garmin cloud needed.
 - **Cloud sync** (optional backup): a scheduled job pulls from Garmin every 30 minutes, used when the band isn't nearby.
+- **Intelligence** (Insights → Intelligence): recovery momentum, an experimental illness radar, sleep timing and regularity, sleep debt and long-term trends, each compared with your own baseline, with its evidence and limits shown. See [docs/intelligence.md](docs/intelligence.md).
 - **Power tools**: units, goals, CSV export and an SQL console.
 
 ## Quick start

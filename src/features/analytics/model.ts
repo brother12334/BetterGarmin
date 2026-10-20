@@ -16,6 +16,12 @@ export interface DayRecord {
   bedtime: number | null
   steps: number | null
   stressAvg: number | null
+  /** Sleep window (epoch ms), awake minutes in bed, blood oxygen and waking respiration, when recorded. */
+  sleepStartMs?: number | null
+  sleepEndMs?: number | null
+  awakeMinutes?: number | null
+  spo2Avg?: number | null
+  respirationAvg?: number | null
 }
 
 export interface ExerciseSession {

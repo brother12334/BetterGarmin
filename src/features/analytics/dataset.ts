@@ -69,6 +69,11 @@ export async function loadAnalyticsDataset(loadedKinds: DbKind[]): Promise<Analy
       bedtime: sl ? bedtimeHours(sl.start) : null,
       steps: s?.steps ?? null,
       stressAvg: s?.stress_avg ?? null,
+      sleepStartMs: sl ? parseSleepTimestamp(sl.start) : null,
+      sleepEndMs: sl ? parseSleepTimestamp(sl.end) : null,
+      awakeMinutes: sl ? hmsToMinutes(sl.awake) : null,
+      spo2Avg: s?.spo2_avg ?? null,
+      respirationAvg: s?.rr_waking_avg ?? null,
     }
   })
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
 import { Chart } from '../../components/ui/Chart'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -57,6 +57,15 @@ export function InsightsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Insights</h1>
+      <Link to="/insights/intelligence" className="block">
+        <Card className="flex items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">Intelligence</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Recovery momentum, illness radar, sleep timing and debt, long-term trends</p>
+          </div>
+          <span className="text-[var(--text-tertiary)]">›</span>
+        </Card>
+      </Link>
       <div className="sticky top-0 z-10 -mx-1 flex gap-1 rounded-control bg-[var(--bg-base)]/80 p-1 backdrop-blur" role="tablist">
         {TABS.map((t) => (
           <button
