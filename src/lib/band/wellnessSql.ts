@@ -35,6 +35,8 @@ const GARMIN_SCHEMA = `
     rem_sleep TEXT, awake TEXT, avg_spo2 REAL, avg_rr REAL, avg_stress REAL, score INTEGER, qualifier TEXT);
   CREATE TABLE IF NOT EXISTS sleep_events (timestamp TEXT PRIMARY KEY, event TEXT, duration TEXT);
   CREATE TABLE IF NOT EXISTS resting_hr (day TEXT PRIMARY KEY, resting_heart_rate REAL);
+  CREATE TABLE IF NOT EXISTS hrv (day TEXT PRIMARY KEY, weekly_avg INTEGER, last_night_avg INTEGER, last_night_5min_high INTEGER,
+    baseline_low INTEGER, baseline_upper INTEGER, status TEXT);
   CREATE TABLE IF NOT EXISTS daily_summary (day TEXT PRIMARY KEY, hr_min INTEGER, hr_max INTEGER, rhr INTEGER, stress_avg INTEGER,
     step_goal INTEGER, steps INTEGER, floors_up REAL, floors_goal REAL, distance REAL, calories_total INTEGER, calories_bmr INTEGER,
     calories_active INTEGER, calories_goal INTEGER, bb_charged INTEGER, bb_max INTEGER, bb_min INTEGER, spo2_avg REAL, spo2_min REAL,
@@ -82,13 +84,13 @@ export interface Night {
   score: number | null
 }
 
-/** Splits sleep-level samples into nights (a gap of over 2 hours starts a new one). */
+/** Splits sleep-level samples into nights. The band logs a level only when the stage changes, so one stage can last hours; a gap of over 6 hours starts a new night. */
 export function nights(w: WellnessData): Night[] {
   const levels = w.sleepLevels.filter((l) => l.stage != null) as { t: number; stage: SleepStage }[]
   const groups: (typeof levels)[] = []
   for (const l of levels) {
     const g = groups[groups.length - 1]
-    if (g && l.t - g[g.length - 1].t <= 2 * 3600_000) g.push(l)
+    if (g && l.t - g[g.length - 1].t <= 6 * 3600_000) g.push(l)
     else groups.push([l])
   }
   return groups
@@ -136,6 +138,14 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
       ],
     })
     if (d.rhr != null) g.push({ sql: 'INSERT OR REPLACE INTO resting_hr (day, resting_heart_rate) VALUES (?, ?)', params: [day, d.rhr] })
+  }
+
+  for (const h of w.hrvSummaries) {
+    // The summary is written on waking, so it belongs to that day.
+    g.push({
+      sql: 'INSERT OR REPLACE INTO hrv (day, weekly_avg, last_night_avg, last_night_5min_high, baseline_low, baseline_upper, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      params: [localDay(h.t), h.weekly, h.lastNight, h.high5min, h.baselineLow, h.baselineHigh, h.status],
+    })
   }
 
   for (const n of nights(w)) {

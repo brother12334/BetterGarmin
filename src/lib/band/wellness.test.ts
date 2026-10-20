@@ -20,6 +20,7 @@ function wellnessFit(): Uint8Array {
   const stages = ['light', 'deep', 'deep', 'rem', 'light', 'awake']
   for (let i = 0; i < 8 * 60; i++) e.onMesg(Profile.MesgNum.SLEEP_LEVEL, { timestamp: new Date(start.getTime() + 3600_000 + i * 60_000), sleepLevel: stages[Math.floor(i / 80)] })
   e.onMesg(Profile.MesgNum.SLEEP_ASSESSMENT, { overallSleepScore: 81 })
+  e.onMesg(Profile.MesgNum.HRV_STATUS_SUMMARY, { timestamp: new Date(start.getTime() + 9 * 3600_000), weeklyAverage: 48, lastNightAverage: 52, lastNight5MinHigh: 70, baselineBalancedLower: 40, baselineBalancedUpper: 55, status: 'balanced' })
   return e.close()
 }
 
@@ -33,6 +34,7 @@ describe('band wellness files', () => {
     expect(w.stress.length).toBe(6)
     expect(w.sleepLevels.length).toBe(480)
     expect(w.sleepScores.map((s) => s.v)).toEqual([81])
+    expect(w.hrvSummaries[0]).toMatchObject({ weekly: 48, lastNight: 52, high5min: 70, baselineLow: 40, baselineHigh: 55, status: 'balanced' })
   })
 
   it('maps a night of sleep and daily totals into dashboard rows', () => {
@@ -45,6 +47,7 @@ describe('band wellness files', () => {
     // 80 min light ×2 = 2:40, deep 2:40, rem 1:20, awake 1:20.
     expect(sleep.params.slice(3, 8)).toEqual(['06:40:00', '02:40:00', '02:40:00', '01:20:00', '01:20:00'])
     expect(garmin.statements.filter((s) => s.sql.startsWith('INSERT OR REPLACE INTO stress')).length).toBe(6)
+    expect(garmin.statements.find((s) => s.sql.includes('INTO hrv'))?.params).toEqual(['2026-10-19', 48, 52, 70, 40, 55, 'balanced'])
     expect(monitoring.statements.filter((s) => s.sql.includes('monitoring_hr')).length).toBe(11)
   })
 
