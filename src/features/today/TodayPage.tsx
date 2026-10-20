@@ -11,7 +11,7 @@ import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
-import { getDailySummary, getHrv, getLatestDay, getSleep } from '../../db/queries'
+import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
 import { useData } from '../../app/DataProvider'
@@ -63,7 +63,10 @@ export function TodayPage() {
         }
         return
       }
-      const [summary, sleep, hrv] = await Promise.all([getDailySummary(day), getSleep(day), getHrv(day)])
+      const latestSleep = await getLatestSleepDay()
+      // Last night from the band can be newer than the rest of the data: show it rather than an older night.
+      const sleepDay = latestSleep && latestSleep > day ? latestSleep : day
+      const [summary, sleep, hrv] = await Promise.all([getDailySummary(day), getSleep(sleepDay), getHrv(sleepDay)])
       if (!cancelled) {
         setData({ day, summary, sleep, hrv })
         setLoading(false)

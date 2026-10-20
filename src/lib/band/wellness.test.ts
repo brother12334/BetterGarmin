@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Encoder, Profile } from '@garmin/fitsdk'
 import { decodeWellness } from './wellness'
+import { crc16Arc } from './crc'
 import { nights, wellnessOverlays } from './wellnessSql'
 
 const FIT_EPOCH_S = 631065600
@@ -63,5 +64,55 @@ describe('band wellness files', () => {
     const b = wellnessFit()
     b[50] ^= 0xff
     expect(decodeWellness(b)).toBeNull()
+  })
+})
+
+/** A FIT file with one undocumented message, written by hand (the SDK encoder only writes documented ones). */
+function rawFit(globalNum: number, fields: [num: number, size: 1 | 2 | 4, value: number][]): Uint8Array {
+  const def = [0x40, 0, 0, ...u16le(globalNum), fields.length, ...fields.flatMap(([n, size]) => [n, size, size === 1 ? 0x02 : size === 2 ? 0x84 : 0x86])]
+  const data = [0x00, ...fields.flatMap(([, size, v]) => Array.from({ length: size }, (_, i) => (v >>> (8 * i)) & 0xff))]
+  const body = [...def, ...data]
+  const header = [14, 0x20, ...u16le(2195), ...u32le(body.length), 0x2e, 0x46, 0x49, 0x54]
+  const headerCrc = crc16Arc(Uint8Array.from(header))
+  const withHeader = [...header, ...u16le(headerCrc), ...body]
+  return Uint8Array.from([...withHeader, ...u16le(crc16Arc(Uint8Array.from(withHeader)))])
+}
+const u16le = (v: number) => [v & 0xff, (v >> 8) & 0xff]
+const u32le = (v: number) => [v & 0xff, (v >>> 8) & 0xff, (v >>> 16) & 0xff, (v >>> 24) & 0xff]
+
+describe('Firstbeat backup sleep summaries (message 411)', () => {
+  // Values from the real band's Oct 16–17 night, whose sleep file showed: score 49, deep 88, light 408, REM 58, awake 124.
+  const start = 1161145827
+  const end = 1161188367
+  const fit = rawFit(411, [
+    [0, 1, 49],
+    [1, 2, 88],
+    [2, 2, 408],
+    [3, 2, 58],
+    [4, 2, 124],
+    [5, 2, 31],
+    [8, 4, end],
+    [10, 4, start],
+  ])
+
+  it('maps score, stage minutes and times', () => {
+    const w = decodeWellness(fit)!
+    expect(w.fbtNights).toEqual([{ start: (start + FIT_EPOCH_S) * 1000, end: (end + FIT_EPOCH_S) * 1000, score: 49, deep: 88, light: 408, rem: 58, awake: 124 }])
+    const sleep = wellnessOverlays(w).garmin.statements.find((s) => s.sql.includes('INTO sleep ('))!
+    expect(sleep.params.slice(3, 9)).toEqual(['09:14:00', '01:28:00', '06:48:00', '00:58:00', '02:04:00', 49])
+  })
+
+  it('ignores a record whose minutes do not add up', () => {
+    const bad = rawFit(411, [
+      [0, 1, 49],
+      [1, 2, 300],
+      [2, 2, 408],
+      [3, 2, 58],
+      [4, 2, 124],
+      [5, 2, 31],
+      [8, 4, end],
+      [10, 4, start],
+    ])
+    expect(decodeWellness(bad)?.fbtNights ?? []).toEqual([])
   })
 })

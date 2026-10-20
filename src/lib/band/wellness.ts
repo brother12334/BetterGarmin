@@ -26,13 +26,19 @@ export interface WellnessData {
   sleepLevels: { t: number; stage: SleepStage | null }[]
   /** Overall sleep score, timed at the end of the file's sleep data. */
   sleepScores: TimedValue[]
+  /**
+   * Nightly sleep summaries from the band's Firstbeat backup file (type 72, undocumented message 411). Field meanings
+   * were matched on a real CIRQA against a night whose sleep file was also available: 0 score, 1 deep, 2 light,
+   * 3 REM, 4 awake (minutes), 10 start and 8 end (FIT time, UTC).
+   */
+  fbtNights: { start: number; end: number; score: number | null; deep: number; light: number; rem: number; awake: number }[]
   /** Overnight HRV summaries (Garmin's own figures, milliseconds). */
   hrvSummaries: { t: number; weekly: number | null; lastNight: number | null; high5min: number | null; baselineLow: number | null; baselineHigh: number | null; status: string | null }[]
   /** Message counts by number, for the protocol log (no values). */
   counts: Record<string, number>
 }
 
-const MESG = { MONITORING: 55, MONITORING_HR: 211, STRESS: 227, SLEEP_LEVEL: 275, SLEEP_ASSESSMENT: 346, HRV_SUMMARY: 370 }
+const MESG = { MONITORING: 55, MONITORING_HR: 211, STRESS: 227, SLEEP_LEVEL: 275, SLEEP_ASSESSMENT: 346, HRV_SUMMARY: 370, FBT_SLEEP: 411 }
 /** Seconds between the Unix epoch and the FIT epoch (1989-12-31T00:00:00Z). */
 const FIT_EPOCH_S = 631065600
 
@@ -40,7 +46,7 @@ const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFi
 const ms = (v: unknown): number | null => (v instanceof Date ? v.getTime() : null)
 
 export function emptyWellness(): WellnessData {
-  return { stress: [], bodyBattery: [], hr: [], steps: [], restingHr: [], sleepLevels: [], sleepScores: [], hrvSummaries: [], counts: {} }
+  return { stress: [], bodyBattery: [], hr: [], steps: [], restingHr: [], sleepLevels: [], sleepScores: [], hrvSummaries: [], fbtNights: [], counts: {} }
 }
 
 /** Where the FIT header starts: 0 normally, or later if the transfer put extra bytes in front. -1 if there's no ".FIT". */
@@ -111,6 +117,19 @@ export function decodeWellnessDetailed(raw: Uint8Array): WellnessDecode {
         out.sleepLevels.push({ t: full, stage: s === 'awake' || s === 'light' || s === 'deep' || s === 'rem' ? s : null })
         return
       }
+      case MESG.FBT_SLEEP: {
+        const start = num(m[10])
+        const end = num(m[8])
+        const mins = [1, 2, 3, 4].map((k) => num(m[k]))
+        if (start == null || end == null || end <= start || mins.some((x) => x == null)) return
+        const [deep, light, rem, awake] = mins as number[]
+        // Sanity check found on the real band: the stage minutes add up to the time in bed (plus field 5).
+        const span = (end - start) / 60
+        if (Math.abs(deep + light + rem + awake + (num(m[5]) ?? 0) - span) > 5) return
+        const score = num(m[0])
+        out.fbtNights.push({ start: (start + FIT_EPOCH_S) * 1000, end: (end + FIT_EPOCH_S) * 1000, score: score != null && score <= 100 ? score : null, deep, light, rem, awake })
+        return
+      }
       case MESG.HRV_SUMMARY: {
         if (full == null) return
         out.hrvSummaries.push({
@@ -156,6 +175,7 @@ export function mergeWellness(parts: WellnessData[]): WellnessData {
     all.sleepLevels.push(...p.sleepLevels)
     all.sleepScores.push(...p.sleepScores)
     all.hrvSummaries.push(...p.hrvSummaries)
+    for (const n of p.fbtNights) if (!all.fbtNights.some((x) => x.start === n.start)) all.fbtNights.push(n)
     for (const [k, n] of Object.entries(p.counts)) all.counts[k] = (all.counts[k] ?? 0) + n
   }
   for (const k of ['stress', 'bodyBattery', 'hr', 'steps', 'restingHr', 'sleepLevels', 'sleepScores'] as const) (all[k] as { t: number }[]).sort((a, b) => a.t - b.t)
@@ -163,5 +183,5 @@ export function mergeWellness(parts: WellnessData[]): WellnessData {
 }
 
 export function hasWellness(w: WellnessData): boolean {
-  return w.stress.length + w.bodyBattery.length + w.hr.length + w.steps.length + w.sleepLevels.length + w.hrvSummaries.length > 0
+  return w.stress.length + w.bodyBattery.length + w.hr.length + w.steps.length + w.sleepLevels.length + w.hrvSummaries.length + w.fbtNights.length > 0
 }

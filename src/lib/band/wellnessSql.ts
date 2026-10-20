@@ -148,6 +148,19 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
     })
   }
 
+  // Nights known only from the backup summary (no sleep file): totals and score, no stage timeline.
+  const detailed = new Set(nights(w).map((n) => n.day))
+  for (const n of w.fbtNights) {
+    const day = localDay(n.end)
+    if (detailed.has(day)) continue
+    g.push({
+      sql: `INSERT OR REPLACE INTO sleep (day, start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      params: [day, localTs(n.start), localTs(n.end), hms((n.deep + n.light + n.rem) * 60), hms(n.deep * 60), hms(n.light * 60), hms(n.rem * 60), hms(n.awake * 60), n.score],
+    })
+    g.push({ sql: 'INSERT OR IGNORE INTO daily_summary (day) VALUES (?)', params: [day] })
+  }
+
   for (const n of nights(w)) {
     const total = (stage: SleepStage) => n.stages.filter((s) => s.stage === stage).reduce((a, s) => a + s.seconds, 0)
     const asleep = total('light') + total('deep') + total('rem')

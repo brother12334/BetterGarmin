@@ -5,7 +5,7 @@ import { BigStat, DetailChart, Dial } from '../../components/charts/HealthCharts
 import { detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
-import { getLatestDay, getSleepRange } from '../../db/queries'
+import { getLatestDay, getLatestSleepDay, getSleepRange } from '../../db/queries'
 import type { SleepRow } from '../../db/types'
 import { addDays } from '../../lib/dateRange'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
@@ -56,7 +56,8 @@ export function SleepPage() {
         return
       }
       setLoading(true)
-      const day = await getLatestDay()
+      const [latest, latestSleep] = await Promise.all([getLatestDay(), getLatestSleepDay()])
+      const day = latest && latestSleep ? (latestSleep > latest ? latestSleep : latest) : (latest ?? latestSleep)
       if (!day) {
         if (!cancelled) {
           setData(null)

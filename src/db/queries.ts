@@ -52,6 +52,14 @@ export async function getDailySummaryRange(startDay: string, endDay: string): Pr
   )
 }
 
+/** The newest night with recorded sleep, not after today (the band can have a newer night than the rest of the data). */
+export async function getLatestSleepDay(): Promise<string | null> {
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const rows = await sqliteClient.query<{ day: string | null }>('garmin', "SELECT MAX(day) as day FROM sleep WHERE day <= ? AND total_sleep IS NOT NULL AND total_sleep != '00:00:00'", [today])
+  return rows[0]?.day ?? null
+}
+
 export async function getSleep(day: string): Promise<SleepRow | null> {
   const rows = await sqliteClient.query<SleepRow>('garmin', 'SELECT * FROM sleep WHERE day = ?', [day])
   return rows[0] ?? null
