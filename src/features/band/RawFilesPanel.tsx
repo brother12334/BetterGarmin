@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { indexedDbBandStore, type BandFileRecord } from '../../lib/band/bandFileStore'
 import { rawView } from '../../lib/band/rawDecode'
-import { downloadBlob } from '../../lib/download'
+import { copyText, downloadBlob } from '../../lib/download'
 
 const label = (r: BandFileRecord) => `${r.dataType ?? 'unknown type'} · ${r.size.toLocaleString()} bytes · synced ${new Date(r.syncedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
 
@@ -19,11 +19,13 @@ export function RawFilesPanel() {
     setFiles(all.filter((r) => !r.activity && r.fileType !== 'workout').sort((a, b) => b.syncedAt - a.syncedAt))
   }
 
-  const exportAll = () => {
-    if (!files) return
-    const text = files.map((r) => `===== ${label(r)} =====\n${rawView(r.bytes)}`).join('\n\n')
-    downloadBlob(`bettergarmin-band-raw-${new Date().toISOString().slice(0, 10)}.txt`, text, 'text/plain')
+  const [status, setStatus] = useState<string | null>(null)
+  const allText = () => (files ?? []).map((r) => `===== ${label(r)} =====\n${rawView(r.bytes)}`).join('\n\n')
+  const exportAll = async () => {
+    const how = await downloadBlob(`bettergarmin-band-raw-${new Date().toISOString().slice(0, 10)}.txt`, allText(), 'text/plain')
+    setStatus(how === 'shared' ? 'Shared.' : how === 'cancelled' ? null : 'If nothing appeared, use Copy all instead.')
   }
+  const copyAll = async () => setStatus((await copyText(allText())) ? 'Copied. Paste it into a message or note.' : "Couldn't copy. Open each file below and select the text.")
 
   return (
     <details className="rounded-control border border-[var(--border-panel)] p-3 text-sm" onToggle={(e) => (e.currentTarget.open && !files ? void load() : undefined)}>
@@ -39,9 +41,15 @@ export function RawFilesPanel() {
           <p className="text-[var(--text-tertiary)]">No undocumented files synced yet. Tap Sync first.</p>
         ) : (
           <>
-            <Button variant="secondary" onClick={exportAll} className="self-start">
-              Save all as a text file
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={copyAll}>
+                Copy all
+              </Button>
+              <Button variant="secondary" onClick={exportAll}>
+                Share as a file
+              </Button>
+            </div>
+            {status && <p className="text-[var(--text-secondary)]" role="status">{status}</p>}
             {files.map((r) => (
               <div key={r.key} className="flex flex-col gap-1">
                 <button type="button" className="min-h-11 text-left text-[var(--accent)]" onClick={() => setOpen(open === r.key ? null : r.key)}>
