@@ -60,6 +60,16 @@ export async function getLatestSleepDay(): Promise<string | null> {
   return rows[0]?.day ?? null
 }
 
+/** Body Battery on waking, read from the band's morning report (undocumented; see wellness.ts). */
+export async function getBandWakeEnergy(day: string): Promise<number | null> {
+  try {
+    const rows = await sqliteClient.query<{ wake_energy: number | null }>('garmin', 'SELECT wake_energy FROM band_daily WHERE day = ?', [day])
+    return rows[0]?.wake_energy ?? null
+  } catch {
+    return null // no band data loaded
+  }
+}
+
 export async function getSleep(day: string): Promise<SleepRow | null> {
   const rows = await sqliteClient.query<SleepRow>('garmin', 'SELECT * FROM sleep WHERE day = ?', [day])
   return rows[0] ?? null

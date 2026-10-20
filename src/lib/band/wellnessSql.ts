@@ -39,6 +39,7 @@ const GARMIN_SCHEMA = `
     rem_sleep TEXT, awake TEXT, avg_spo2 REAL, avg_rr REAL, avg_stress REAL, score INTEGER, qualifier TEXT);
   CREATE TABLE IF NOT EXISTS sleep_events (timestamp TEXT PRIMARY KEY, event TEXT, duration TEXT);
   CREATE TABLE IF NOT EXISTS resting_hr (day TEXT PRIMARY KEY, resting_heart_rate REAL);
+  CREATE TABLE IF NOT EXISTS band_daily (day TEXT PRIMARY KEY, wake_energy INTEGER);
   CREATE TABLE IF NOT EXISTS hrv (day TEXT PRIMARY KEY, weekly_avg INTEGER, last_night_avg INTEGER, last_night_5min_high INTEGER,
     baseline_low INTEGER, baseline_upper INTEGER, status TEXT);
   CREATE TABLE IF NOT EXISTS daily_summary (day TEXT PRIMARY KEY, hr_min INTEGER, hr_max INTEGER, rhr INTEGER, stress_avg INTEGER,
@@ -142,6 +143,12 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
       ],
     })
     if (d.rhr != null) g.push({ sql: 'INSERT OR REPLACE INTO resting_hr (day, resting_heart_rate) VALUES (?, ?)', params: [day, d.rhr] })
+  }
+
+  // Wake-up energy: kept apart from Garmin's daily high/low so it's never mistaken for them.
+  for (const e of w.wakeEnergy) {
+    const day = localDay(e.t)
+    g.push({ sql: 'INSERT OR REPLACE INTO band_daily (day, wake_energy) VALUES (?, ?)', params: [day, e.v] })
   }
 
   for (const h of w.hrvSummaries) {
