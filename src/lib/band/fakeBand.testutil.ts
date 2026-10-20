@@ -15,6 +15,7 @@ export class FakeBand {
   /** Any other frame the host sends (e.g. legacy file transfer). */
   onFrame: (messageId: number, payload: Uint8Array) => void = (id) => {
     // By default the older file transfer is refused (download status 1 = index unknown).
+    if (id === 5007) this.sendFrame(encodeFrame(MSG.ACK, [...u16(5007), 0]))
     if (id === 5002) this.sendFrame(encodeFrame(MSG.ACK, [...u16(5002), 0, 1, 0, 0, 0, 0]))
   }
   /** Extra service registrations (file pipes): return [status, handle]. */

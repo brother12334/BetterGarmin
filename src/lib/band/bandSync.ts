@@ -6,7 +6,7 @@ import { fileAccessCapabilities, fileListRequest, pullItemDataRequest } from './
 import { validateAndDecodeFit } from './fitImport'
 import type { BandFileStore } from './bandFileStore'
 import { markBandSynced, recordAttempt, recordSeen } from './bandIndex'
-import { WELLNESS_SUBTYPES, entryDate, parseDirectory, wellnessEntries } from './legacyFiles'
+import { FILTER, WELLNESS_SUBTYPES, describeEntry, entryDate, parseDirectory, wellnessEntries } from './legacyFiles'
 
 /** Newest all-day files fetched per sync over the older transfer (each is small, but the link is slow). */
 const MAX_LEGACY_FILES = 40
@@ -257,9 +257,16 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
 export async function syncLegacyWellness(session: BandSession, store: BandFileStore, deviceKey: string, onProgress: (p: SyncProgress) => void = () => {}): Promise<FileOutcome[]> {
   let entries
   try {
-    const dir = await session.legacyDownload(0)
-    entries = wellnessEntries(parseDirectory(dir))
-    session.addLog('info', `directory: ${parseDirectory(dir).length} files, ${entries.length} all-day (${[...new Set(entries.map((e) => WELLNESS_SUBTYPES[e.subType]))].join(', ') || 'none'})`)
+    // Ask for every file, not just ones no app has synced yet: Garmin Connect may already have taken the new ones.
+    try {
+      await session.setDirectoryFilter(FILTER.ALL_FILES)
+    } catch (e) {
+      session.addLog('info', `directory filter not acknowledged: ${e instanceof Error ? e.message : String(e)}`)
+    }
+    const all = parseDirectory(await session.legacyDownload(0))
+    entries = wellnessEntries(all)
+    session.addLog('info', `directory: ${all.length} files, ${entries.length} all-day (${[...new Set(entries.map((e) => WELLNESS_SUBTYPES[e.subType]))].join(', ') || 'none'})`)
+    for (const e of all.slice(0, 60)) session.addLog('info', `  ${describeEntry(e)}`)
   } catch (e) {
     session.addLog('info', `older file transfer unavailable: ${e instanceof Error ? e.message : String(e)}`)
     return []

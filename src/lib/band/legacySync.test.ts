@@ -40,6 +40,7 @@ function serveLegacy(fake: FakeBand, files: Map<number, Uint8Array>, opts: { cor
   }
   let crcAt = new Map<number, number>()
   fake.onFrame = (id, payload) => {
+    if (id === 5007) return fake.sendFrame(encodeFrame(MSG.ACK, [...u16(5007), 0]))
     if (id === 5002) {
       const index = readU16(payload, 0)
       const bytes = files.get(index)

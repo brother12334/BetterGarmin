@@ -321,6 +321,19 @@ export class BandSession {
     this.addLog('out', label)
   }
 
+  private filterAck: ((status: number) => void) | null = null
+
+  /** Sets which files the band's directory lists (0 = all, including ones another app already synced). */
+  async setDirectoryFilter(type: number): Promise<number> {
+    const acked = new Promise<number>((resolve) => (this.filterAck = resolve))
+    await this.sendFrame(encodeFrame(LEGACY_MSG.FILTER, [type]), `5007 directory filter ${type}`)
+    try {
+      return await timeout(acked, 5000, 'the filter acknowledgement')
+    } finally {
+      this.filterAck = null
+    }
+  }
+
   /**
    * Downloads one file over the older GFDI file transfer (DownloadRequest 5002 → FileTransferData 5004). Each chunk's
    * offset and running CRC are checked before it's acknowledged. Index 0 is the band's file directory.
@@ -543,6 +556,9 @@ export class BandSession {
           this.addLog('in', `ack 5043 #${requestId} (status ${status})`)
           this.pendingDelivery.get(requestId)?.resolve()
           this.pendingDelivery.delete(requestId)
+        } else if (original === LEGACY_MSG.FILTER && this.filterAck) {
+          this.addLog('in', `ack 5007 (status ${status}${payload.length > 3 ? `, ${hex(payload.slice(3))}` : ''})`)
+          this.filterAck(status)
         } else if (original === LEGACY_MSG.DOWNLOAD_REQUEST && this.legacy) {
           const st = parseDownloadStatus(payload)
           this.addLog('in', `ack 5002 (status ${status}, download ${st ? (DOWNLOAD_STATUS[st.downloadStatus] ?? st.downloadStatus) : '?'}, ${st?.size ?? '?'} bytes)`)

@@ -10,7 +10,10 @@ import { crc16Arc } from './crc'
  * listing never returned, which is why this path is tried. Message layouts follow Gadgetbridge; unverified on a CIRQA.
  */
 
-export const LEGACY_MSG = { DOWNLOAD_REQUEST: 5002, FILE_TRANSFER_DATA: 5004 } as const
+export const LEGACY_MSG = { DOWNLOAD_REQUEST: 5002, FILE_TRANSFER_DATA: 5004, FILTER: 5007 } as const
+
+/** Directory filter sent before reading the directory (Gadgetbridge's FilterType): 0 = all files, 3 = only new. */
+export const FILTER = { ALL_FILES: 0, ONLY_NEW: 3 } as const
 
 /** FIT file subtypes worth downloading for all-day data. */
 export const WELLNESS_SUBTYPES: Record<number, string> = {
@@ -38,9 +41,14 @@ export interface DirectoryEntry {
 const FIT_EPOCH_S = 631065600
 export const entryDate = (e: DirectoryEntry) => new Date((e.fitTime + FIT_EPOCH_S) * 1000)
 
-/** DownloadRequest payload: file index, offset, request type (1 = new transfer), CRC seed, data size (0 = whole file). */
+/** DownloadRequest payload: file index, offset, request type (1 = new transfer), CRC seed, data size (0 = whole file), flags. */
 export function downloadRequestPayload(fileIndex: number, offset = 0, crcSeed = 0): number[] {
-  return [...u16(fileIndex), ...u32(offset), offset === 0 ? 1 : 0, ...u16(crcSeed), ...u32(0)]
+  return [...u16(fileIndex), ...u32(offset), offset === 0 ? 1 : 0, ...u16(crcSeed), ...u32(0), 0]
+}
+
+/** One line per directory entry for the protocol log: identifiers, sizes and dates only. */
+export function describeEntry(e: DirectoryEntry): string {
+  return `#${e.fileIndex} type ${e.dataType}/${e.subType}${WELLNESS_SUBTYPES[e.subType] && e.dataType === 128 ? ` (${WELLNESS_SUBTYPES[e.subType]})` : ''} ${e.size}B flags 0x${e.fileFlags.toString(16)} ${entryDate(e).toISOString().slice(0, 16)}`
 }
 
 /** The band's answer to a DownloadRequest, carried in its ACK after the plain status byte. */
