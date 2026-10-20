@@ -24,6 +24,10 @@ export function localTs(t: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 const localDay = (t: number) => localTs(t).slice(0, 10)
+/** UTC wall-clock: GarminDB stores sleep start/end and sleep events in UTC, and the Sleep page converts them. */
+export function utcTs(t: number): string {
+  return new Date(t).toISOString().slice(0, 19).replace('T', ' ')
+}
 export function hms(seconds: number): string {
   const s = Math.max(0, Math.round(seconds))
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
@@ -148,15 +152,17 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
     })
   }
 
-  // Nights known only from the backup summary (no sleep file): totals and score, no stage timeline.
-  const detailed = new Set(nights(w).map((n) => n.day))
+  // Garmin's own nightly summary (Firstbeat backup) is the source of truth for totals and score: on the real band the
+  // sleep file holds only ~20 sleep-level entries a night, too few to rebuild the stages from. The stage timeline from
+  // those entries is only drawn when it agrees with the summary.
+  const levelNights = new Map(nights(w).map((n) => [n.day, n]))
   for (const n of w.fbtNights) {
     const day = localDay(n.end)
-    if (detailed.has(day)) continue
+    const fileScore = levelNights.get(day)?.score ?? null
     g.push({
       sql: `INSERT OR REPLACE INTO sleep (day, start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      params: [day, localTs(n.start), localTs(n.end), hms((n.deep + n.light + n.rem) * 60), hms(n.deep * 60), hms(n.light * 60), hms(n.rem * 60), hms(n.awake * 60), n.score],
+      params: [day, utcTs(n.start), utcTs(n.end), hms((n.deep + n.light + n.rem) * 60), hms(n.deep * 60), hms(n.light * 60), hms(n.rem * 60), hms(n.awake * 60), n.score ?? fileScore],
     })
     g.push({ sql: 'INSERT OR IGNORE INTO daily_summary (day) VALUES (?)', params: [day] })
   }
@@ -164,11 +170,18 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
   for (const n of nights(w)) {
     const total = (stage: SleepStage) => n.stages.filter((s) => s.stage === stage).reduce((a, s) => a + s.seconds, 0)
     const asleep = total('light') + total('deep') + total('rem')
-    g.push({
-      sql: `INSERT OR REPLACE INTO sleep (day, start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      params: [n.day, localTs(n.start), localTs(n.end), hms(asleep), hms(total('deep')), hms(total('light')), hms(total('rem')), hms(total('awake')), n.score],
-    })
+    const summary = w.fbtNights.find((f) => localDay(f.end) === n.day)
+    if (summary) {
+      const close = (a: number, b: number) => Math.abs(a / 60 - b) <= Math.max(10, b * 0.15)
+      const agrees = close(total('deep'), summary.deep) && close(total('light'), summary.light) && close(total('rem'), summary.rem) && close(total('awake'), summary.awake)
+      if (!agrees) continue
+    } else {
+      g.push({
+        sql: `INSERT OR REPLACE INTO sleep (day, start, end, total_sleep, deep_sleep, light_sleep, rem_sleep, awake, score)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [n.day, utcTs(n.start), utcTs(n.end), hms(asleep), hms(total('deep')), hms(total('light')), hms(total('rem')), hms(total('awake')), n.score],
+      })
+    }
     // Sleep events are stage changes, each lasting until the next change.
     let i = 0
     while (i < n.stages.length) {
@@ -176,7 +189,7 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
       let seconds = 0
       while (j < n.stages.length && n.stages[j].stage === n.stages[i].stage) seconds += n.stages[j++].seconds
       const event = n.stages[i].stage === 'deep' ? 'deep_sleep' : n.stages[i].stage === 'light' ? 'light_sleep' : n.stages[i].stage === 'rem' ? 'rem_sleep' : 'awake'
-      g.push({ sql: 'INSERT OR REPLACE INTO sleep_events (timestamp, event, duration) VALUES (?, ?, ?)', params: [localTs(n.stages[i].t), event, hms(seconds)] })
+      g.push({ sql: 'INSERT OR REPLACE INTO sleep_events (timestamp, event, duration) VALUES (?, ?, ?)', params: [utcTs(n.stages[i].t), event, hms(seconds)] })
       i = j
     }
   }
