@@ -4,6 +4,7 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { BAND_CAPS, band, cancelBandAlert, testBandAlert, useBand } from '../../lib/band/bandStore'
 import { BandSyncPanel } from './BandSyncPanel'
+import { RawFilesPanel } from './RawFilesPanel'
 import { BandTroubleshooting } from './BandTroubleshooting'
 import { useLastBandSync } from './useLastBandSync'
 import { formatRelativeTime } from '../../lib/relativeTime'
@@ -143,6 +144,7 @@ export function BandCard() {
 
       <BandSyncPanel ready={ready} />
 
+      <RawFilesPanel />
       <BandTroubleshooting onShowAll={() => connect(true)} />
 
       <div className="border-t border-[var(--border-panel)] pt-2">
