@@ -257,13 +257,21 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
 export async function syncLegacyWellness(session: BandSession, store: BandFileStore, deviceKey: string, onProgress: (p: SyncProgress) => void = () => {}): Promise<FileOutcome[]> {
   let entries
   try {
-    // Ask for every file, not just ones no app has synced yet: Garmin Connect may already have taken the new ones.
-    try {
-      await session.setDirectoryFilter(FILTER.ALL_FILES)
-    } catch (e) {
-      session.addLog('info', `directory filter not acknowledged: ${e instanceof Error ? e.message : String(e)}`)
+    // Gadgetbridge's order: say the host is ready to sync (the band may answer with what it has waiting), set the
+    // directory filter, then read the directory. All files are asked for first, since Garmin Connect may have taken
+    // the new ones; if that comes back empty, "only new" is tried too.
+    await session.announceSyncReady()
+    let all: ReturnType<typeof parseDirectory> = []
+    for (const filter of [FILTER.ALL_FILES, FILTER.ONLY_NEW]) {
+      try {
+        await session.setDirectoryFilter(filter)
+      } catch (e) {
+        session.addLog('info', `directory filter not acknowledged: ${e instanceof Error ? e.message : String(e)}`)
+      }
+      all = parseDirectory(await session.legacyDownload(0)).filter((e) => e.dataType !== 0 || e.size > 0)
+      session.addLog('info', `directory with filter ${filter}: ${all.length} real entries`)
+      if (all.length) break
     }
-    const all = parseDirectory(await session.legacyDownload(0))
     entries = wellnessEntries(all)
     session.addLog('info', `directory: ${all.length} files, ${entries.length} all-day (${[...new Set(entries.map((e) => WELLNESS_SUBTYPES[e.subType]))].join(', ') || 'none'})`)
     for (const e of all.slice(0, 60)) session.addLog('info', `  ${describeEntry(e)}`)

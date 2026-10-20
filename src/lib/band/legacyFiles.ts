@@ -10,7 +10,20 @@ import { crc16Arc } from './crc'
  * listing never returned, which is why this path is tried. Message layouts follow Gadgetbridge; unverified on a CIRQA.
  */
 
-export const LEGACY_MSG = { DOWNLOAD_REQUEST: 5002, FILE_TRANSFER_DATA: 5004, FILTER: 5007 } as const
+export const LEGACY_MSG = { DOWNLOAD_REQUEST: 5002, FILE_TRANSFER_DATA: 5004, FILTER: 5007, SYSTEM_EVENT: 5030, SYNCHRONIZATION: 5037 } as const
+
+/** System event "sync ready" (Gadgetbridge's GarminSystemEventType ordinal 8), value 0. */
+export const SYNC_READY_PAYLOAD = [8, 0]
+
+/** Synchronization (5037) from the band: type (0 manual, 1 automatic) and a bitmask of file kinds with data waiting. */
+export function parseSynchronization(payload: Uint8Array): { type: number; bitmask: bigint } | null {
+  if (payload.length < 2) return null
+  const size = payload[1]
+  if (payload.length < 2 + size) return null
+  let mask = 0n
+  for (let i = size - 1; i >= 0; i--) mask = (mask << 8n) | BigInt(payload[2 + i])
+  return { type: payload[0], bitmask: mask }
+}
 
 /** Directory filter sent before reading the directory (Gadgetbridge's FilterType): 0 = all files, 3 = only new. */
 export const FILTER = { ALL_FILES: 0, ONLY_NEW: 3 } as const

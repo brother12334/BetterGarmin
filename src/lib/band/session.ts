@@ -17,7 +17,7 @@ import {
 } from './gfdi'
 import { BAND_UUIDS, GFDI_SERVICE, closeHandleRequest, fragment, isCloseHandleResponse, parseRegisterResponse, registerRequest, type RegisterResponse } from './multilink'
 import { decodeMessage, type ProtoField } from './proto'
-import { DOWNLOAD_STATUS, LEGACY_MSG, chunkCrc, downloadRequestPayload, parseDownloadStatus, parseTransferData, transferAckExtra } from './legacyFiles'
+import { DOWNLOAD_STATUS, LEGACY_MSG, SYNC_READY_PAYLOAD, parseSynchronization, chunkCrc, downloadRequestPayload, parseDownloadStatus, parseTransferData, transferAckExtra } from './legacyFiles'
 
 export type SessionState = 'idle' | 'connecting' | 'registering' | 'handshaking' | 'ready' | 'reconnecting' | 'disconnected' | 'error'
 
@@ -322,6 +322,20 @@ export class BandSession {
   }
 
   private filterAck: ((status: number) => void) | null = null
+  private syncWaiter: ((s: { type: number; bitmask: bigint }) => void) | null = null
+
+  /** Tells the band the host is ready to sync and waits briefly for its Synchronization (5037) answer, if any. */
+  async announceSyncReady(waitMs = 6000): Promise<{ type: number; bitmask: bigint } | null> {
+    const got = new Promise<{ type: number; bitmask: bigint }>((resolve) => (this.syncWaiter = resolve))
+    await this.sendFrame(encodeFrame(LEGACY_MSG.SYSTEM_EVENT, SYNC_READY_PAYLOAD), '5030 system event: sync ready')
+    try {
+      return await timeout(got, waitMs, 'a synchronization message')
+    } catch {
+      return null
+    } finally {
+      this.syncWaiter = null
+    }
+  }
 
   /** Sets which files the band's directory lists (0 = all, including ones another app already synced). */
   async setDirectoryFilter(type: number): Promise<number> {
@@ -572,6 +586,13 @@ export class BandSession {
       case LEGACY_MSG.FILE_TRANSFER_DATA:
         await this.handleTransferData(payload, tag)
         return
+      case LEGACY_MSG.SYNCHRONIZATION: {
+        const sync = parseSynchronization(payload)
+        this.addLog('in', `5037 synchronization (type ${sync?.type ?? '?'}, files waiting 0x${sync?.bitmask.toString(16) ?? '?'})`)
+        await this.sendFrame(encodeFrame(MSG.ACK, ackPayload(LEGACY_MSG.SYNCHRONIZATION), tag), '5000 ack 5037')
+        if (sync) this.syncWaiter?.(sync)
+        return
+      }
       case MSG.PROTOBUF_REQUEST:
       case MSG.PROTOBUF_RESPONSE: {
         const chunk = parseProtobufPayload(payload)
