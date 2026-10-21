@@ -97,6 +97,8 @@ export class BandSession {
   batteryPercent: number | null = null
 
   private userDisconnect = false
+  /** Set while a sync or transfer runs: only then is an unexpected drop worth reconnecting for. */
+  busy = false
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private device: BluetoothDevice | null = null
@@ -276,7 +278,8 @@ export class BandSession {
   private handleDisconnect = () => {
     this.addLog('info', 'band disconnected')
     this.cleanup()
-    if (this.userDisconnect || !this.device) {
+    // Reconnect only mid-sync. Otherwise stay off the band so Garmin Connect can use it.
+    if (this.userDisconnect || !this.device || !this.busy) {
       this.setState('disconnected')
       return
     }

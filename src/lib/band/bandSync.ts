@@ -170,7 +170,7 @@ export async function downloadFile(session: BandSession, item: FileItem, onBytes
 }
 
 /** Lists the band's files and imports every one not already synced. Each file is saved before it counts as done. */
-export async function syncBand(session: BandSession, store: BandFileStore, onProgress: (p: SyncProgress) => void = () => {}): Promise<SyncReport> {
+async function syncBandInner(session: BandSession, store: BandFileStore, onProgress: (p: SyncProgress) => void = () => {}): Promise<SyncReport> {
   if (session.state !== 'ready') throw new Error('Connect the band first')
   if (!session.bandConfigBits.includes(FILE_ACCESS_CAPABILITY)) throw new Error("The band doesn't advertise FileAccess (capability 90)")
   onProgress({ phase: 'listing' })
@@ -318,4 +318,18 @@ export async function syncLegacyWellness(session: BandSession, store: BandFileSt
     }
   }
   return outcomes
+}
+
+/**
+ * Syncs, then lets go of the band: the band talks to one app at a time, and staying connected would keep
+ * Garmin Connect from syncing its own (all-day) data.
+ */
+export async function syncBand(session: BandSession, store: BandFileStore, onProgress: (p: SyncProgress) => void = () => {}): Promise<SyncReport> {
+  session.busy = true
+  try {
+    return await syncBandInner(session, store, onProgress)
+  } finally {
+    session.busy = false
+    session.disconnect()
+  }
 }
