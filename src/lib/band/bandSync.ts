@@ -10,6 +10,7 @@ import { FILTER, WELLNESS_SUBTYPES, describeEntry, entryDate, parseDirectory, we
 
 /** Newest all-day files fetched per sync over the older transfer (each is small, but the link is slow). */
 const MAX_LEGACY_FILES = 40
+export const LEGACY_TRANSFER_ENABLED = false
 
 /**
  * Direct band → BetterGarmin sync over Bluetooth (experimental):
@@ -243,7 +244,9 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
     }
   }
   // All-day files (monitoring, sleep, HRV…) only show up in the band's directory file, read over the older transfer.
-  if (session.state === 'ready') outcomes.push(...(await syncLegacyWellness(session, store, deviceKey, onProgress)))
+  // Off: on a real CIRQA its directory came back empty every time, and these extra commands (sync ready, filter,
+  // directory read) began around when the band stopped handing all-day data to any app. Kept for research only.
+  if (LEGACY_TRANSFER_ENABLED && session.state === 'ready') outcomes.push(...(await syncLegacyWellness(session, store, deviceKey, onProgress)))
 
   if (!outcomes.some((o) => o.result === 'failed')) markBandSynced()
   onProgress({ phase: 'done' })
