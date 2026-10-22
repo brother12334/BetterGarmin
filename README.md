@@ -186,6 +186,41 @@ under More → Garmin band → *Connection trouble?* Details are in
 the protocol and what's been verified are in
 [docs/band-protocol.md](docs/band-protocol.md).
 
+### Known issue: all-day data stopped (October 2026)
+
+On the test CIRQA (firmware 3.2), the band **stopped handing over all-day
+data from about October 19**. This affected Garmin Connect too, not just
+BetterGarmin.
+
+- **Still arriving:** sleep (score and stages), overnight HRV, workouts.
+  Blood oxygen was measured overnight (Garmin Connect showed "breathing
+  variations").
+- **Missing in both apps:** steps, heart-rate timeline, resting heart rate,
+  Body Battery timeline and charge, SpO₂ averages and respiration. Garmin
+  Connect showed only a live Body Battery number with "Not enough data".
+- **Already tried, no change:**
+  - turning the band off and on from Garmin Connect;
+  - blocking Bluefy from the band entirely and syncing Garmin Connect alone
+    for over a day.
+- **What BetterGarmin changed anyway:**
+  - The band commands added around Oct 19 (sync ready, file filter and the
+    older file-directory read) are switched off.
+  - BetterGarmin now **disconnects from the band after every sync**. It only
+    reconnects on its own if the band drops in the middle of a sync, so it
+    can't hold the band and block Garmin Connect.
+- **Status:** unresolved. With BetterGarmin blocked, Garmin Connect still got
+  no all-day data, so the cause is most likely the band or Garmin's side. The
+  next step is Garmin support (check for a firmware update first). Avoid a
+  factory reset unless Garmin recommends it: it wipes data the band hasn't
+  uploaded yet.
+
+**If this happens to you:**
+1. Check whether Garmin Connect has steps and a heart-rate timeline for
+   today.
+2. If it doesn't, the problem isn't BetterGarmin. Contact Garmin support.
+3. Sleep, HRV, workouts and wake-up energy keep coming straight from the band
+   in BetterGarmin meanwhile.
+
 ## How it works
 
 GitHub Pages only serves static files — it can't run Python, can't run
