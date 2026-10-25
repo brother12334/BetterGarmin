@@ -186,7 +186,7 @@ under More → Garmin band → *Connection trouble?* Details are in
 the protocol and what's been verified are in
 [docs/band-protocol.md](docs/band-protocol.md).
 
-### Known issue: all-day data stopped (October 2026)
+### Resolved issue: all-day data stopped (October 2026)
 
 On the test CIRQA (firmware 3.2), the band **stopped handing over all-day
 data from about October 19**. This affected Garmin Connect too, not just
@@ -208,18 +208,28 @@ BetterGarmin.
   - BetterGarmin now **disconnects from the band after every sync**. It only
     reconnects on its own if the band drops in the middle of a sync, so it
     can't hold the band and block Garmin Connect.
-- **Status:** unresolved. With BetterGarmin blocked, Garmin Connect still got
-  no all-day data, so the cause is most likely the band or Garmin's side. The
-  next step is Garmin support (check for a firmware update first). Avoid a
-  factory reset unless Garmin recommends it: it wipes data the band hasn't
-  uploaded yet.
+- **Also tried:**
+  - Garmin support's advice: removing the band from Garmin Connect and
+    pairing it again. No change.
+  - Sending the band's files to Garmin support. No answer after two days.
+- **Fixed by:** resetting all data on the band (factory reset, around
+  Oct 25). It started tracking all-day data again straight away.
+- **Cause:** unknown. Garmin never confirmed one. The battery was very low
+  (1–10 %) during part of this, which may have contributed. With BetterGarmin
+  blocked from the band, Garmin Connect still got no all-day data, so
+  BetterGarmin wasn't the cause.
 
 **If this happens to you:**
 1. Check whether Garmin Connect has steps and a heart-rate timeline for
-   today.
-2. If it doesn't, the problem isn't BetterGarmin. Contact Garmin support.
-3. Sleep, HRV, workouts and wake-up energy keep coming straight from the band
-   in BetterGarmin meanwhile.
+   today. If it doesn't, the problem isn't BetterGarmin.
+2. Charge the band. Low battery can switch off all-day tracking.
+3. Turn the band off and on from Garmin Connect.
+4. As a last resort, reset all data on the band. This fixed it here, but it
+   erases anything the band hasn't uploaded yet, so sync Garmin Connect and
+   BetterGarmin first if you can.
+5. After a reset, pair with Garmin Connect first, check that steps and heart
+   rate appear, then reconnect BetterGarmin (More → Garmin band → Connect).
+   Everything BetterGarmin downloaded before stays on your phone.
 
 ## How it works
 
