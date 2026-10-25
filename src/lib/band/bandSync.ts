@@ -35,7 +35,7 @@ export interface SyncProgress {
 export interface FileOutcome {
   uidHex: string | null
   dataType: string | null
-  result: 'imported' | 'unsupported' | 'skipped-duplicate' | 'failed'
+  result: 'imported' | 'unsupported' | 'updated' | 'skipped-duplicate' | 'failed'
   error?: string
 }
 
@@ -194,7 +194,12 @@ async function syncBandInner(session: BandSession, store: BandFileStore, onProgr
       continue
     }
     const key = `${deviceKey}:${item.uidHex}`
-    if (await store.has(key)) {
+    // All-day files keep growing through the day under the same UUID, so a changed size or time means fetch it again.
+    // Workouts are finished files and stay as first saved (their history and notes hang off them).
+    const existing = await store.get(key)
+    const listedSize = item.dataSize != null ? Number(item.dataSize) : null
+    const changed = !!existing && !existing.activity && (item.modifiedTime != null && existing.modifiedTime != null ? item.modifiedTime !== existing.modifiedTime : listedSize != null && listedSize !== existing.size)
+    if (existing && !changed) {
       outcomes.push({ ...base, result: 'skipped-duplicate' })
       continue
     }
@@ -235,7 +240,7 @@ async function syncBandInner(session: BandSession, store: BandFileStore, onProgr
       // Saved first, then it joins the history: a workout is never "in history" without its original file.
       if (status === 'imported') await store.addHistory(key)
       recordAttempt(key, null)
-      outcomes.push({ ...base, result: status })
+      outcomes.push({ ...base, result: changed && status === 'unsupported' ? 'updated' : status })
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e)
       recordAttempt(key, error)

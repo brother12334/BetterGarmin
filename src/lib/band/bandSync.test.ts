@@ -211,4 +211,17 @@ describe('direct sync against a simulated band', () => {
     expect(r.outcomes[0].result).toBe('unsupported')
     expect([...store.records.values()][0].activity).toBeNull()
   }, 30_000)
+
+  it('downloads an all-day file again once it has grown under the same UUID', async () => {
+    const enc = new TextEncoder()
+    await connected({ files: [{ ms: MS2, ls: LS2, bytes: enc.encode('<morning/>') }] })
+    const store = memoryBandStore()
+    await syncBand(session, store)
+    const later = enc.encode('<morning/><evening/>')
+    await connected({ files: [{ ms: MS2, ls: LS2, bytes: later }] })
+    const r = await syncBand(session, store)
+    expect(r.outcomes.map((o) => o.result)).toEqual(['updated'])
+    expect(store.records.size).toBe(1)
+    expect([...store.records.values()][0].bytes).toEqual(later)
+  }, 30_000)
 })

@@ -86,7 +86,8 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
         <div className="flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
           <div className="flex flex-wrap gap-2">
             <Badge tone="success">{counts.imported ?? 0} imported</Badge>
-            <Badge>{counts['skipped-duplicate'] ?? 0} already synced</Badge>
+            <Badge>{counts.updated ?? 0} updated</Badge>
+            <Badge>{counts['skipped-duplicate'] ?? 0} unchanged</Badge>
             {counts.unsupported ? <Badge>{counts.unsupported} other files</Badge> : null}
             {counts.failed ? <Badge tone="danger">{counts.failed} failed</Badge> : null}
           </div>

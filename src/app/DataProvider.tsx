@@ -459,7 +459,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const n = (r: string) => report.outcomes.filter((o) => o.result === r).length
           const failed = report.outcomes.find((o) => o.result === 'failed')
           const parts = [
-            `Band: ${report.listed} file${report.listed === 1 ? '' : 's'} listed, ${n('imported') + n('unsupported')} new, ${n('skipped-duplicate')} already synced`,
+            `Band: ${report.listed} file${report.listed === 1 ? '' : 's'} listed, ${n('imported') + n('unsupported')} new, ${n('updated')} updated, ${n('skipped-duplicate')} unchanged`,
             n('failed') ? `${n('failed')} failed (${failed?.error})` : '',
             w?.files ? `${w.stress} stress, ${w.bodyBattery} energy, ${w.hr} heart-rate readings, ${w.nights} nights` : 'no stress, energy or sleep data read from the files yet (file details: More → Garmin band)',
           ].filter(Boolean)
