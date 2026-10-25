@@ -105,3 +105,17 @@ Notes:
 - During the failed attempts Bluefy reported a bare error, `2`. What it means
   isn't known, so BetterGarmin shows the browser's exact error text alongside
   these steps rather than calling it an authentication failure.
+
+### The band is missing from Bluefy and Bluefy isn't under "Apps allowed to connect"
+
+Seen on the tested iPhone after resetting all data on the band. The band's
+**Apps allowed to connect** list showed only Garmin Connect, not Bluefy.
+Restarting Bluefy and charging the band didn't help, even with Bluetooth on
+for Bluefy.
+
+1. Open iPhone **Settings → Bluetooth**, tap ⓘ next to the band and choose
+   **Forget This Device**.
+2. Open BetterGarmin in Bluefy and connect (**More → Garmin band → Connect**).
+   The iPhone pairs the band again, and it works in Bluefy.
+
+Garmin Connect may need to find the band again afterwards.

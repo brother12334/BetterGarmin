@@ -230,6 +230,23 @@ BetterGarmin.
 5. After a reset, pair with Garmin Connect first, check that steps and heart
    rate appear, then reconnect BetterGarmin (More → Garmin band → Connect).
    Everything BetterGarmin downloaded before stays on your phone.
+6. If the band is then missing from Bluefy's device chooser, see the next
+   section.
+
+### Resolved issue: band missing from Bluefy after the reset (October 2026)
+
+After the reset, the CIRQA no longer showed up in Bluefy's device chooser.
+
+- **Already checked:** Bluetooth was on for Bluefy in iPhone Settings, the
+  band was charged, and Bluefy had been restarted.
+- **What iPhone Settings showed:** under the band's **Apps allowed to
+  connect**, only Garmin Connect was listed (switched off). Bluefy wasn't
+  listed at all, so there was nothing to switch on.
+- **Fixed by:**
+  1. Going to iPhone **Settings → Bluetooth**, tapping ⓘ next to the band, and
+     choosing **Forget This Device**.
+  2. Connecting again from BetterGarmin in Bluefy (**More → Garmin band →
+     Connect**). This paired the band again, and it has worked since.
 
 ## How it works
 
