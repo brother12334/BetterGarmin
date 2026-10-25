@@ -453,7 +453,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (bluetooth) {
         setGarminPull({ status: 'running', startedAt: new Date(), via: 'band' })
         try {
-          if (band.state !== 'ready') await band.connect()
+          if (band.state !== 'ready') {
+            try {
+              await band.connect()
+            } catch (e) {
+              // The band sometimes drops the link right after it's chosen. Try once more with the same band (no chooser).
+              if (!band.hasDevice) throw e
+              band.addLog('info', 'connect failed, retrying once')
+              await new Promise((r) => setTimeout(r, 1500))
+              await band.connect({ reuse: true })
+            }
+          }
           const report = await syncBand(band, indexedDbBandStore)
           const w = await refreshBandData()
           const n = (r: string) => report.outcomes.filter((o) => o.result === r).length

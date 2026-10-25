@@ -102,6 +102,10 @@ export class BandSession {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private device: BluetoothDevice | null = null
+  /** Whether a band was chosen earlier, so connect({ reuse: true }) can skip the chooser. */
+  get hasDevice() {
+    return this.device != null
+  }
   private notifyChar: BluetoothRemoteGATTCharacteristic | null = null
   private writeChar: BluetoothRemoteGATTCharacteristic | null = null
   private stream = new CobsStream()
@@ -306,7 +310,7 @@ export class BandSession {
 
   private async writeRaw(bytes: Uint8Array): Promise<void> {
     const ch = this.writeChar
-    if (!ch) throw new Error('Not connected')
+    if (!ch) throw new Error('The band dropped the Bluetooth connection')
     const job = this.writeChain.then(async () => {
       const buf = bytes.slice().buffer
       if (ch.properties?.writeWithoutResponse && ch.writeValueWithoutResponse) await ch.writeValueWithoutResponse(buf)
