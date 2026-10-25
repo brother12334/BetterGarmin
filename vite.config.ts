@@ -15,6 +15,17 @@ function gitCommit(): string {
   }
 }
 
+// The last number counts commits, so every pushed update bumps it automatically (the deploy checks out full history).
+function appVersion(): string {
+  const [major, minor] = pkg.version.split('.')
+  try {
+    const n = execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    return `${major}.${minor}.${n}`
+  } catch {
+    return pkg.version
+  }
+}
+
 // Deployed to GitHub Pages at https://<user>.github.io/<repo>/. Paths are case-sensitive, so the base is
 // taken from the repo name in CI (forks under another name just work); BASE_PATH overrides it.
 const REPO_NAME = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'BetterGarmin'
@@ -44,7 +55,7 @@ const spaFallback = {
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? REPO_BASE : '/',
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(appVersion()),
     __APP_COMMIT__: JSON.stringify(gitCommit()),
     __APP_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
   },

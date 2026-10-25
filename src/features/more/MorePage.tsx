@@ -29,7 +29,10 @@ export function MorePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">More</h1>
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-bold">More</h1>
+        <span className="text-sm text-[var(--text-tertiary)]">v{__APP_VERSION__}</span>
+      </div>
 
       <Link to="/customize">
         <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">

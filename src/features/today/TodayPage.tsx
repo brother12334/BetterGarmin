@@ -86,6 +86,7 @@ export function TodayPage() {
     return (
       <div className="flex flex-col gap-6">
         <SyncBar />
+        <VersionTag />
         <LiveHeartRateCard />
         <Card className="text-center text-[var(--text-secondary)]">
           {hasGarmin
@@ -106,7 +107,12 @@ export function TodayPage() {
 
   const widgets: Record<WidgetId, ReactNode> = {
     hero: <ReadinessHero atTop={layout.find((w) => w.visible)?.id === 'hero'} formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
-    sync: <SyncBar />,
+    sync: (
+      <>
+        <SyncBar />
+        <VersionTag />
+      </>
+    ),
     training: <TrainingWidget />,
     heartRate: <LiveHeartRateCard />,
     bars: (
@@ -307,4 +313,8 @@ function SyncBar() {
       </Button>
     </div>
   )
+}
+
+function VersionTag() {
+  return <p className="-mt-4 text-xs text-[var(--text-tertiary)]">v{__APP_VERSION__}</p>
 }
