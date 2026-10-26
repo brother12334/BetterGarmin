@@ -121,9 +121,23 @@ describe('Firstbeat backup sleep summaries (message 411)', () => {
   it('counts steps across a counter reset that isn\'t at local midnight', () => {
     const w = emptyWellness()
     const t0 = new Date(2026, 9, 26, 9, 0).getTime()
-    // 100 → 300 (+200), reset → 50 (+50), → 80 (+30), all on the same local day.
+    // 100 (first sample, counted in full) → 300 (+200), reset → 50 (+50), → 80 (+30), all on the same local day.
     w.steps = [100, 300, 50, 80].map((total, i) => ({ t: t0 + i * 3600_000, type: 'walking', total }))
     const day = wellnessOverlays(w).garmin.statements.find((st) => st.sql.startsWith('UPDATE daily_summary'))!
-    expect(day.params[4]).toBe(280)
+    expect(day.params[4]).toBe(380)
+  })
+
+  it('doesn\'t read two files\' interleaved step counters as resets', () => {
+    const w = emptyWellness()
+    const t0 = new Date(2026, 9, 26, 9, 0).getTime()
+    // File 0 counts 100 → 400; file 1 has its own copy at 90 → 380. Interleaved, they'd zig-zag.
+    w.steps = [
+      { t: t0, type: 'walking', total: 100, src: 0 },
+      { t: t0 + 1, type: 'walking', total: 90, src: 1 },
+      { t: t0 + 3600_000, type: 'walking', total: 400, src: 0 },
+      { t: t0 + 3600_001, type: 'walking', total: 380, src: 1 },
+    ]
+    const day = wellnessOverlays(w).garmin.statements.find((st) => st.sql.startsWith('UPDATE daily_summary'))!
+    expect(day.params[4]).toBe(400)
   })
 })

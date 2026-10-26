@@ -74,18 +74,25 @@ function byDay(w: WellnessData): Map<string, DayStats> {
   for (const s of w.hr) get(s.t).hr.push(s.v)
   for (const s of w.bodyBattery) get(s.t).bb.push(s)
   for (const s of w.restingHr) get(s.t).rhr = s.v
-  // Step counters are cumulative per activity type and reset once a day, but at the band's own midnight, which needn't
-  // be the phone's (a freshly reset band can be on UTC). So count each sample's increase over the one before and give
-  // it to the sample's local day; a drop means the counter reset, and the new value is all new steps.
+  // Step counters are cumulative per activity type and reset once a day, at the band's own midnight, which needn't be
+  // the phone's. Within each file, count each sample's increase over the one before (a drop means the counter reset)
+  // and give it to the sample's local day; a file's first sample counts in full, since its counter starts at that
+  // reset. Different files can carry their own copies of the counters, so mixing them would read every switch between
+  // them as a reset: a day's steps are taken from whichever file accounts for the most.
+  const perSrc = new Map<string, Map<number, number>>() // day → src → steps
   const last = new Map<string, number>()
   for (const s of [...w.steps].sort((a, b) => a.t - b.t)) {
-    const prev = last.get(s.type)
-    last.set(s.type, s.total)
-    if (prev == null) continue // where the counter started from is unknown
-    const added = s.total >= prev ? s.total - prev : s.total
-    const d = get(s.t)
-    d.stepsByType.set(s.type, (d.stepsByType.get(s.type) ?? 0) + added)
+    const key = `${s.src ?? 0}:${s.type}`
+    const prev = last.get(key)
+    last.set(key, s.total)
+    const added = prev == null || s.total < prev ? s.total : s.total - prev
+    const day = localDay(s.t)
+    get(s.t)
+    let bySrc = perSrc.get(day)
+    if (!bySrc) perSrc.set(day, (bySrc = new Map()))
+    bySrc.set(s.src ?? 0, (bySrc.get(s.src ?? 0) ?? 0) + added)
   }
+  for (const [day, bySrc] of perSrc) days.get(day)!.stepsByType.set('all', Math.max(...bySrc.values()))
   return days
 }
 

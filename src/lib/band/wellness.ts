@@ -21,7 +21,7 @@ export interface WellnessData {
   bodyBattery: TimedValue[]
   hr: TimedValue[]
   /** Cumulative step counters per activity type, as the band logs them. */
-  steps: { t: number; type: string; total: number }[]
+  steps: { t: number; type: string; total: number; /** which file it came from, set when merging */ src?: number }[]
   restingHr: TimedValue[]
   sleepLevels: { t: number; stage: SleepStage | null }[]
   /** Overall sleep score, timed at the end of the file's sleep data. */
@@ -190,7 +190,8 @@ export function mergeWellness(parts: WellnessData[]): WellnessData {
     all.stress.push(...p.stress)
     all.bodyBattery.push(...p.bodyBattery)
     all.hr.push(...p.hr)
-    all.steps.push(...p.steps)
+    const src = parts.indexOf(p)
+    all.steps.push(...p.steps.map((x) => ({ ...x, src })))
     all.restingHr.push(...p.restingHr)
     all.sleepLevels.push(...p.sleepLevels)
     all.sleepScores.push(...p.sleepScores)
