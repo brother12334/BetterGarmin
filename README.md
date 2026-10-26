@@ -207,7 +207,9 @@ BetterGarmin.
     older file-directory read) are switched off.
   - BetterGarmin now **disconnects from the band after every sync**. It only
     reconnects on its own if the band drops in the middle of a sync, so it
-    can't hold the band and block Garmin Connect.
+    can't hold the band and block Garmin Connect. (Undone on October 26:
+    once the iPhone pairs the band it holds the link itself, so BetterGarmin
+    now stays connected after a sync instead. See troubleshooting.)
 - **Also tried:**
   - Garmin support's advice: removing the band from Garmin Connect and
     pairing it again. No change.
