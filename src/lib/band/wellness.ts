@@ -6,7 +6,7 @@ import { Decoder, Stream } from '@garmin/fitsdk'
  * Garmin's FIT SDK before anything is read from it.
  *
  * Body Battery isn't in the public FIT profile; on recent Garmin devices it rides in the stress_level message as
- * undocumented field 3 ("body energy", as decoded by Gadgetbridge). It's only accepted when it's a plausible 0–100.
+ * undocumented field 3 ("body energy", as decoded by Gadgetbridge). It's only accepted when it's a plausible 1–100.
  */
 
 export interface TimedValue {
@@ -115,7 +115,9 @@ export function decodeWellnessDetailed(raw: Uint8Array): WellnessDecode {
         const stress = num(m.stressLevelValue)
         if (stress != null) out.stress.push({ t, v: stress })
         const energy = num(m[3])
-        if (energy != null && energy >= 0 && energy <= 100) out.bodyBattery.push({ t, v: energy })
+        // 0 is skipped: seen on a real CIRQA right after a reset, while Garmin Connect said "Not enough data". It reads
+        // as "not measured yet", not as an empty battery.
+        if (energy != null && energy > 0 && energy <= 100) out.bodyBattery.push({ t, v: energy })
         return
       }
       case MESG.SLEEP_LEVEL: {
