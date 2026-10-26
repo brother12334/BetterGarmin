@@ -121,8 +121,8 @@ day of the band vanishing from Bluefy.
 5. In **Settings → Bluetooth → ⓘ → Apps allowed to connect**, turn
    **Connect** off to sync from BetterGarmin, then close Garmin Connect. On the
    tested iPhone only Connect was listed (Bluefy wasn't), yet syncing from
-   Bluefy worked after these steps. Whether it keeps working across later
-   syncs is still being checked.
+   Bluefy worked once after these steps, but on the next sync the band was
+   missing from the chooser again. So this gets one sync, not a lasting fix.
 
 Why the order seems to matter: when Garmin Connect alone had paired the band,
 iOS kept it connected in the background and Bluefy's chooser never showed it
