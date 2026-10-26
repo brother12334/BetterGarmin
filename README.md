@@ -28,8 +28,8 @@ Not affiliated with Garmin. Not medical advice.
 - **Strength training**: import workouts from **Element 26**. Each workout gets a heart-rate timeline lined up with your sets, recovery between sets, a correction tool and workout comparison.
 - **Insights**: findings that link training with sleep, resting HR and HRV, with sample sizes and evidence levels instead of overconfident claims. Also history charts, personal experiments, and an optional Gemini assistant that uses your own API key.
 - **Live heart rate**: straight from your watch over Bluetooth (Chrome/Edge; on iPhone, Safari with the beacio extension or Bluefy).
-- **Sync straight from the band**: **Sync now** downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. No Garmin Connect or Garmin cloud needed.
-- **Cloud sync** (optional backup): a scheduled job pulls from Garmin every 30 minutes, used when the band isn't nearby.
+- **Cloud sync** (default): **Sync now** refreshes the Garmin cloud copy that Garmin Connect uploads, and a scheduled job pulls it every 30 minutes.
+- **Sync straight from the band** (opt-in, More → Sync source): downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. On iPhone it's unreliable once iOS has paired the band (see [the open issue](#open-issue-band-missing-from-bluefy-after-the-reset-october-2026)), so it's off by default.
 - **Intelligence** (Insights → Intelligence): recovery momentum, an experimental illness radar, sleep timing and regularity, sleep debt and long-term trends, each compared with your own baseline, with its evidence and limits shown. See [docs/intelligence.md](docs/intelligence.md).
 - **Power tools**: units, goals, CSV export and an SQL console.
 
@@ -39,8 +39,8 @@ Not affiliated with Garmin. Not medical advice.
 | --- | --- |
 | Look around | Open the app and tap **Try demo mode**. |
 | Use my data privately | Run GarminDB on your computer and drop the `.db` files in. See [Getting your data](#getting-your-data). |
-| Sync from my band | Open the app in Bluefy (or Chrome/Edge) and tap **Sync now**. See [Syncing from the band](#syncing-from-the-band). |
-| Have a cloud backup | [Fork it and host your own copy](docs/self-hosting.md), then set up [cloud sync](docs/cloud-sync.md). |
+| Sync my data | [Fork it and host your own copy](docs/self-hosting.md), set up [cloud sync](docs/cloud-sync.md), then tap **Sync now**. |
+| Sync from my band directly | Open the app in Bluefy (or Chrome/Edge), set **More → Sync source** to **Band (Bluetooth)** and tap **Sync now**. See [Syncing from the band](#syncing-from-the-band). |
 | Fix a problem | See [troubleshooting](docs/troubleshooting.md). |
 
 ## Recommended setup (iPhone)
@@ -52,7 +52,7 @@ details and the alternatives.
 | --- | --- | --- |
 | **How to open the app** | A **Safari tab** with the beacio extension and the [Compact tab layout](#making-safari-look-like-an-app): live heart rate works and the address bar shrinks out of the way | Safari **Home Screen app** (always full screen, no live heart rate), [Bluefy or WebBLE](#choosing-a-browser-iphone) |
 | **Live heart rate over Bluetooth** | The **beacio** Safari extension in a Safari tab (the Home Screen app's **Open in Safari** button takes you there) | [Bluefy](#choosing-a-browser-iphone) |
-| **Getting your data in** | [**Sync now** straight from the band](#syncing-from-the-band) | [Cloud sync](docs/cloud-sync.md) backup, or [drop in GarminDB files](#getting-your-data) |
+| **Getting your data in** | [Cloud sync](docs/cloud-sync.md) with **Sync now** (the default sync source) | [Sync straight from the band](#syncing-from-the-band) (More → Sync source), or [drop in GarminDB files](#getting-your-data) |
 | **Look** | The **Glacier** preset (default) | 7 other presets in Customize |
 | **Clock and units** | Whatever your phone uses (default) | More → Clock / Units |
 
@@ -113,8 +113,9 @@ BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
   [docs/band-protocol.md](docs/band-protocol.md).
 - **Test band alert:** makes the band buzz (Find My Watch). It's a test, not a
   custom vibration or an alarm.
-- **Sync now** (Today, More, and the band card) is the main way data gets
-  in. It connects to the band, downloads new files, checks each one with
+- **Sync now** on Today refreshes the Garmin cloud copy by default. With
+  **More → Sync source** set to **Band (Bluetooth)**, or from the band card,
+  it connects to the band, downloads new files, checks each one with
   Garmin's FIT SDK and imports stress, energy (Body Battery), heart rate,
   steps, sleep stages and sleep score, plus activities. Files are never
   deleted or changed on the band, and nothing is imported twice. If the band
@@ -302,8 +303,7 @@ buttons.
 
 ### Keeping the cloud backup fresh (iPhone)
 
-Only needed for the optional cloud backup: **Sync now** reads straight from
-the band and doesn't depend on any of this. The cloud copy comes from
+The cloud copy is the default sync source, so this matters. The cloud copy comes from
 Garmin's servers, and only the Garmin Connect app moves data there, so it
 helps to keep Connect syncing in the background.
 

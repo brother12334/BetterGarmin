@@ -17,10 +17,12 @@ import { formatRelativeTime } from '../../lib/relativeTime'
 import { GoalsCard } from './GoalsCard'
 import { QuickExport } from './QuickExport'
 import { SqlConsole } from './SqlConsole'
+import { setSyncSource, useSyncSource } from '../../lib/syncSource'
 
 export function MorePage() {
   const { theme, setTheme } = useTheme()
   const { units, setUnits } = useUnits()
+  const syncSource = useSyncSource()
   const clock = useClockFormat()
   const fullscreen = useFullscreenPref()
   const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } = useData()
@@ -55,6 +57,21 @@ export function MorePage() {
               {t === 'light' && <SunIcon width={15} height={15} />}
               {t === 'dark' && <MoonIcon width={15} height={15} />}
               {t}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <p className="mb-1 font-semibold">Sync source</p>
+        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
+          What Sync now uses. The Garmin cloud copy works whenever Garmin Connect syncs your band. Direct band sync reads the band over
+          Bluetooth in Bluefy, but on iPhone the band often stops showing up in the device list once it's paired.
+        </p>
+        <div className="flex gap-2">
+          {(['cloud', 'band'] as const).map((src) => (
+            <Button key={src} variant={syncSource === src ? 'primary' : 'secondary'} onClick={() => setSyncSource(src)} className="flex-1">
+              {src === 'cloud' ? 'Garmin cloud copy' : 'Band (Bluetooth)'}
             </Button>
           ))}
         </div>

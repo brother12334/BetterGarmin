@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { sqliteClient } from '../db/client'
+import { getSyncSource } from '../lib/syncSource'
 import { cacheDbFile, clearCachedFiles, getCachedFiles } from '../db/cache'
 import { DB_KIND_INFO, type DbKind } from '../db/types'
 import { setSleepTimesUtc } from '../features/training/matchGarminActivity'
@@ -450,7 +451,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     let bandFailure: string | null = null
     try {
       // Primary: straight from the band over Bluetooth. connect() runs first, inside the tap, as the browser requires.
-      if (bluetooth) {
+      // The band is read directly only when chosen in More → Sync source (or when there's no cloud copy to use).
+      if (bluetooth && (opts.bandOnly || getSyncSource() === 'band' || !config)) {
         setGarminPull({ status: 'running', startedAt: new Date(), via: 'band' })
         try {
           if (band.state !== 'ready') {
