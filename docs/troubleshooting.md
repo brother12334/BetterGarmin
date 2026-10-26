@@ -106,55 +106,38 @@ Notes:
   isn't known, so BetterGarmin shows the browser's exact error text alongside
   these steps rather than calling it an authentication failure.
 
-### The band is missing from Bluefy and Bluefy isn't under "Apps allowed to connect"
+### Setting up the band so both Bluefy and Garmin Connect can use it
 
-Seen on the tested iPhone after resetting all data on the band. **Don't use
-Forget This Device for this.** It worked once, then the band hung up about a
-second after every connection and disappeared from iPhone Settings. The band
-kept its old pairing after the iPhone had dropped it.
+**Do this in this order.** Verified on the tested iPhone (October 26) after a
+day of the band vanishing from Bluefy.
 
-1. Turn Bluetooth on for Garmin Connect (iPhone **Settings → Garmin Connect**)
-   and let Connect pair with the band, re-adding the band in Connect if needed.
-2. In **Settings → Bluetooth**, tap ⓘ next to the band ("Garmin Device").
-3. Under **Apps allowed to connect**, turn **Connect** off and **Bluefy** on.
-4. Close Garmin Connect fully, then connect from BetterGarmin in Bluefy.
-5. If the band still isn't in Bluefy's chooser (even with **Show all
-   devices**), the iPhone itself may still be holding the band's connection.
-   On the tested iPhone this fixed it: restart the iPhone, then turn Bluetooth
-   off and on in **Settings → Bluetooth** (not Control Center), then connect
-   from Bluefy.
+1. **Settings → Bluetooth → ⓘ next to the band → Forget This Device**, and
+   remove the band in Garmin Connect.
+2. **Soft-reset the band:** hold its button for about 12 seconds.
+3. **Pair from Bluefy first:** in BetterGarmin tap **Sync now**, pick the band,
+   tap **Pair** when the iPhone asks, and let the sync finish.
+4. **Then add the band in Garmin Connect** (its Bluetooth switch on in
+   Settings → Garmin Connect).
+5. In **Settings → Bluetooth → ⓘ → Apps allowed to connect**, the list should
+   show Connect and Bluefy. To sync from BetterGarmin, turn **Connect** off
+   and leave **Bluefy** on, then close Garmin Connect.
 
-### The band disappears from Bluefy again after each sync
-
-Seen on the tested iPhone once the band had been paired again through Garmin
-Connect. iOS shows the band as **Connected** in Settings even with Connect
-switched off and closed, Bluefy closed, and **Share System Notifications**
-off. iOS reconnects to the paired band by itself, and a connected band stops
-advertising, so it isn't in Bluefy's chooser (not even with **Show all
-devices**). There's no Disconnect button for it in Settings.
-
-What works: **turn Bluetooth off and on in Settings → Bluetooth** (not Control
-Center) right before syncing, then tap **Sync now** in Bluefy straight away.
-BetterGarmin shows this hint when a sync can't reach the band.
-
-What fixed it on the tested iPhone (October 26):
-
-1. In **Settings → Bluetooth**, tap ⓘ next to the band → **Forget This Device**.
-2. In Garmin Connect, remove the band from your devices.
-3. Soft-reset the band: hold its button for about 12 seconds.
-4. Connect from BetterGarmin in Bluefy. The iPhone asks **"CIRQA Smart Band"
-   would like to pair with your iPhone**. Tap **Pair**. The sync then
-   completed.
-
-Without step 3 the band still remembered its old pairing and hung up about a
-second after connecting. Whether the band now stays visible to Bluefy across
-syncs is still being checked.
+Why the order matters: once Garmin Connect has registered the band, iOS keeps
+it connected in the background and seems to only let the apps under **Apps
+allowed to connect** see it. If Bluefy isn't in that list, the band never
+appears in Bluefy's chooser. Other devices still do. Restarting the phone or
+turning Bluetooth off and on doesn't change that. Bluefy only got into the
+list when it had paired with the band before Connect did.
 
 What didn't work:
 
-- Closing Bluefy and reopening it.
-- Connecting to the remembered band without the chooser (Web Bluetooth
-  `getDevices()`): Bluefy finds the band but every connection fails with
-  error `2`.
-- Forget This Device: the band keeps its old pairing and drops Bluefy's
-  connection (see above).
+- Pairing only through Garmin Connect: Bluefy never appears in **Apps allowed
+  to connect**.
+- Pairing only from Bluefy (no Garmin Connect): there's no **Apps allowed to
+  connect** list at all, and iOS holds the band as an ordinary accessory, so it
+  vanishes from Bluefy's chooser again.
+- **Forget This Device** without resetting the band: the band keeps its old
+  pairing and hangs up about a second after connecting.
+- Restarting the iPhone, turning Bluetooth off and on, closing Bluefy, or
+  connecting to the remembered band without the chooser (Bluefy error `2`).
+
