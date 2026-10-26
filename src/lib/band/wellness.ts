@@ -100,7 +100,10 @@ export function decodeWellnessDetailed(raw: Uint8Array): WellnessDecode {
         if (typeof m.activityType === 'string') lastActivity = m.activityType
         const hr = num(m.heartRate)
         if (hr != null && hr > 0 && hr < 255) out.hr.push({ t, v: hr })
-        const steps = num(m.steps) ?? (lastActivity === 'walking' || lastActivity === 'running' ? num(m.cycles) : null)
+        // Only the steps subfield, which the SDK resolves when the message itself says walking or running. Falling back
+        // to cycles under an activity type carried over from an earlier message mixed in other counters (half-step
+        // values), which read as counter resets and tripled the day's steps on a real CIRQA (3300.5 vs 891).
+        const steps = num(m.steps)
         if (steps != null) out.steps.push({ t, type: lastActivity, total: steps })
         return
       }
