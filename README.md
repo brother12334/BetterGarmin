@@ -241,8 +241,8 @@ After the reset, the CIRQA kept vanishing from Bluefy's device chooser. Fixed
 on October 26 by setting the band up again **in this order**: forget it in
 iPhone Settings and remove it from Garmin Connect, soft-reset the band (hold the
 button about 12 seconds), **pair from Bluefy first**, then add it in Garmin
-Connect. Under the band's **Apps allowed to connect**, turn Connect off and
-leave Bluefy on to sync from BetterGarmin. Step by step in
+Connect. To sync from BetterGarmin, turn Connect off under the band's **Apps
+allowed to connect** (Bluefy isn't listed there) and close Connect. Step by step in
 [troubleshooting](docs/troubleshooting.md).
 
 ## How it works
