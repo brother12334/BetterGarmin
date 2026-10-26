@@ -152,11 +152,11 @@ jobs:
               "rhr_start_date": "$START",
               "hrv_start_date": "$START",
               "monitoring_start_date": "$START",
-              "download_latest_activities": 25,
+              "download_latest_activities": 3,
               "download_all_activities": 1000
             },
             "directories": { "relative_to_home": true, "base_dir": "HealthData", "mount_dir": "/Volumes/GARMIN" },
-            "enabled_stats": { "monitoring": true, "steps": true, "itime": true, "sleep": true, "rhr": true, "hrv": true, "weight": true, "activities": true },
+            "enabled_stats": { "monitoring": true, "steps": true, "itime": true, "sleep": true, "rhr": true, "hrv": true, "weight": false, "activities": true },
             "course_views": { "steps": [] },
             "modes": {},
             "activities": { "display": [] },
@@ -176,11 +176,14 @@ jobs:
             exit 1
           fi
 
+      # Kept fast for Sync now: only the 3 newest activities are re-fetched each run (it runs every 30 minutes, so
+      # nothing is missed), weight is off (no scale), and --analyze is skipped because its rollup databases
+      # (garmin_summary.db, summary.db) aren't used by the app. The first full sync above still analyzes.
       - name: Run GarminDB (incremental sync)
         if: steps.check.outputs.ready == 'true' && env.first_run == 'false'
         run: |
           set -o pipefail
-          garmindb_cli.py --all --download --import --analyze --latest 2>&1 | tee /tmp/garmindb.log
+          garmindb_cli.py --all --download --import --latest 2>&1 | tee /tmp/garmindb.log
           # GarminDB exits 0 even when it can't log in — never let that pass as a successful sync.
           if grep -q "Failed to login" /tmp/garmindb.log; then
             echo "::error::Garmin Connect login failed. Check GARMIN_USERNAME / GARMIN_PASSWORD. Accounts with two-step verification can't be used by this automated login."

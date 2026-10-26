@@ -52,7 +52,7 @@ const CLOUD_CONFIG_KEY = 'bettergarmin:cloudConfig'
 const CLOUD_MANIFEST_KEY = 'bettergarmin:cloudManifest'
 const CLOUD_POLL_INTERVAL_MS = 5 * 60 * 1000
 const LAST_SYNCED_KEY = 'bettergarmin:lastSynced'
-const PULL_POLL_MS = 5000
+const PULL_POLL_MS = 3000
 const PULL_TIMEOUT_MS = 6 * 60 * 1000
 const PENDING_PULL_KEY = 'bettergarmin:pendingPull'
 
@@ -165,6 +165,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       for (const file of files) {
         const unchanged = !opts.force && known[file.name] === file.lastModified
         if (unchanged) continue
+        // GarminDB's rollup databases aren't used by any screen, so skip downloading them.
+        if (/(^|\/)(garmin_)?summary\.db$/.test(file.name)) continue
         const buffer = await fetchCloudFile(config, file.name)
         const { kind } = await sqliteClient.loadFile(file.name, buffer)
         if (kind) {
