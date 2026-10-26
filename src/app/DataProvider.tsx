@@ -492,7 +492,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           setGarminPull(n('failed') && !w?.files ? { status: 'error', message: bandNote } : { status: 'idle', note: bandNote })
           return
         } catch (err) {
-          const why = err instanceof Error ? err.message : String(err)
+          // On a paired iPhone, iOS reconnects to the band by itself and holds it, so it stops advertising and Bluefy
+          // can't see it. Turning Bluetooth off and on in Settings frees it.
+          const why = `${err instanceof Error ? err.message : String(err)}. If the band isn't in the list, turn Bluetooth off and on in iPhone Settings, then sync again`
           if (!config || !navigator.onLine || opts.bandOnly) throw new Error(`Couldn't sync from the band: ${why}`)
           // Band unreachable: use the cloud copy, but say so.
           bandFailure = why
