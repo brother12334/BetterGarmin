@@ -118,3 +118,8 @@ kept its old pairing after the iPhone had dropped it.
 2. In **Settings → Bluetooth**, tap ⓘ next to the band ("Garmin Device").
 3. Under **Apps allowed to connect**, turn **Connect** off and **Bluefy** on.
 4. Close Garmin Connect fully, then connect from BetterGarmin in Bluefy.
+5. If the band still isn't in Bluefy's chooser (even with **Show all
+   devices**), the iPhone itself may still be holding the band's connection.
+   On the tested iPhone this fixed it: restart the iPhone, then turn Bluetooth
+   off and on in **Settings → Bluetooth** (not Control Center), then connect
+   from Bluefy.
