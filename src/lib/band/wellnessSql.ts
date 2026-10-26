@@ -39,6 +39,7 @@ const GARMIN_SCHEMA = `
     rem_sleep TEXT, awake TEXT, avg_spo2 REAL, avg_rr REAL, avg_stress REAL, score INTEGER, qualifier TEXT);
   CREATE TABLE IF NOT EXISTS sleep_events (timestamp TEXT PRIMARY KEY, event TEXT, duration TEXT);
   CREATE TABLE IF NOT EXISTS resting_hr (day TEXT PRIMARY KEY, resting_heart_rate REAL);
+  CREATE TABLE IF NOT EXISTS band_energy (timestamp TEXT PRIMARY KEY, value INTEGER);
   CREATE TABLE IF NOT EXISTS band_daily (day TEXT PRIMARY KEY, wake_energy INTEGER, energy_now INTEGER);
   CREATE TABLE IF NOT EXISTS hrv (day TEXT PRIMARY KEY, weekly_avg INTEGER, last_night_avg INTEGER, last_night_5min_high INTEGER,
     baseline_low INTEGER, baseline_upper INTEGER, status TEXT);
@@ -129,6 +130,7 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
   const g: SqlStatement[] = []
   const m: SqlStatement[] = []
 
+  for (const s of w.bodyBattery) g.push({ sql: 'INSERT OR REPLACE INTO band_energy (timestamp, value) VALUES (?, ?)', params: [localTs(s.t), s.v] })
   for (const s of w.stress) g.push({ sql: 'INSERT OR REPLACE INTO stress (timestamp, stress) VALUES (?, ?)', params: [localTs(s.t), s.v] })
   for (const s of w.spo2) m.push({ sql: 'INSERT OR REPLACE INTO monitoring_pulse_ox (timestamp, pulse_ox) VALUES (?, ?)', params: [localTs(s.t), s.v] })
   for (const s of w.hr) m.push({ sql: 'INSERT OR REPLACE INTO monitoring_hr (timestamp, heart_rate) VALUES (?, ?)', params: [localTs(s.t), s.v] })

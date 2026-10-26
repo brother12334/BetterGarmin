@@ -31,6 +31,7 @@ Not affiliated with Garmin. Not medical advice.
 - **Cloud sync** (default): **Sync now** refreshes the Garmin cloud copy that Garmin Connect uploads, and a scheduled job pulls it every 30 minutes.
 - **Sync straight from the band** (opt-in, More → Sync source): downloads stress, energy, heart rate, steps, sleep and activities from your Garmin band over Bluetooth. On iPhone it's unreliable once iOS has paired the band (see [the open issue](#open-issue-band-missing-from-bluefy-after-the-reset-october-2026)), so it's off by default.
 - **Intelligence** (Insights → Intelligence): recovery momentum, an experimental illness radar, sleep timing and regularity, sleep debt and long-term trends, each compared with your own baseline, with its evidence and limits shown. See [docs/intelligence.md](docs/intelligence.md).
+- **Energy forecast** (Today): where your energy (Body Battery) is likely to be for the rest of the day, from how it changed after this hour on your own past days, shown as a typical line with a range. Needs at least 5 past days of band readings; it can't know what you'll do, so it's a likely range, not an exact figure.
 - **Power tools**: units, goals, CSV export and an SQL console.
 
 ## Quick start

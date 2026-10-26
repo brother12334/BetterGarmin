@@ -8,6 +8,7 @@ export const TODAY_WIDGETS = [
   { id: 'heartRate', label: 'Heart rate' },
   { id: 'bars', label: 'Sleep / Stress / Energy bars' },
   { id: 'energy', label: 'Energy Reserve curve' },
+  { id: 'forecast', label: 'Energy forecast' },
   { id: 'stats', label: 'Steps, floors, calories, distance' },
   { id: 'lastNight', label: 'How you slept (sleep stages)' },
   { id: 'insights', label: "Today's insights" },

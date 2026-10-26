@@ -25,6 +25,7 @@ import { useReadiness } from './useReadiness'
 import { useEnergyReserve } from './useEnergyReserve'
 import { TrainingWidget } from './TrainingWidget'
 import { EnergyReserveCard } from './EnergyReserveCard'
+import { EnergyForecastCard } from './EnergyForecastCard'
 import { STATUS_COLORS, STATUS_LABELS, statusForInverseScore, statusForScore } from '../../lib/statusWords'
 
 interface TodayData {
@@ -152,6 +153,7 @@ export function TodayPage() {
         />
       </Card>
     ),
+    forecast: <EnergyForecastCard day={data.day} />,
     energy: <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />,
     stats: (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -60,6 +60,15 @@ export async function getLatestSleepDay(): Promise<string | null> {
   return rows[0]?.day ?? null
 }
 
+/** The band's energy (Body Battery) readings since a day, oldest first. */
+export async function getBandEnergySince(day: string): Promise<{ timestamp: string; value: number }[]> {
+  try {
+    return await sqliteClient.query<{ timestamp: string; value: number }>('garmin', 'SELECT timestamp, value FROM band_energy WHERE timestamp >= ? ORDER BY timestamp', [day])
+  } catch {
+    return [] // no band data loaded
+  }
+}
+
 /** The latest Body Battery level the band recorded that day. */
 export async function getBandEnergyNow(day: string): Promise<number | null> {
   try {
