@@ -74,10 +74,17 @@ function byDay(w: WellnessData): Map<string, DayStats> {
   for (const s of w.hr) get(s.t).hr.push(s.v)
   for (const s of w.bodyBattery) get(s.t).bb.push(s)
   for (const s of w.restingHr) get(s.t).rhr = s.v
-  // Step counters are cumulative per activity type and reset at midnight: a day's total is the sum of each type's peak.
-  for (const s of w.steps) {
+  // Step counters are cumulative per activity type and reset once a day, but at the band's own midnight, which needn't
+  // be the phone's (a freshly reset band can be on UTC). So count each sample's increase over the one before and give
+  // it to the sample's local day; a drop means the counter reset, and the new value is all new steps.
+  const last = new Map<string, number>()
+  for (const s of [...w.steps].sort((a, b) => a.t - b.t)) {
+    const prev = last.get(s.type)
+    last.set(s.type, s.total)
+    if (prev == null) continue // where the counter started from is unknown
+    const added = s.total >= prev ? s.total - prev : s.total
     const d = get(s.t)
-    d.stepsByType.set(s.type, Math.max(d.stepsByType.get(s.type) ?? 0, s.total))
+    d.stepsByType.set(s.type, (d.stepsByType.get(s.type) ?? 0) + added)
   }
   return days
 }

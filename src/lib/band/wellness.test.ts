@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Encoder, Profile } from '@garmin/fitsdk'
-import { decodeWellness } from './wellness'
+import { decodeWellness, emptyWellness } from './wellness'
 import { crc16Arc } from './crc'
 import { nights, wellnessOverlays } from './wellnessSql'
 
@@ -116,5 +116,14 @@ describe('Firstbeat backup sleep summaries (message 411)', () => {
       [10, 4, start],
     ])
     expect(decodeWellness(bad)?.fbtNights ?? []).toEqual([])
+  })
+
+  it('counts steps across a counter reset that isn\'t at local midnight', () => {
+    const w = emptyWellness()
+    const t0 = new Date(2026, 9, 26, 9, 0).getTime()
+    // 100 → 300 (+200), reset → 50 (+50), → 80 (+30), all on the same local day.
+    w.steps = [100, 300, 50, 80].map((total, i) => ({ t: t0 + i * 3600_000, type: 'walking', total }))
+    const day = wellnessOverlays(w).garmin.statements.find((st) => st.sql.startsWith('UPDATE daily_summary'))!
+    expect(day.params[4]).toBe(280)
   })
 })

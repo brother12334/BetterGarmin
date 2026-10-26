@@ -146,7 +146,7 @@ export function DetailChart({
         const pts = pointsOf(s)
         const color = seriesColor(s, pts)
         const data = bucket(pts, HOUR)
-        return { type: 'bar', data, barWidth: '70%', itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
+        return { type: 'bar', data, barWidth: '70%', barMaxWidth: 10, itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
       })
     : allSeries
 
@@ -161,11 +161,10 @@ export function DetailChart({
       minInterval: Math.max(1, Math.ceil(((active?.to ?? max) - (active?.from ?? min)) / DAY / 4)) * DAY,
     }),
     ...(intraday && {
-      // Whole hours only ("6 AM"), spaced so labels never collide.
-      // Ticks every 2 hours, labelled only at 6 AM, 12 PM and 6 PM so the times never crowd.
+      // Ticks every 2 hours, labelled only at 6a, 12p and 6p (short, so they fit on a phone).
       minInterval: 2 * HOUR,
       maxInterval: 2 * HOUR,
-      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => ([6, 12, 18].includes(new Date(v).getHours()) ? new Date(v).toLocaleTimeString([], { hour: 'numeric' }) : '') },
+      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => ({ 6: '6a', 12: '12p', 18: '6p' } as Record<number, string>)[new Date(v).getHours()] ?? '' },
     }),
   }
   const grid = intraday ? { ...(rest.grid as object), left: 8, right: 24, containLabel: true } : rest.grid
