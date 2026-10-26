@@ -102,7 +102,6 @@ export class BandSession {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private device: BluetoothDevice | null = null
-  private skipKnown = false
   /** Whether a band was chosen earlier, so connect({ reuse: true }) can skip the chooser. */
   get hasDevice() {
     return this.device != null
@@ -177,11 +176,9 @@ export class BandSession {
     this.configAcked = deferred<void>()
     this.stream.reset()
     this.setState('connecting')
-    let fromKnown = false
     try {
       const optionalServices = [BAND_UUIDS.MULTILINK_SERVICE, BAND_UUIDS.HEART_RATE_SERVICE, 'battery_service']
-      const reuse = opts.reuse && this.device ? this.device : (!opts.showAll && !this.skipKnown && (await this.knownBand())) || null
-      fromKnown = !!reuse && !opts.reuse
+      const reuse = opts.reuse && this.device ? this.device : null
       this.device = reuse ?? await navigator.bluetooth.requestDevice(
         opts.showAll
           ? { acceptAllDevices: true, optionalServices }
@@ -219,7 +216,6 @@ export class BandSession {
       this.setState('handshaking')
       await timeout(this.configAcked.promise, 20_000, 'the band to finish the handshake')
       this.setState('ready')
-      this.skipKnown = false
       this.addLog('info', 'session ready')
       void this.readBattery(server)
     } catch (err) {
@@ -228,29 +224,9 @@ export class BandSession {
       const message = err instanceof Error ? err.message : String(err)
       this.error = { message: message || raw, raw }
       this.addLog('error', raw)
-      // A remembered band that won't connect: open the normal chooser on the next tap.
-      if (fromKnown) this.skipKnown = true
       this.cleanup()
       this.setState('error')
       throw err
-    }
-  }
-
-  /**
-   * A band this site was allowed to use before, if the browser supports getDevices(). This can reach a band the iPhone
-   * is still holding a connection to, which stops advertising and so never appears in the chooser.
-   */
-  private async knownBand(): Promise<BluetoothDevice | null> {
-    const bt = navigator.bluetooth as Bluetooth & { getDevices?: () => Promise<BluetoothDevice[]> }
-    if (typeof bt.getDevices !== 'function') return null
-    try {
-      const devices = await bt.getDevices()
-      const band = devices.find((d) => d.name?.startsWith('CIRQA')) ?? null
-      this.addLog('info', band ? 'found the band chosen before' : `getDevices: ${devices.length} known, no band`)
-      return band
-    } catch (e) {
-      this.addLog('info', `getDevices failed: ${e instanceof Error ? e.message : String(e)}`)
-      return null
     }
   }
 
