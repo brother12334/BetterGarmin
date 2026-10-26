@@ -11,7 +11,7 @@ import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
-import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, getBandWakeEnergy } from '../../db/queries'
+import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, getBandWakeEnergy, getBandEnergyNow } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
 import { useData } from '../../app/DataProvider'
@@ -33,6 +33,7 @@ interface TodayData {
   sleep: SleepRow | null
   /** Body Battery on waking from the band, used when Garmin's daily figure isn't available. */
   wakeEnergy: number | null
+  energyNow: number | null
   hrv: HrvRow | null
 }
 
@@ -68,9 +69,9 @@ export function TodayPage() {
       const latestSleep = await getLatestSleepDay()
       // Last night from the band can be newer than the rest of the data: show it rather than an older night.
       const sleepDay = latestSleep && latestSleep > day ? latestSleep : day
-      const [summary, sleep, hrv, wakeEnergy] = await Promise.all([getDailySummary(day), getSleep(sleepDay), getHrv(sleepDay), getBandWakeEnergy(sleepDay)])
+      const [summary, sleep, hrv, wakeEnergy, energyNow] = await Promise.all([getDailySummary(day), getSleep(sleepDay), getHrv(sleepDay), getBandWakeEnergy(sleepDay), getBandEnergyNow(day)])
       if (!cancelled) {
-        setData({ day, summary, sleep, hrv, wakeEnergy })
+        setData({ day, summary, sleep, hrv, wakeEnergy, energyNow })
         setLoading(false)
       }
     }
@@ -105,6 +106,13 @@ export function TodayPage() {
     day: 'numeric',
   })
 
+  // The band's latest level first; then the level on waking. bb_charged (how much it charged) is only a last resort.
+  const energyTile =
+    data.energyNow != null
+      ? { label: 'Energy now', value: data.energyNow }
+      : data.wakeEnergy != null
+        ? { label: 'Energy at wake', value: data.wakeEnergy }
+        : { label: 'Energy', value: summary?.bb_charged || null }
   const widgets: Record<WidgetId, ReactNode> = {
     hero: <ReadinessHero atTop={layout.find((w) => w.visible)?.id === 'hero'} formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
     sync: (
@@ -135,12 +143,12 @@ export function TodayPage() {
         />
         <RangeBar
           // A missing or zero cloud figure (the cloud copy stops updating while Garmin Connect is off) yields to the band.
-          label={!summary?.bb_charged && data.wakeEnergy != null ? 'Energy at wake' : 'Energy'}
-          value={!summary?.bb_charged && data.wakeEnergy != null ? data.wakeEnergy : (summary?.bb_charged ?? null)}
-          status={statusForScore(!summary?.bb_charged && data.wakeEnergy != null ? data.wakeEnergy : summary?.bb_charged, [30, 50, 75])}
+          label={energyTile.label}
+          value={energyTile.value}
+          status={statusForScore(energyTile.value, [30, 50, 75])}
           color={METRIC_COLORS.energy.solid}
           infoTitle="Energy Reserve (Garmin Body Battery)"
-          infoDescription="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. “Energy at wake” is the level your band recorded when you woke up, read from its morning report. See the curve below for BetterGarmin's own estimated intraday trace."
+          infoDescription="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. “Energy now” is the latest level your band recorded; “Energy at wake” is the level it recorded when you woke up, read from its morning report. See the curve below for BetterGarmin's own estimated intraday trace."
         />
       </Card>
     ),

@@ -39,7 +39,7 @@ const GARMIN_SCHEMA = `
     rem_sleep TEXT, awake TEXT, avg_spo2 REAL, avg_rr REAL, avg_stress REAL, score INTEGER, qualifier TEXT);
   CREATE TABLE IF NOT EXISTS sleep_events (timestamp TEXT PRIMARY KEY, event TEXT, duration TEXT);
   CREATE TABLE IF NOT EXISTS resting_hr (day TEXT PRIMARY KEY, resting_heart_rate REAL);
-  CREATE TABLE IF NOT EXISTS band_daily (day TEXT PRIMARY KEY, wake_energy INTEGER);
+  CREATE TABLE IF NOT EXISTS band_daily (day TEXT PRIMARY KEY, wake_energy INTEGER, energy_now INTEGER);
   CREATE TABLE IF NOT EXISTS hrv (day TEXT PRIMARY KEY, weekly_avg INTEGER, last_night_avg INTEGER, last_night_5min_high INTEGER,
     baseline_low INTEGER, baseline_upper INTEGER, status TEXT);
   CREATE TABLE IF NOT EXISTS daily_summary (day TEXT PRIMARY KEY, hr_min INTEGER, hr_max INTEGER, rhr INTEGER, stress_avg INTEGER,
@@ -127,6 +127,12 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
     let charged = 0
     for (let i = 1; i < d.bb.length; i++) charged += Math.max(0, d.bb[i].v - d.bb[i - 1].v)
     const steps = d.stepsByType.size ? [...d.stepsByType.values()].reduce((a, b) => a + b, 0) : null
+    // The day's latest Body Battery reading: the level to show as "now" (bb_charged is how much it charged, not a level).
+    const latest = d.bb.reduce<{ t: number; v: number } | null>((a, b) => (!a || b.t > a.t ? b : a), null)
+    if (latest) {
+      g.push({ sql: 'INSERT OR IGNORE INTO band_daily (day) VALUES (?)', params: [day] })
+      g.push({ sql: 'UPDATE band_daily SET energy_now = ? WHERE day = ?', params: [latest.v, day] })
+    }
     g.push({ sql: 'INSERT OR IGNORE INTO daily_summary (day) VALUES (?)', params: [day] })
     g.push({
       sql: `UPDATE daily_summary SET stress_avg = COALESCE(?, stress_avg), hr_min = COALESCE(?, hr_min), hr_max = COALESCE(?, hr_max),
@@ -161,7 +167,8 @@ export function wellnessOverlays(w: WellnessData): { garmin: Overlay; monitoring
   // Wake-up energy: kept apart from Garmin's daily high/low so it's never mistaken for them.
   for (const e of w.wakeEnergy) {
     const day = localDay(e.t)
-    g.push({ sql: 'INSERT OR REPLACE INTO band_daily (day, wake_energy) VALUES (?, ?)', params: [day, e.v] })
+    g.push({ sql: 'INSERT OR IGNORE INTO band_daily (day) VALUES (?)', params: [day] })
+    g.push({ sql: 'UPDATE band_daily SET wake_energy = ? WHERE day = ?', params: [e.v, day] })
   }
 
   for (const h of w.hrvSummaries) {
