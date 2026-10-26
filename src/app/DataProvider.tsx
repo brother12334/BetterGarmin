@@ -454,14 +454,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setGarminPull({ status: 'running', startedAt: new Date(), via: 'band' })
         try {
           if (band.state !== 'ready') {
-            try {
-              await band.connect()
-            } catch (e) {
-              // The band sometimes drops the link right after it's chosen. Try once more with the same band (no chooser).
-              if (!band.hasDevice) throw e
-              band.addLog('info', 'connect failed, retrying once')
-              await new Promise((r) => setTimeout(r, 1500))
-              await band.connect({ reuse: true })
+            // A band chosen earlier in this visit: reconnect to it directly, since a paired band may not be in the chooser.
+            let reused = false
+            if (band.hasDevice) {
+              try {
+                await band.connect({ reuse: true })
+                reused = true
+              } catch {
+                band.addLog('info', 'reconnect failed, opening the chooser')
+              }
+            }
+            if (!reused) {
+              try {
+                await band.connect()
+              } catch (e) {
+                // The band sometimes drops the link right after it's chosen. Try once more with the same band (no chooser).
+                if (!band.hasDevice) throw e
+                band.addLog('info', 'connect failed, retrying once')
+                await new Promise((r) => setTimeout(r, 1500))
+                await band.connect({ reuse: true })
+              }
             }
           }
           const report = await syncBand(band, indexedDbBandStore)

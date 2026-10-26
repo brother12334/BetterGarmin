@@ -153,8 +153,9 @@ describe('direct sync against a simulated band', () => {
     expect(closes).toEqual([{ service: 0x2018, handle: 0x80 }])
     expect(first.nextTransactionId).toBe(98)
 
-    // The band is released after every sync, so the next sync connects again.
-    expect(session.state).toBe('disconnected')
+    // The band stays connected after a sync.
+    expect(session.state).toBe('ready')
+    session.disconnect()
     await connected({ files: [{ ms: MS, ls: LS, bytes: fit }] })
     const second = await syncBand(session, store)
     expect(second.outcomes.map((o) => o.result)).toEqual(['skipped-duplicate'])

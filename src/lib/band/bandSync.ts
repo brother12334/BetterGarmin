@@ -334,7 +334,8 @@ export async function syncBand(session: BandSession, store: BandFileStore, onPro
   try {
     return await syncBandInner(session, store, onProgress)
   } finally {
+    // Stays connected: once iOS has paired the band it holds the link itself, so the band stops advertising and a
+    // later sync could only find it again after Bluetooth is turned off and on.
     session.busy = false
-    session.disconnect()
   }
 }
