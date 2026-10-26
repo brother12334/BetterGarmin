@@ -137,6 +137,19 @@ What works: **turn Bluetooth off and on in Settings → Bluetooth** (not Control
 Center) right before syncing, then tap **Sync now** in Bluefy straight away.
 BetterGarmin shows this hint when a sync can't reach the band.
 
+What fixed it on the tested iPhone (October 26):
+
+1. In **Settings → Bluetooth**, tap ⓘ next to the band → **Forget This Device**.
+2. In Garmin Connect, remove the band from your devices.
+3. Soft-reset the band: hold its button for about 12 seconds.
+4. Connect from BetterGarmin in Bluefy. The iPhone asks **"CIRQA Smart Band"
+   would like to pair with your iPhone**. Tap **Pair**. The sync then
+   completed.
+
+Without step 3 the band still remembered its old pairing and hung up about a
+second after connecting. Whether the band now stays visible to Bluefy across
+syncs is still being checked.
+
 What didn't work:
 
 - Closing Bluefy and reopening it.
