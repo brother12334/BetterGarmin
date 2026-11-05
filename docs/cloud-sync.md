@@ -52,7 +52,8 @@ still stay on the free plan.
 ## How it works
 
 1. A GitHub Actions workflow (`.github/workflows/sync-garmin-data.yml`) runs
-   on a schedule (every 30 minutes by default). It restores your last synced database
+   every 15 minutes, started by the Worker's Cron Trigger (GitHub's own
+   schedule is kept as a backup but often runs hours late). It restores your last synced database
    files from R2, runs the real `garmindb_cli.py --latest` to pull anything
    new from Garmin Connect, and uploads the updated files back to R2.
 2. A small Cloudflare Worker (`worker/`) sits in front of that R2 bucket. It
@@ -191,11 +192,36 @@ If you deploy with wrangler instead, edit `GITHUB_REPO`, `GITHUB_REF` (and
 
 The token can only start workflows in that one repo; it never reaches the app.
 
+## Automatic sync every 15 minutes (recommended)
+
+GitHub's own schedule for the workflow is unreliable: on the test repo it ran
+only every 4–8 hours instead of every 30 minutes. A Cloudflare Cron Trigger on
+the Worker starts the sync on time instead, even when the app is closed. It
+uses the same `GITHUB_TOKEN` as Sync now, so set that up first.
+
+- **Dashboard:** paste the latest `worker/dashboard-worker.js` into the
+  Worker's editor and **Deploy**. Then your Worker → **Settings → Triggers →
+  Cron Triggers → Add** → **Cron expression** `*/15 * * * *` → Add.
+- **wrangler:** `worker/wrangler.toml` already has the trigger; run
+  `npx wrangler deploy`.
+
+To check it works: GitHub → **Actions → Sync Garmin data** should show a new
+`workflow_dispatch` run about every 15 minutes.
+
+Each run reuses Garmin's login token from the run before (kept in your R2
+bucket under `auth/`, which the Worker never serves), so frequent runs don't
+mean a password login every time. Garmin can flag accounts that log in too
+often; if a run's log shows login failures or HTTP 429, slow the trigger to
+`*/30 * * * *`.
+
+The cloud copy can only be as fresh as Garmin's servers: the band's data gets
+there when the Garmin Connect app syncs it, so keep Connect allowed to use the
+band and running in the background.
+
 ## Changing the sync frequency
 
-Edit the `cron` line in `.github/workflows/sync-garmin-data.yml`. The default
-is every 30 minutes. Garmin can flag accounts that authenticate too often, so avoid
-going much tighter than every 15–30 minutes.
+Change the Worker's Cron Trigger (above). The `cron` line in
+`.github/workflows/sync-garmin-data.yml` is only a backup.
 
 ## Turning it off
 

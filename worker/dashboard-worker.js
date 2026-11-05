@@ -113,4 +113,10 @@ export default {
 
     return new Response('Not found', { status: 404, headers })
   },
+
+  // Cron Trigger (every 15 minutes, see docs/cloud-sync.md): starts the sync workflow on time. GitHub's own schedule
+  // is unreliable and on this repo often ran only every few hours.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(startGarminSync(env, {}))
+  },
 }

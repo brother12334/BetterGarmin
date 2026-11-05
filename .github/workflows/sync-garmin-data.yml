@@ -12,9 +12,8 @@ name: Sync Garmin data
 
 on:
   schedule:
-    # Every 30 minutes (the app's "Sync now" button covers anything sooner).
-    # Garmin Connect can flag accounts that log in too often — don't go much
-    # tighter than this. GitHub may also delay or skip scheduled runs when busy.
+    # Backup only: the Cloudflare Worker's Cron Trigger starts this every 15 minutes (see docs/cloud-sync.md).
+    # GitHub delays or skips scheduled runs when busy; on this repo it often ran only every few hours.
     - cron: '17,47 * * * *'
   workflow_dispatch:
 
@@ -165,6 +164,13 @@ jobs:
           }
           CONFIG
 
+      # Reuse Garmin's login token from the last run, so a run every 15 minutes doesn't mean a fresh password login
+      # each time (Garmin can block accounts that log in too often). Kept in R2 under auth/, which the Worker never
+      # serves. GarminDB falls back to the password if the token has expired.
+      - name: Restore Garmin login token
+        if: steps.check.outputs.ready == 'true'
+        run: aws --endpoint-url "$R2_ENDPOINT" s3 cp "s3://$R2_BUCKET/auth/garmin_tokens.json" ~/.GarminDb/garmin_tokens.json --only-show-errors || echo "No saved token yet; logging in with the password."
+
       - name: Run GarminDB (first-time full sync)
         if: steps.check.outputs.ready == 'true' && env.first_run == 'true'
         run: |
@@ -227,6 +233,11 @@ jobs:
             exit 1
           fi
           aws --endpoint-url "$R2_ENDPOINT" s3 sync "$DB_DIR" "s3://$R2_BUCKET/DBs" --delete
+
+      - name: Save Garmin login token
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          [ -f ~/.GarminDb/garmin_tokens.json ] && aws --endpoint-url "$R2_ENDPOINT" s3 cp ~/.GarminDb/garmin_tokens.json "s3://$R2_BUCKET/auth/garmin_tokens.json" --only-show-errors || true
 
       - name: Clean up credentials
         if: always()
