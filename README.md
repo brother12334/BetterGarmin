@@ -40,36 +40,50 @@ Not affiliated with Garmin. Not medical advice.
 | --- | --- |
 | Look around | Open the app and tap **Try demo mode**. |
 | Use my data privately | Run GarminDB on your computer and drop the `.db` files in. See [Getting your data](#getting-your-data). |
-| Sync my data | [Fork it and host your own copy](docs/self-hosting.md), set up [cloud sync](docs/cloud-sync.md), then tap **Sync now**. |
-| Sync from my band directly | Open the app in Bluefy (or Chrome/Edge), set **More → Sync source** to **Band (Bluetooth)** and tap **Sync now**. See [Syncing from the band](#syncing-from-the-band). |
+| Use it on iPhone (recommended) | Open the app in Safari, tap **Share → Add to Home Screen**, set up [cloud sync](docs/cloud-sync.md), and open it from the Home Screen. See [Recommended setup](#recommended-setup-iphone). |
+| Sync my data | [Fork it and host your own copy](docs/self-hosting.md), set up [cloud sync](docs/cloud-sync.md); it then syncs every 15 minutes, and **Sync now** refreshes on demand. |
 | Fix a problem | See [troubleshooting](docs/troubleshooting.md). |
 
 ## Recommended setup (iPhone)
 
-Not sure what to pick? Do these and you're done. Each one links to the
-details and the alternatives.
+**Use the Safari Home Screen app with cloud sync.** That's the primary way to
+run BetterGarmin from now on:
+
+1. Set up [cloud sync](docs/cloud-sync.md), including the
+   [15-minute automatic sync](docs/cloud-sync.md#automatic-sync-every-15-minutes-recommended).
+2. Keep the band paired with **Garmin Connect** and let Connect use it (its
+   switch on under the band's **Apps allowed to connect**), so the band's data
+   reaches Garmin's servers.
+3. Open BetterGarmin in **Safari**, tap **Share → Add to Home Screen**, and
+   open it from the Home Screen from then on. It runs full screen, needs no
+   Bluetooth and no extra apps, and shows the newest synced data whenever you
+   open it.
 
 | Choice | ⭐ Recommended | Alternatives |
 | --- | --- | --- |
-| **How to open the app** | A **Safari tab** with the beacio extension and the [Compact tab layout](#making-safari-look-like-an-app): live heart rate works and the address bar shrinks out of the way | Safari **Home Screen app** (always full screen, no live heart rate), [Bluefy or WebBLE](#choosing-a-browser-iphone) |
-| **Live heart rate over Bluetooth** | The **beacio** Safari extension in a Safari tab (the Home Screen app's **Open in Safari** button takes you there) | [Bluefy](#choosing-a-browser-iphone) |
-| **Getting your data in** | [Cloud sync](docs/cloud-sync.md) with **Sync now** (the default sync source) | [Sync straight from the band](#syncing-from-the-band) (More → Sync source), or [drop in GarminDB files](#getting-your-data) |
+| **How to open the app** | The **Safari Home Screen app** | Safari tab + beacio, Bluefy, WebBLE: complicated and obsolete, see below |
+| **Getting your data in** | [Cloud sync](docs/cloud-sync.md), automatic every 15 minutes (the default sync source) | [Sync straight from the band](#syncing-from-the-band) or [GarminDB files](#getting-your-data) |
 | **Look** | The **Glacier** preset (default) | 7 other presets in Customize |
 | **Clock and units** | Whatever your phone uses (default) | More → Clock / Units |
 
-### Choosing a browser (iPhone)
+### Other ways to open it (obsolete)
+
+These are complicated and obsolete: they're only needed for features that use
+Bluetooth from the phone (live heart rate, direct band sync), and direct band
+sync is unreliable on iPhone (see the [open issue](#open-issue-band-missing-from-bluefy-after-the-reset-october-2026)).
+They're kept here for reference.
 
 Live heart rate needs Web Bluetooth, which Safari, Chrome and Edge on iPhone
 don't have. Everything else (cloud sync, charts, Sync now) works in any browser.
 
 | Option | Full screen | Live heart rate | Notes |
 | --- | --- | --- | --- |
-| ⭐ **Safari tab + beacio extension** | Nearly: the address bar shrinks to a small pill, or hide it | ✅ | Best overall. See [Making Safari look like an app](#making-safari-look-like-an-app). |
-| **Safari Home Screen app** | ✅ Always | ❌ (extensions don't run in Home Screen apps; it has an **Open in Safari** button) | Good if you rarely need live heart rate |
+| **Safari tab + beacio extension** | Nearly: the address bar shrinks to a small pill, or hide it | ✅ | Obsolete. See [Making Safari look like an app](#making-safari-look-like-an-app). |
+| ⭐ **Safari Home Screen app** | ✅ Always | ❌ (extensions don't run in Home Screen apps; it has an **Open in Safari** button) | **Recommended.** Everything except Bluetooth features |
 | **Bluefy** | Only from Bluefy's own menu (the app can't turn it on) | ✅ | Easiest if you want live heart rate everywhere |
 | **WebBLE** | Not confirmed | ✅ | Similar to Bluefy |
 
-**Setting up Safari + beacio (recommended)**
+**Setting up Safari + beacio (obsolete)**
 
 1. Install **[beacio](https://apps.apple.com/tt/app/ioswebble/id6761301368)**
    (listed as "iOSWebBLE", "Web Bluetooth for Safari") from the App Store and
@@ -105,6 +119,10 @@ The Home Screen app keeps its own storage, so connect cloud sync once more
 inside it (Worker address and access token).
 
 ## Syncing from the band
+
+> **Obsolete for now:** complicated, and unreliable on iPhone once the band is
+> paired (see the [open issue](#open-issue-band-missing-from-bluefy-after-the-reset-october-2026)).
+> Use the [Safari Home Screen app with cloud sync](#recommended-setup-iphone) instead.
 
 BetterGarmin can connect straight to a Garmin **CIRQA** band over Bluetooth
 (Bluefy on iPhone, or Chrome/Edge), without Garmin Connect or Garmin's cloud.
