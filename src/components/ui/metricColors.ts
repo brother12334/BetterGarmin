@@ -9,11 +9,11 @@ interface MetricColor {
 }
 
 export const METRIC_COLORS: Record<MetricKey, MetricColor> = {
-  heart: { solid: '#fb4a59', gradient: ['#fb4a59', '#ff8a7a'], label: 'Heart' },
-  sleep: { solid: '#8b7bf6', gradient: ['#8b7bf6', '#c2b6ff'], label: 'Sleep' },
-  stress: { solid: '#f5a623', gradient: ['#f5a623', '#ffd37a'], label: 'Stress' },
-  energy: { solid: '#34d399', gradient: ['#34d399', '#38bdf8'], label: 'Energy Reserve' },
-  training: { solid: '#2dd4bf', gradient: ['#2dd4bf', '#14b8a6'], label: 'Training' },
-  readiness: { solid: '#38bdf8', gradient: ['#38bdf8', '#60a5fa'], label: 'Readiness' },
-  neutral: { solid: '#9aa3b2', gradient: ['#9aa3b2', '#c3c9d3'], label: 'Neutral' },
+  heart: { solid: '#c2412d', gradient: ['#c2412d', '#d9654f'], label: 'Heart' },
+  sleep: { solid: '#4f4fae', gradient: ['#4f4fae', '#7676c7'], label: 'Sleep' },
+  stress: { solid: '#c98a14', gradient: ['#c98a14', '#dba53f'], label: 'Stress' },
+  energy: { solid: '#2f7d4a', gradient: ['#2f7d4a', '#2c6e9b'], label: 'Energy Reserve' },
+  training: { solid: '#1f7a78', gradient: ['#1f7a78', '#2f9592'], label: 'Training' },
+  readiness: { solid: '#2c6e9b', gradient: ['#2c6e9b', '#4b8cb8'], label: 'Readiness' },
+  neutral: { solid: '#7d8279', gradient: ['#7d8279', '#a1a69c'], label: 'Neutral' },
 }

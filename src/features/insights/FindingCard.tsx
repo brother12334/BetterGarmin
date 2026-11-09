@@ -5,8 +5,8 @@ import type { Finding } from '../analytics/findings'
 import type { Evidence } from '../analytics/robust'
 
 const EVIDENCE_STYLE: Record<Evidence, { label: string; className: string }> = {
-  strong: { label: 'Consistent pattern', className: 'bg-emerald-500/15 text-emerald-400' },
-  moderate: { label: 'Moderate evidence', className: 'bg-sky-500/15 text-sky-400' },
+  strong: { label: 'Consistent pattern', className: 'bg-[color-mix(in_srgb,var(--tone-green)_15%,transparent)] text-[var(--tone-green)]' },
+  moderate: { label: 'Moderate evidence', className: 'bg-[color-mix(in_srgb,var(--tone-blue)_15%,transparent)] text-[var(--tone-blue)]' },
   weak: { label: 'Weak / exploratory', className: 'bg-slate-500/20 text-[var(--text-secondary)]' },
   insufficient: { label: 'Not enough data', className: 'bg-slate-500/20 text-[var(--text-tertiary)]' },
 }
@@ -44,13 +44,13 @@ export function FindingCard({
       <p className="mt-2 text-xs text-[var(--text-tertiary)]">
         {shortDate(finding.startDay)} – {shortDate(finding.endDay)} · {finding.n} {finding.nLabel}
         {finding.effectLabel ? ` · ${finding.effectLabel}` : ''}
-        {updated && <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-1 text-amber-400">Updated</span>}
+        {updated && <span className="ml-2 rounded-full bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] px-2 py-1 text-[var(--tone-amber)]">Updated</span>}
       </p>
       {finding.needs && <p className="mt-1 text-xs text-[var(--text-tertiary)]">Needs: {finding.needs}.</p>}
 
       {!compact && finding.evidence !== 'insufficient' && (
         <>
-          <button type="button" className="mt-2 text-xs text-sky-400 hover:text-sky-300" onClick={() => setOpen((o) => !o)}>
+          <button type="button" className="mt-2 text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]" onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide details' : 'How this was worked out'}
           </button>
           {open && (
@@ -89,13 +89,13 @@ export function FindingCard({
       {(finding.links.length > 0 || onUseful || onDismiss) && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
           {finding.links.map((l) => (
-            <Link key={l.to + l.label} to={l.to} className="text-sky-400 hover:text-sky-300">
+            <Link key={l.to + l.label} to={l.to} className="text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
               {l.label} →
             </Link>
           ))}
           <span className="flex-1" />
           {onUseful && (
-            <button type="button" onClick={onUseful} className={useful ? 'text-emerald-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}>
+            <button type="button" onClick={onUseful} className={useful ? 'text-[var(--tone-green)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}>
               {useful ? 'Marked useful' : 'Useful'}
             </button>
           )}

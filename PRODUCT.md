@@ -40,9 +40,8 @@ Built on the user's own data with no Garmin app UI in between: GarminDB pulls fr
 ## Brand Commitments
 
 - Name: BetterGarmin. Dual Orbit logo.
-- **Liquid glass** card design must be kept.
-- **Photo backgrounds** (the daily mountain/forest backdrops) must be kept.
-- **Customize options** (presets, card styles, fonts, widget order and visibility) must be kept.
+- The visual design is open (November 2026: the owner asked for a complete remake; liquid glass, photo backgrounds and the old Customize looks are no longer binding). Customize may be rebuilt around the new look.
+- The owner disliked the old look as generic, too busy, hard to read at a glance, and dark/moody. A new look must not feel clinical/medical or playful/gamified, and must not hide numbers.
 - Independent project, not affiliated with Garmin; not medical advice.
 
 ## Evidence on Hand

@@ -22,7 +22,9 @@ export function MountainBackdrop({ height = 220, className }: MountainBackdropPr
   const style = { width: '100%', height: '100%', minHeight: height, display: 'block', filter, transform } as const
 
   let content
-  if (a.backgroundMode === 'gradient') {
+  if (a.backgroundMode === 'none') {
+    content = <div className={className} style={{ ...style, background: 'var(--bg-base)' }} />
+  } else if (a.backgroundMode === 'gradient') {
     content = <div className={className} style={{ ...style, background: GRADIENTS[a.gradient]?.css ?? GRADIENTS.aurora.css }} />
   } else {
     const src =

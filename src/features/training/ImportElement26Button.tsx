@@ -66,20 +66,20 @@ export function ImportElement26Button({ onImported }: ImportElement26ButtonProps
         {importing ? 'Importing…' : 'Import Element 26 workout'}
       </Button>
       {!summary && <p className="text-xs text-[var(--text-tertiary)]">Tip: sync your watch right after your workout so each set gets its heart rate.</p>}
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error && <p className="text-sm text-[var(--tone-red)]">{error}</p>}
       {summary && (
         <div className="flex flex-col gap-1 text-xs">
           <p className="text-[var(--text-secondary)]">
             {summary.replaced ? 'Re-imported' : 'Imported'} {summary.setCount} sets.{' '}
-            <Link to={`/training/strength/workout/${summary.workoutId}/review`} className="text-sky-400 hover:text-sky-300">
+            <Link to={`/training/strength/workout/${summary.workoutId}/review`} className="text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
               Review import →
             </Link>{' '}
-            <Link to={`/training/strength/workout/${summary.workoutId}`} className="text-sky-400 hover:text-sky-300">
+            <Link to={`/training/strength/workout/${summary.workoutId}`} className="text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
               Timeline →
             </Link>
           </p>
           {summary.warnings.length > 0 && (
-            <ul className="flex flex-col gap-1 text-amber-400">
+            <ul className="flex flex-col gap-1 text-[var(--tone-amber)]">
               {summary.warnings.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}

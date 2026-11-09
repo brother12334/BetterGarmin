@@ -80,10 +80,10 @@ export function ActivityDetailPage() {
     const map = L.map(mapRef.current, { zoomControl: true, attributionControl: true })
     map.getPane('tilePane')!.style.filter = 'invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)'
     L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map)
-    const polyline = L.polyline(routePoints, { color: '#38bdf8', weight: 3.5, opacity: 0.9 }).addTo(map)
+    const polyline = L.polyline(routePoints, { color: '#2c6e9b', weight: 3.5, opacity: 0.9 }).addTo(map)
     map.fitBounds(polyline.getBounds(), { padding: [24, 24] })
-    L.circleMarker(routePoints[0], { radius: 6, color: '#34d399', fillColor: '#34d399', fillOpacity: 1 }).addTo(map)
-    L.circleMarker(routePoints[routePoints.length - 1], { radius: 6, color: '#fb4a59', fillColor: '#fb4a59', fillOpacity: 1 }).addTo(map)
+    L.circleMarker(routePoints[0], { radius: 6, color: '#2f7d4a', fillColor: '#2f7d4a', fillOpacity: 1 }).addTo(map)
+    L.circleMarker(routePoints[routePoints.length - 1], { radius: 6, color: '#c2412d', fillColor: '#c2412d', fillOpacity: 1 }).addTo(map)
     leafletMapRef.current = map
     return () => {
       map.remove()
@@ -110,7 +110,7 @@ export function ActivityDetailPage() {
         radius: 7,
         color: '#fff',
         weight: 2,
-        fillColor: '#38bdf8',
+        fillColor: '#2c6e9b',
         fillOpacity: 1,
       }).addTo(map)
     }
@@ -150,7 +150,7 @@ export function ActivityDetailPage() {
 
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">{activity.name || activity.sport || 'Activity'}</h1>
+          <h1 className="page-title">{activity.name || activity.sport || 'Activity'}</h1>
           <p className="text-sm text-[var(--text-secondary)]">
             {activity.start_time && new Date(activity.start_time.replace(' ', 'T')).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
           </p>
@@ -199,7 +199,7 @@ export function ActivityDetailPage() {
             option={{
               xAxis: { type: 'category', show: false, data: hrSeries.map((p) => p.i) },
               yAxis: { type: 'value', splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
-              series: [{ type: 'line', data: hrSeries.map((p) => p.hr), symbol: 'none', lineStyle: { color: '#fb4a59', width: 1.5 } }],
+              series: [{ type: 'line', data: hrSeries.map((p) => p.hr), symbol: 'none', lineStyle: { color: '#c2412d', width: 1.5 } }],
             }}
             height={160}
             onHover={setHoverIndex}
@@ -219,7 +219,7 @@ export function ActivityDetailPage() {
                   type: 'line',
                   data: elevationSeries.map((p) => p.altitude),
                   symbol: 'none',
-                  lineStyle: { color: '#34d399', width: 1.5 },
+                  lineStyle: { color: '#2f7d4a', width: 1.5 },
                   areaStyle: { color: 'rgba(52, 211, 153, 0.1)' },
                 },
               ],

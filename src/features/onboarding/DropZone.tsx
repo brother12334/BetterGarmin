@@ -42,7 +42,7 @@ export function DropZone() {
       }}
       className={cn(
         'flex flex-col items-center gap-3 border-2 border-dashed p-8 text-center transition-colors',
-        isDragging ? 'border-sky-400 bg-sky-400/5' : 'border-[var(--border-panel)]',
+        isDragging ? 'border-[var(--tone-blue)] bg-[color-mix(in_srgb,var(--tone-blue)_5%,transparent)]' : 'border-[var(--border-panel)]',
       )}
     >
       <motion.div
@@ -74,14 +74,14 @@ export function DropZone() {
         <div className="mt-2 flex w-full flex-col gap-2 text-left">
           {loadedKinds.map((kind) => (
             <div key={kind} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-              <CheckIcon width={15} height={15} className="text-emerald-400" />
+              <CheckIcon width={15} height={15} className="text-[var(--tone-green)]" />
               {describeKind(kind)}
             </div>
           ))}
         </div>
       )}
       {unrecognized.length > 0 && (
-        <p className="text-sm text-amber-400">
+        <p className="text-sm text-[var(--tone-amber)]">
           Didn't recognize: {unrecognized.join(', ')}. Make sure these are unmodified GarminDB `.db` files.
         </p>
       )}

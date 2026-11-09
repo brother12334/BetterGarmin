@@ -22,12 +22,12 @@ const STATE_TEXT: Record<string, string> = {
 }
 
 const STATE_DOT: Record<string, string> = {
-  ready: 'bg-emerald-500',
-  connecting: 'bg-amber-400 animate-pulse',
-  registering: 'bg-amber-400 animate-pulse',
-  handshaking: 'bg-amber-400 animate-pulse',
-  reconnecting: 'bg-amber-400 animate-pulse',
-  error: 'bg-rose-500',
+  ready: 'bg-[var(--tone-green)]',
+  connecting: 'bg-[var(--tone-amber)] animate-pulse',
+  registering: 'bg-[var(--tone-amber)] animate-pulse',
+  handshaking: 'bg-[var(--tone-amber)] animate-pulse',
+  reconnecting: 'bg-[var(--tone-amber)] animate-pulse',
+  error: 'bg-[var(--tone-red)]',
 }
 
 /** Direct Bluetooth connection to a Garmin CIRQA band: status, test alert, experimental file listing and a protocol log. */
@@ -107,7 +107,7 @@ export function BandCard({ bare = false }: { bare?: boolean } = {}) {
       )}
 
       {b.state === 'error' && b.error && (
-        <div className="rounded-control border border-amber-400/30 p-3 text-xs text-[var(--text-secondary)]">
+        <div className="rounded-control border border-[color-mix(in_srgb,var(--tone-amber)_30%,transparent)] p-3 text-xs text-[var(--text-secondary)]">
           <p>
             Couldn't connect. The browser said: <code className="text-[var(--text-primary)]">{b.error.raw}</code>
           </p>
@@ -116,7 +116,7 @@ export function BandCard({ bare = false }: { bare?: boolean } = {}) {
             under <b>Apps allowed to connect</b> turn <b>Connect</b> off. Then try again here. Turn it back on when you're done. Don't forget, unpair or
             reset the band for this.
           </p>
-          <button className="mt-2 text-sky-400 underline" onClick={() => connect(true)}>
+          <button className="mt-2 text-[var(--tone-blue)] underline" onClick={() => connect(true)}>
             Show all Bluetooth devices
           </button>
         </div>
@@ -175,7 +175,7 @@ export function BandCard({ bare = false }: { bare?: boolean } = {}) {
 function Cap({ on, label }: { on: boolean; label: string }) {
   return (
     <Badge tone={on ? 'success' : 'neutral'}>
-      <span className={on ? 'h-2 w-2 rounded-full bg-emerald-500' : 'h-2 w-2 rounded-full bg-[var(--text-tertiary)]'} />
+      <span className={on ? 'h-2 w-2 rounded-full bg-[var(--tone-green)]' : 'h-2 w-2 rounded-full bg-[var(--text-tertiary)]'} />
       {label}
     </Badge>
   )

@@ -4,9 +4,9 @@ import { cn } from '../../lib/cn'
 const TONES = {
   neutral: 'bg-[var(--bg-panel)] text-[var(--text-secondary)] border border-[var(--border-panel)]',
   accent: 'bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-[var(--accent)]',
-  success: 'bg-emerald-500/15 text-emerald-500',
-  warning: 'bg-amber-500/15 text-amber-500',
-  danger: 'bg-rose-500/15 text-rose-500',
+  success: 'bg-[color-mix(in_srgb,var(--tone-green)_15%,transparent)] text-[var(--tone-green)]',
+  warning: 'bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] text-[var(--tone-amber)]',
+  danger: 'bg-[color-mix(in_srgb,var(--tone-red)_15%,transparent)] text-[var(--tone-red)]',
 } as const
 
 /** Small status label. The one pill style used across the app. */

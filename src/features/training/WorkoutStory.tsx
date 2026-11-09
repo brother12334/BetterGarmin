@@ -10,8 +10,8 @@ import { fmtRest, type Grade, type Letter, type WorkoutSummary } from './workout
  * and a short plan.
  */
 
-const GRADE_COLOR = (l: Letter) => (l.startsWith('A') ? '#2fd08a' : l.startsWith('B') ? '#4f8dff' : l.startsWith('C') ? '#ffc24b' : '#ff4d6d')
-const BAND_COLORS = ['#7d8aa3', '#4f8dff', '#2fd08a', '#ffc24b', '#ff4d6d']
+const GRADE_COLOR = (l: Letter) => (l.startsWith('A') ? '#2f7d4a' : l.startsWith('B') ? '#3f7fbf' : l.startsWith('C') ? '#dba53f' : '#c2412d')
+const BAND_COLORS = ['#7d8aa3', '#3f7fbf', '#2f7d4a', '#dba53f', '#c2412d']
 
 function GradeChip({ grade }: { grade: Grade | undefined }) {
   if (!grade) return null
@@ -112,7 +112,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="effort" tint="#ff8a4c" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
+    <Slide key="effort" tint="#b8612a" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
       {s.calories != null ? (
         <>
           <Big>{s.calories}</Big>
@@ -129,10 +129,10 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="heart" tint="#ff4d6d" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
+    <Slide key="heart" tint="#c2412d" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
       {s.hrAvg != null ? (
         <>
-          <Spark series={hrSeries} color="#ff4d6d" />
+          <Spark series={hrSeries} color="#c2412d" />
           <Big>
             {s.hrAvg}
             <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">avg bpm</span>
@@ -155,7 +155,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       )}
     </Slide>,
 
-    <Slide key="strength" tint="#2dd4bf" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
+    <Slide key="strength" tint="#1f7a78" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
       <Big>
         {s.volumeKg.toLocaleString()}
         <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">kg moved</span>
@@ -180,7 +180,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
 
     <Slide
       key="rest"
-      tint="#2fd08a"
+      tint="#2f7d4a"
       label="Rest & recovery"
       footer={
         <div className="flex flex-wrap gap-2">
@@ -204,7 +204,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
             {s.vsLast.map((c) => (
               <div key={c.label} className="flex items-baseline justify-between">
                 <span className="text-base">{c.label}</span>
-                <b className={cn('text-3xl font-extrabold tabular-nums', (c.change >= 0) === c.higherIsBetter ? 'text-emerald-500' : 'text-rose-500')}>
+                <b className={cn('text-3xl font-extrabold tabular-nums', (c.change >= 0) === c.higherIsBetter ? 'text-[var(--tone-green)]' : 'text-[var(--tone-red)]')}>
                   {c.change > 0 ? '+' : ''}
                   {c.change}%
                 </b>
@@ -215,7 +215,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
         ]
       : []),
 
-    <Slide key="next" tint="#4f8dff" label="Next up">
+    <Slide key="next" tint="#3f7fbf" label="Next up">
       {s.recoveryHours != null && (
         <>
           <Big>
@@ -292,8 +292,8 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
               </div>
             ))}
           </div>
-          <div className="mt-3 rounded-control bg-emerald-500/10 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-400">Next up</p>
+          <div className="mt-3 rounded-control bg-[color-mix(in_srgb,var(--tone-green)_10%,transparent)] p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--tone-green)]">Next up</p>
             <ul className="mt-1 list-disc pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
               {s.nextUp.map((n) => (
                 <li key={n}>{n}</li>

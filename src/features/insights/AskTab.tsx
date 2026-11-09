@@ -81,7 +81,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
             >
               Save key
             </Button>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-sky-400 hover:text-sky-300">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
               Get a key in Google AI Studio →
             </a>
           </div>
@@ -107,10 +107,10 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
 
       {turns.map((t, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <p className="self-end rounded-control bg-sky-500/15 px-3 py-2 text-sm">{t.question}</p>
+          <p className="self-end rounded-control bg-[color-mix(in_srgb,var(--tone-blue)_15%,transparent)] px-3 py-2 text-sm">{t.question}</p>
           <Card className="text-sm leading-relaxed">
             {t.error ? (
-              <p className="text-rose-400">{t.error}</p>
+              <p className="text-[var(--tone-red)]">{t.error}</p>
             ) : t.answer ? (
               <Answer text={t.answer} knownIds={knownIds} titles={titles} />
             ) : (
@@ -145,7 +145,7 @@ export function AskTab({ result }: { result: AnalyticsResult }) {
         </button>
         <button
           type="button"
-          className="hover:text-rose-400"
+          className="hover:text-[var(--tone-red)]"
           onClick={() => {
             saveSettings(null)
             setSettings(null)
@@ -168,7 +168,7 @@ function Answer({ text, knownIds, titles }: { text: string; knownIds: Set<string
         p.kind === 'text' ? (
           <span key={i}>{p.text.replace(/\*\*(.+?)\*\*/g, '$1')}</span>
         ) : (
-          <Link key={i} to={`/insights?tab=findings#finding-${encodeURIComponent(p.id)}`} title={titles.get(p.id)} className="mx-1 rounded-full bg-sky-500/15 px-1 text-xs text-sky-400 hover:text-sky-300">
+          <Link key={i} to={`/insights?tab=findings#finding-${encodeURIComponent(p.id)}`} title={titles.get(p.id)} className="mx-1 rounded-full bg-[color-mix(in_srgb,var(--tone-blue)_15%,transparent)] px-1 text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
             ↗ {titles.get(p.id)?.slice(0, 40)}
           </Link>
         ),

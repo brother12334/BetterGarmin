@@ -16,10 +16,10 @@ import { formatTime } from '../../lib/clock'
 type Stage = 'awake' | 'rem' | 'light' | 'deep'
 
 const STAGES: { key: Stage; label: string; color: string; column: keyof SleepRow; typical: string }[] = [
-  { key: 'awake', label: 'Awake', color: '#f59e8b', column: 'awake', typical: 'brief wakings are normal' },
-  { key: 'rem', label: 'REM', color: '#8b7bf6', column: 'rem_sleep', typical: 'typically 20–25%' },
-  { key: 'light', label: 'Light', color: '#60a5fa', column: 'light_sleep', typical: 'typically about half' },
-  { key: 'deep', label: 'Deep', color: '#4338ca', column: 'deep_sleep', typical: 'typically 13–23%' },
+  { key: 'awake', label: 'Awake', color: '#d9654f', column: 'awake', typical: 'brief wakings are normal' },
+  { key: 'rem', label: 'REM', color: '#4f4fae', column: 'rem_sleep', typical: 'typically 20–25%' },
+  { key: 'light', label: 'Light', color: '#3f7fbf', column: 'light_sleep', typical: 'typically about half' },
+  { key: 'deep', label: 'Deep', color: '#2e2f7a', column: 'deep_sleep', typical: 'typically 13–23%' },
 ]
 
 const LOOKBACK_DAYS = 3

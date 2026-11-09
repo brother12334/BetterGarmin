@@ -8,10 +8,10 @@ export const STATUS_LABELS: Record<StatusLevel, string> = {
 }
 
 export const STATUS_COLORS: Record<StatusLevel, string> = {
-  low: '#fb4a59',
-  fair: '#f5a623',
-  good: '#34d399',
-  optimal: '#38bdf8',
+  low: '#c2412d',
+  fair: '#b87a0e',
+  good: '#2f7d4a',
+  optimal: '#2c6e9b',
 }
 
 /** Higher is better (readiness, sleep score, energy/body battery, ...). */

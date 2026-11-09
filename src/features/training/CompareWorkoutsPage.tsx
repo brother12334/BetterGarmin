@@ -24,7 +24,7 @@ interface Side {
   restingHr: number | null
 }
 
-const COLORS = ['#38bdf8', '#f5a623']
+const COLORS = ['#2c6e9b', '#c98a14']
 
 async function loadSide(id: string, kinds: Parameters<typeof loadWorkoutAnalysis>[1]): Promise<Side | null> {
   const workout = await getWorkoutWithSets(id)
@@ -116,7 +116,7 @@ export function CompareWorkoutsPage() {
       <Link to={`/training/strength/workout/${a}`} className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
         ← Back to workout
       </Link>
-      <h1 className="text-2xl font-bold">Compare workouts</h1>
+      <h1 className="page-title">Compare workouts</h1>
 
       <Card>
         <table className="w-full text-left text-sm">

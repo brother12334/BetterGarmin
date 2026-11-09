@@ -17,7 +17,7 @@ export function LiveHeartRateCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-control bg-rose-500/10 text-rose-400"
+              className="flex h-12 w-12 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-red)_10%,transparent)] text-[var(--tone-red)]"
             >
               <HealthIcon width={22} height={22} />
             </div>
@@ -52,7 +52,7 @@ export function LiveHeartRateCard() {
           </Button>
         </div>
       )}
-      {live.error && <p className="mt-2 text-sm text-rose-400">{live.error}</p>}
+      {live.error && <p className="mt-2 text-sm text-[var(--tone-red)]">{live.error}</p>}
     </Card>
   )
 }
@@ -68,7 +68,7 @@ function LatestReading({ latest }: { latest: ReturnType<typeof useLatestHeartRat
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-rose-500/10 text-rose-400">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-red)_10%,transparent)] text-[var(--tone-red)]">
           <HealthIcon width={22} height={22} />
         </div>
         <div>

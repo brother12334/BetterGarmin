@@ -11,10 +11,10 @@ interface Props {
 
 const spring = { type: 'spring', stiffness: 420, damping: 34 } as const
 
-/** The phone tab bar: a floating smoked-glass capsule. Pure presentation: the caller decides what is active and what a tap does. */
+/** The phone tab bar: a black sign band; the current tab sits on a white plate. Pure presentation: the caller decides what is active and what a tap does. */
 export function NavBar({ active, onSelect, layoutKey }: Props) {
   return (
-    <div className="flex h-[76px] w-full max-w-md items-center gap-1 rounded-full border border-white/15 bg-black/35 p-2 shadow-float backdrop-blur-2xl">
+    <div className="flex h-[64px] w-full max-w-md items-center gap-1 rounded-control bg-[var(--band)] p-1.5 shadow-float">
       {TABS.map((t, i) => {
         const on = i === active
         const C = t.icon
@@ -31,10 +31,10 @@ export function NavBar({ active, onSelect, layoutKey }: Props) {
               <motion.span
                 layoutId={`${layoutKey}-gv`}
                 transition={spring}
-                className="absolute inset-0 rounded-full border border-white/20 bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]"
+                className="absolute inset-0 rounded-[4px] bg-[var(--band-text)]"
               />
             )}
-            <C width={27} height={27} className={cn('relative z-10 transition-colors duration-200', on ? 'text-white' : 'text-white/70')} />
+            <C width={27} height={27} className={cn('relative z-10 transition-colors duration-200', on ? 'text-[var(--band)]' : 'text-white/75')} />
           </button>
         )
       })}

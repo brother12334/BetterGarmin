@@ -13,12 +13,12 @@ export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
 }
 
 export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
-  chest: '#fb4a59',
-  back: '#38bdf8',
-  legs: '#34d399',
-  shoulders: '#f5a623',
-  arms: '#a78bfa',
-  core: '#ec4899',
+  chest: '#c2412d',
+  back: '#2c6e9b',
+  legs: '#2f7d4a',
+  shoulders: '#c98a14',
+  arms: '#7676c7',
+  core: '#a8456b',
 }
 
 export interface SetEntry {

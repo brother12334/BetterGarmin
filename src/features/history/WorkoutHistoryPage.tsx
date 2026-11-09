@@ -38,7 +38,7 @@ export function WorkoutHistoryPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Workout history</h1>
+        <h1 className="page-title">Workout history</h1>
         <p className="text-sm text-[var(--text-secondary)]">Band recordings and logged strength sessions.</p>
       </div>
 

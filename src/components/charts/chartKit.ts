@@ -20,8 +20,8 @@ export const fade = (color: string, a = 0.3) => ({
   ],
 })
 
-export const AXIS_TEXT = '#8a92a3'
-export const GRID_LINE = 'rgba(140,150,170,0.15)'
+export const AXIS_TEXT = '#7d8279'
+export const GRID_LINE = 'rgba(125,130,121,0.22)'
 
 /** Frosted-glass zoom pill that floats inside the bottom of the plot. Shared so every chart's zoom feels the same. */
 export const GLASS_SLIDER = {
@@ -30,10 +30,10 @@ export const GLASS_SLIDER = {
   bottom: 30,
   left: 56,
   right: 22,
-  borderColor: 'rgba(255,255,255,0.28)',
+  borderColor: 'var(--border-panel)',
   borderRadius: 6,
-  backgroundColor: 'rgba(255,255,255,0.07)',
-  fillerColor: 'rgba(255,255,255,0.32)',
+  backgroundColor: 'var(--ring-track)',
+  fillerColor: 'color-mix(in srgb, var(--text-primary) 28%, transparent)',
   dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
   selectedDataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
   handleSize: 0,

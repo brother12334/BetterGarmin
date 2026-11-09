@@ -11,7 +11,7 @@ export function SyncFirstCard() {
   const { pullFromGarmin, garminPull, lastSynced, cloudStatus } = useData()
   const running = garminPull.status === 'running'
   return (
-    <Card className="flex flex-col gap-3 self-stretch border-sky-400/30">
+    <Card className="flex flex-col gap-3 self-stretch border-[color-mix(in_srgb,var(--tone-blue)_30%,transparent)]">
       <div>
         <p className="font-semibold">Sync your watch first</p>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
@@ -20,7 +20,7 @@ export function SyncFirstCard() {
         </p>
       </div>
       <div className="flex items-center justify-between gap-3 text-xs text-[var(--text-tertiary)]">
-        <span className={garminPull.status === 'error' ? 'text-rose-400' : undefined}>
+        <span className={garminPull.status === 'error' ? 'text-[var(--tone-red)]' : undefined}>
           {running ? 'Syncing…' : garminPull.status === 'error' ? garminPull.message : (garminPull.note ?? `Last synced ${formatRelativeTime(lastSynced)}`)}
         </span>
         <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">

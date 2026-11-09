@@ -67,7 +67,7 @@ export function OnboardingFlow() {
               <Logo size={72} className="rounded-control" />
 
               <div>
-                <h1 className="text-2xl font-bold">Welcome to BetterGarmin</h1>
+                <h1 className="page-title">Welcome to BetterGarmin</h1>
                 <p className="mt-2 text-[var(--text-secondary)]">
                   See your Garmin sleep, heart rate, training and recovery in one place. Everything runs in your browser, and
                   your data stays on this device unless you set up cloud sync.
@@ -82,7 +82,7 @@ export function OnboardingFlow() {
                   Set up automatic sync (recommended, about 15 min)
                 </Button>
               </div>
-              {demoError && <p className="text-sm text-rose-400">Couldn't load the demo data. Please try again.</p>}
+              {demoError && <p className="text-sm text-[var(--tone-red)]">Couldn't load the demo data. Please try again.</p>}
               <p className="max-w-sm text-xs text-[var(--text-tertiary)]">
                 Not affiliated with Garmin. Not medical advice. Built on the open-source{' '}
                 <a

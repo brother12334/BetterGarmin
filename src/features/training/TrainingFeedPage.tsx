@@ -87,8 +87,8 @@ export function TrainingFeedPage() {
         </Link>
       </div>
       <Link to="/training/strength">
-        <Card className="flex items-center gap-4 border-teal-500/30 transition-colors hover:border-teal-500/60">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-teal-500/15 text-teal-400">
+        <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--tone-teal)_30%,transparent)] transition-colors hover:border-[color-mix(in_srgb,var(--tone-teal)_60%,transparent)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-teal)_15%,transparent)] text-[var(--tone-teal)]">
             <TrainingIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export function TrainingFeedPage() {
   if (!activities) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold">Training</h1>
+        <h1 className="page-title">Training</h1>
         {strengthLink}
         <Card className="text-center text-[var(--text-secondary)]">No activities loaded yet.</Card>
       </div>
@@ -145,7 +145,7 @@ export function TrainingFeedPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Training</h1>
+      <h1 className="page-title">Training</h1>
 
       {strengthLink}
       {latestDay && <TrainingOverview activities={activities} latestDay={latestDay} />}
@@ -173,7 +173,7 @@ export function TrainingFeedPage() {
         {activities.map((activity) => (
           <Link key={activity.activity_id} to={`/training/${activity.activity_id}`}>
             <Card className="flex items-center gap-4 transition-colors hover:bg-white/5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-teal-500/10 text-teal-400">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-teal)_10%,transparent)] text-[var(--tone-teal)]">
                 <TrainingIcon width={20} height={20} />
               </div>
               <div className="min-w-0 flex-1">

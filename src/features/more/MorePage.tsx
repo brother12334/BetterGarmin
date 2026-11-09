@@ -32,7 +32,7 @@ export function MorePage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">More</h1>
+        <h1 className="page-title">More</h1>
         <span className="text-sm text-[var(--text-tertiary)]">v{__APP_VERSION__}</span>
       </div>
 
@@ -64,10 +64,10 @@ export function MorePage() {
               </span>
               <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
             </div>
-            {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
+            {cloudError && <p className="text-sm text-[var(--tone-red)]">{cloudError}</p>}
             {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
             {garminPull.status === 'idle' && garminPull.note && <p className="text-sm text-[var(--text-secondary)]">{garminPull.note}</p>}
-            {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
+            {garminPull.status === 'error' && <p className="text-sm text-[var(--tone-red)]">{garminPull.message}</p>}
             <div className="flex gap-2">
               <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
                 {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
@@ -189,7 +189,7 @@ export function MorePage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
-                className="border-rose-500/40 text-rose-400"
+                className="border-[color-mix(in_srgb,var(--tone-red)_40%,transparent)] text-[var(--tone-red)]"
                 onClick={async () => {
                   await forgetData()
                   setConfirming(false)

@@ -251,7 +251,7 @@ function ConnectStep({ workerUrl, token, onConnected }: { workerUrl: string; tok
     <>
       <P>Everything's in place. Connect this app to your Worker:</P>
       <p className="break-all rounded-control bg-black/20 px-3 py-2 font-mono text-xs">{workerUrl || 'no Worker address yet: go back to step 3'}</p>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error && <p className="text-sm text-[var(--tone-red)]">{error}</p>}
       <Button loading={status === 'connecting'}
         disabled={!workerUrl || status === 'connecting'}
         onClick={async () => {
@@ -291,9 +291,9 @@ function WorkerCheck({ url }: { url: string }) {
   }, [url])
   if (result === 'checking') return <p className="text-xs text-[var(--text-tertiary)]">Checking the Worker…</p>
   return result === 'ok' ? (
-    <p className="text-xs text-emerald-400">Worker is up and protected.</p>
+    <p className="text-xs text-[var(--tone-green)]">Worker is up and protected.</p>
   ) : (
-    <p className="text-xs text-amber-400">Can't confirm the Worker yet. Check the address, and that you deployed the new code.</p>
+    <p className="text-xs text-[var(--tone-amber)]">Can't confirm the Worker yet. Check the address, and that you deployed the new code.</p>
   )
 }
 
@@ -316,7 +316,7 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
 }
 
 function Missing() {
-  return <p className="text-sm text-amber-400">Enter your GitHub username and repo in step 1 first.</p>
+  return <p className="text-sm text-[var(--tone-amber)]">Enter your GitHub username and repo in step 1 first.</p>
 }
 
 /** Your watch only uploads through the Garmin Connect app, so this step makes the phone side as hands-off as iOS allows. */
@@ -416,12 +416,12 @@ function Input({
           spellCheck={false}
           className={cn(
             'w-full rounded-control border bg-[var(--bg-panel)] px-3 py-3 pr-8 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]',
-            status === 'bad' ? 'border-amber-400/60' : 'border-[var(--border-panel)]',
+            status === 'bad' ? 'border-[color-mix(in_srgb,var(--tone-amber)_60%,transparent)]' : 'border-[var(--border-panel)]',
           )}
         />
-        {status === 'ok' && <CheckIcon width={16} height={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400" aria-label="Valid" />}
+        {status === 'ok' && <CheckIcon width={16} height={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--tone-green)]" aria-label="Valid" />}
       </span>
-      {hint && <span className="text-xs text-amber-400">{hint}</span>}
+      {hint && <span className="text-xs text-[var(--tone-amber)]">{hint}</span>}
     </label>
   )
 }

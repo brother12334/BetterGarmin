@@ -92,7 +92,7 @@ export function TimelineCard({
       value: [(s.startMs + s.endMs) / 2, s.set.weight ?? 0],
       setIndex: i,
       label: { show: true, position: 'top', formatter: `${s.set.reps}`, fontSize: 9, color: 'var(--text-tertiary)' },
-      itemStyle: { color: i === selectedIndex ? '#fb4a59' : s.set.isWarmup ? 'rgba(245,166,35,0.6)' : 'rgba(167,139,250,0.75)' },
+      itemStyle: { color: i === selectedIndex ? '#c2412d' : s.set.isWarmup ? 'rgba(245,166,35,0.6)' : 'rgba(167,139,250,0.75)' },
     }))
     // One bracket per superset group on the load panel.
     const groups = new Map<number, { start: number; end: number }>()
@@ -102,7 +102,7 @@ export function TimelineCard({
       groups.set(st.supersetGroup, { start: Math.min(g?.start ?? Infinity, st.startMs), end: Math.max(g?.end ?? -Infinity, st.endMs) })
     }
     const supersetAreas = [...groups.values()].map((g) => [
-      { xAxis: g.start, itemStyle: { color: 'rgba(45,212,191,0.12)', borderColor: 'rgba(45,212,191,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#a78bfa' } },
+      { xAxis: g.start, itemStyle: { color: 'rgba(45,212,191,0.12)', borderColor: 'rgba(45,212,191,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#7676c7' } },
       { xAxis: g.end },
     ])
     const hasDrop = timeline.sets.some((st) => st.set.setType === 'drop')
@@ -200,10 +200,10 @@ export function TimelineCard({
           connectNulls: false,
           showSymbol: false,
           sampling: 'lttb',
-          lineStyle: { color: '#fb4a59', width: 1.5 },
+          lineStyle: { color: '#c2412d', width: 1.5 },
           markArea: { silent: false, label: { show: false }, data: base.areas },
           markLine: replay
-            ? { symbol: 'none', silent: true, animation: false, label: { show: false }, lineStyle: { color: '#f4f5f7', width: 1.5, type: 'solid' }, data: [{ xAxis: cursor }] }
+            ? { symbol: 'none', silent: true, animation: false, label: { show: false }, lineStyle: { color: 'var(--text-primary)', width: 1.5, type: 'solid' }, data: [{ xAxis: cursor }] }
             : undefined,
         },
         { type: 'bar', xAxisIndex: 1, yAxisIndex: 1, data: base.bars, barWidth: 4, markArea: base.supersetAreas.length ? { silent: true, data: base.supersetAreas as never } : undefined },
@@ -216,7 +216,7 @@ export function TimelineCard({
               x: handles[which] - HANDLE_W / 2,
               y: HR_GRID.top,
               shape: { width: HANDLE_W, height: HR_GRID.height, r: 4 },
-              style: { fill: 'rgba(244,245,247,0.22)', stroke: '#f4f5f7', lineWidth: 1.5 },
+              style: { fill: 'color-mix(in srgb, var(--text-primary) 22%, transparent)', stroke: 'var(--text-primary)', lineWidth: 1.5 },
               draggable: 'horizontal' as const,
               cursor: 'ew-resize',
               z: 100,
@@ -248,11 +248,11 @@ export function TimelineCard({
       <div className="mb-2 flex items-center gap-2">
         <p className="font-semibold">Workout timeline</p>
         <InfoButton title="How this timeline is built">{explainer(hrSource)}</InfoButton>
-        {hrSource === 'monitoring' && <span className="rounded-full bg-amber-500/15 px-2 py-1 text-xs text-amber-400">coarse HR</span>}
+        {hrSource === 'monitoring' && <span className="rounded-full bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] px-2 py-1 text-xs text-[var(--tone-amber)]">coarse HR</span>}
         <span className="flex-1" />
         <button
           type="button"
-          className={`rounded-full px-3 py-1 text-xs ${replay ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+          className={`rounded-full px-3 py-1 text-xs ${replay ? 'bg-[color-mix(in_srgb,var(--tone-blue)_20%,transparent)] text-[var(--tone-blue)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
           onClick={() => {
             setReplay((r) => !r)
             setPlaying(false)
@@ -288,7 +288,7 @@ export function TimelineCard({
             step={1000}
             value={cursor}
             onChange={(e) => setCursor(Number(e.target.value))}
-            className="mt-2 w-full accent-sky-400"
+            className="mt-2 w-full accent-[var(--tone-blue)]"
           />
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <button
@@ -302,7 +302,7 @@ export function TimelineCard({
               {playing ? 'Pause' : cursor >= timeline.windowEnd ? 'Restart' : 'Play'}
             </button>
             {SPEEDS.map((s) => (
-              <button key={s} type="button" onClick={() => setSpeed(s)} className={`rounded-control px-2 py-1 ${speed === s ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)]'}`}>
+              <button key={s} type="button" onClick={() => setSpeed(s)} className={`rounded-control px-2 py-1 ${speed === s ? 'bg-[color-mix(in_srgb,var(--tone-blue)_20%,transparent)] text-[var(--tone-blue)]' : 'text-[var(--text-tertiary)]'}`}>
                 {s}×
               </button>
             ))}

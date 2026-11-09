@@ -32,7 +32,7 @@ export function CustomizePage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Customize</h1>
+          <h1 className="page-title">Customize</h1>
           <p className="text-sm text-[var(--text-secondary)]">Changes apply instantly and are saved in this browser.</p>
         </div>
         <Link to="/more" className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
@@ -63,7 +63,7 @@ export function CustomizePage() {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="secondary"
-              className="border-rose-500/40 text-rose-400"
+              className="border-[color-mix(in_srgb,var(--tone-red)_40%,transparent)] text-[var(--tone-red)]"
               onClick={() => {
                 resetAppearance()
                 setConfirmReset(false)
@@ -132,8 +132,15 @@ function PresetTile({ name, patch, active }: { name: string; patch: Partial<Appe
         'group relative h-24 overflow-hidden rounded-control border-2 text-left transition-transform active:opacity-80',
         active ? 'border-[var(--accent)]' : 'border-transparent',
       )}
-      style={{ background: bg }}
+      style={{ background: patch.backgroundMode === 'none' ? '#e8ebe4' : bg }}
     >
+      {patch.backgroundMode === 'none' ? (
+        // The trail look has no photo: show its sign instead, a black band over stone with a blaze.
+        <div className="absolute inset-0" aria-hidden>
+          <div className="h-5 bg-[#0f110f]" />
+          <span className="absolute right-3 top-8 h-6 w-6 rounded-full bg-[#2f7d4a]" />
+        </div>
+      ) : null}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
       <span className="absolute bottom-2 left-2.5 flex items-center gap-2 text-sm font-semibold text-white">
         <span className="h-2.5 w-2.5 rounded-full" style={{ background: patch.accent }} />
@@ -166,6 +173,10 @@ function BackgroundSection() {
   return (
     <Section title="Background">
       <div className="grid grid-cols-5 gap-2">
+        <button className={tile(a.backgroundMode === 'none')} onClick={() => updateAppearance({ backgroundMode: 'none' })} aria-label="No background">
+          <div className="h-full w-full bg-[var(--bg-base)]" />
+          <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-xs font-semibold text-white">None</span>
+        </button>
         <button className={tile(a.backgroundMode === 'daily')} onClick={() => updateAppearance({ backgroundMode: 'daily' })} aria-label="Changes daily">
           <div className="grid h-full w-full grid-cols-2">
             {PHOTOS.slice(0, 4).map((p) => (
@@ -231,7 +242,7 @@ function BackgroundSection() {
           Choose a different photo
         </button>
       )}
-      {error && <p className="mt-2 text-sm text-rose-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-[var(--tone-red)]">{error}</p>}
 
       <div className="mt-5 flex flex-col gap-4">
         <Field label="Darkness">
@@ -369,6 +380,7 @@ function StyleSection() {
             <Segmented
               value={a.cardStyle}
               options={[
+                ['trail', 'Trail'],
                 ['glass', 'Glass'],
                 ['liquid', 'Liquid'],
                 ['solid', 'Solid'],
@@ -404,6 +416,7 @@ function StyleSection() {
             <Segmented
               value={a.font}
               options={[
+                ['public', 'Public Sans'],
                 ['manrope', 'Manrope'],
                 ['system', 'System'],
                 ['serif', 'Serif'],

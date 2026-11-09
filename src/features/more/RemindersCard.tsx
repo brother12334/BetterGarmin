@@ -33,7 +33,7 @@ export function RemindersCard() {
       {s.enabled && (
         <>
           {perm !== 'granted' && (
-            <p className="text-xs text-amber-500">
+            <p className="text-xs text-[var(--tone-amber)]">
               {perm === 'unsupported' ? "This browser can't show notifications here." : 'Notifications are blocked for this site, so reminders will be silent.'}
             </p>
           )}

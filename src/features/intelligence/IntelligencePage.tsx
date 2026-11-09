@@ -22,7 +22,7 @@ import {
 
 const CONF_TEXT = { insufficient: 'Not enough data', low: 'Low confidence', moderate: 'Moderate confidence', high: 'High confidence' }
 const PROV_TEXT = { device: 'measured by the band', 'garmin-derived': 'calculated by Garmin', betterGarmin: 'calculated by BetterGarmin' }
-const TONE = { good: 'text-emerald-500', watch: 'text-amber-500', neutral: 'text-[var(--text-secondary)]' }
+const TONE = { good: 'text-[var(--tone-green)]', watch: 'text-[var(--tone-amber)]', neutral: 'text-[var(--text-secondary)]' }
 
 /** Physiological intelligence: one card per feature, each with its evidence and limits a tap away. */
 export function IntelligencePage() {
@@ -38,12 +38,12 @@ export function IntelligencePage() {
         <Link to="/insights" className="text-sm text-[var(--accent)]">
           ‹ Insights
         </Link>
-        <h1 className="mt-1 text-2xl font-bold">Intelligence</h1>
+        <h1 className="page-title mt-1">Intelligence</h1>
         <p className="text-sm text-[var(--text-secondary)]">
           Patterns in your own data, compared with your own baseline. Synced {formatRelativeTime(lastSynced)}.
         </p>
       </div>
-      {error && <Card className="text-sm text-rose-400">{error}</Card>}
+      {error && <Card className="text-sm text-[var(--tone-red)]">{error}</Card>}
       {loading || !insights || !caps ? (
         <>
           <Skeleton className="h-64 w-full" />
@@ -119,7 +119,7 @@ function InsightCard({ insight: i, caps, children }: { insight: Insight; caps: R
                     <span>
                       {m.label} <span className="text-[var(--text-tertiary)]">({PROV_TEXT[m.provenance]})</span>
                     </span>
-                    <span className={c.available ? 'text-[var(--text-tertiary)]' : 'text-amber-500'}>{c.available ? `${c.recentDays}/30 days, latest ${c.latestDay}` : 'not available'}</span>
+                    <span className={c.available ? 'text-[var(--text-tertiary)]' : 'text-[var(--tone-amber)]'}>{c.available ? `${c.recentDays}/30 days, latest ${c.latestDay}` : 'not available'}</span>
                   </li>
                 )
               })}
@@ -174,7 +174,7 @@ function Visual({ insight }: { insight: Insight }) {
 
 /** A soft orb whose glow follows the overall picture, with each component as a bar either side of "usual". */
 function EnergyOrb({ view }: { view: EnergyView }) {
-  const hue = view.overall === 'above' ? 'var(--accent)' : view.overall === 'below' ? '#f59e0b' : '#94a3b8'
+  const hue = view.overall === 'above' ? 'var(--accent)' : view.overall === 'below' ? '#c98a14' : '#7d8279'
   return (
     <div className="flex items-center gap-5">
       <div
@@ -203,7 +203,7 @@ function Diverging({ label, z }: { label: string; z: number | null }) {
         <span className="absolute inset-y-0 left-1/2 w-px bg-[var(--text-tertiary)]" />
         {z != null && (
           <span
-            className={`absolute inset-y-0 rounded-full ${z >= 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+            className={`absolute inset-y-0 rounded-full ${z >= 0 ? 'bg-[var(--tone-green)]' : 'bg-[var(--tone-amber)]'}`}
             style={z >= 0 ? { left: '50%', width: `${w * 50}%` } : { right: '50%', width: `${w * 50}%` }}
           />
         )}
@@ -237,7 +237,7 @@ function Row({ label, cells }: { label: string; cells: boolean[] }) {
       <span className="text-[var(--text-secondary)]">{label}</span>
       {cells.map((on, i) => (
         <span key={i} className="flex justify-center">
-          <span className={`h-3 w-3 rounded-full ${on ? 'bg-amber-500' : 'bg-[var(--ring-track)]'}`} aria-label={on ? 'outside usual range' : 'usual'} />
+          <span className={`h-3 w-3 rounded-full ${on ? 'bg-[var(--tone-amber)]' : 'bg-[var(--ring-track)]'}`} aria-label={on ? 'outside usual range' : 'usual'} />
         </span>
       ))}
     </>
@@ -252,7 +252,7 @@ function MomentumLines({ view }: { view: MomentumView }) {
         <div key={m.key}>
           <div className="flex justify-between text-xs text-[var(--text-tertiary)]">
             <span>{m.label}</span>
-            <span className={m.direction === 'toward' ? 'text-emerald-500' : m.direction === 'away' ? 'text-amber-500' : ''}>
+            <span className={m.direction === 'toward' ? 'text-[var(--tone-green)]' : m.direction === 'away' ? 'text-[var(--tone-amber)]' : ''}>
               {m.direction === 'toward' ? '↗ improving' : m.direction === 'away' ? '↘ drifting' : '→ steady'}
             </span>
           </div>
@@ -304,7 +304,7 @@ function SleepClock({ view }: { view: CircadianView }) {
           )
         })}
         {view.nights.map((n, i) => (
-          <path key={n.day} d={arc(n.start, n.end, R - i * 3)} fill="none" stroke={n.free ? '#a78bfa' : 'var(--accent)'} strokeWidth="2.5" strokeLinecap="round" opacity={0.35 + (0.65 * i) / view.nights.length} />
+          <path key={n.day} d={arc(n.start, n.end, R - i * 3)} fill="none" stroke={n.free ? '#7676c7' : 'var(--accent)'} strokeWidth="2.5" strokeLinecap="round" opacity={0.35 + (0.65 * i) / view.nights.length} />
         ))}
       </svg>
       <div className="text-xs text-[var(--text-tertiary)]">
@@ -313,7 +313,7 @@ function SleepClock({ view }: { view: CircadianView }) {
           Weeknights
         </p>
         <p className="mt-1">
-          <span className="mr-1 inline-block h-2 w-2 rounded-full bg-violet-400" />
+          <span className="mr-1 inline-block h-2 w-2 rounded-full bg-[var(--tone-violet)]" />
           Weekend nights
         </p>
         <p className="mt-2">Newer nights are brighter and on the outside.</p>
@@ -333,7 +333,7 @@ function DebtBars({ view }: { view: SleepDebtView }) {
           {n.minutes == null ? (
             <div className="h-1 rounded-full bg-[var(--ring-track)]" title="not recorded" />
           ) : (
-            <div className={`rounded-t-md ${n.shortfall > 0 ? 'bg-amber-500/80' : 'bg-[var(--accent)]'}`} style={{ height: `${(n.minutes / max) * 100}%` }} />
+            <div className={`rounded-t-md ${n.shortfall > 0 ? 'bg-[color-mix(in_srgb,var(--tone-amber)_80%,transparent)]' : 'bg-[var(--accent)]'}`} style={{ height: `${(n.minutes / max) * 100}%` }} />
           )}
         </div>
       ))}

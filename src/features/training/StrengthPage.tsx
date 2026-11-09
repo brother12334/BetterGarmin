@@ -67,7 +67,7 @@ export function StrengthPage() {
             <Link to="/training" className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
               ← Training
             </Link>
-            <h1 className="text-2xl font-bold">Strength</h1>
+            <h1 className="page-title">Strength</h1>
           </div>
         </div>
         <ImportElement26Button onImported={refresh} />
@@ -83,7 +83,7 @@ export function StrengthPage() {
 
       <Card>
         <div className="mb-3 flex items-center gap-2">
-          <TrophyIcon width={18} height={18} className="text-amber-400" />
+          <TrophyIcon width={18} height={18} className="text-[var(--tone-amber)]" />
           <p className="font-semibold">Personal records</p>
           <InfoButton title="Personal records">
             Your best estimated one-rep max per exercise (Epley formula: weight × (1 + reps ÷ 30)), from your
@@ -114,7 +114,7 @@ export function StrengthPage() {
             {prEvents.slice(0, 5).map((e, i) => (
               <li key={i} className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2">
-                  <TrophyIcon width={14} height={14} className="shrink-0 text-amber-400" />
+                  <TrophyIcon width={14} height={14} className="shrink-0 text-[var(--tone-amber)]" />
                   {e.exercise}
                 </span>
                 <span className="text-[var(--text-secondary)]">
@@ -225,7 +225,7 @@ export function StrengthPage() {
                     smooth: true,
                     symbol: 'circle',
                     symbolSize: 6,
-                    lineStyle: { color: '#2dd4bf', width: 2 },
+                    lineStyle: { color: '#1f7a78', width: 2 },
                     areaStyle: { color: 'rgba(167, 139, 250, 0.1)' },
                   },
                 ],
@@ -262,7 +262,7 @@ export function StrengthPage() {
                   {s.workout.startedAtEpochMs != null && (
                     <Link
                       to={`/training/strength/workout/${s.workout.id}`}
-                      className="text-xs text-sky-400 hover:text-sky-300"
+                      className="text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]"
                     >
                       Timeline
                     </Link>
@@ -274,7 +274,7 @@ export function StrengthPage() {
                   ) : null}
                   <button
                     type="button"
-                    className="text-xs text-rose-400 hover:text-rose-300"
+                    className="text-xs text-[var(--tone-red)] hover:text-[var(--tone-red)]"
                     onClick={() => remove(s.workout!.id)}
                   >
                     Delete
@@ -310,7 +310,7 @@ export function StrengthPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
-              className="border-rose-500/40 text-rose-400"
+              className="border-[color-mix(in_srgb,var(--tone-red)_40%,transparent)] text-[var(--tone-red)]"
               onClick={async () => {
                 await clearAll()
                 setConfirmingClear(false)

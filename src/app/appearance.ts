@@ -21,10 +21,10 @@ export interface WidgetSlot {
   visible: boolean
 }
 
-export type BackgroundMode = 'daily' | 'photo' | 'custom' | 'gradient'
-export type CardStyle = 'glass' | 'liquid' | 'solid' | 'outline'
+export type BackgroundMode = 'none' | 'daily' | 'photo' | 'custom' | 'gradient'
+export type CardStyle = 'trail' | 'glass' | 'liquid' | 'solid' | 'outline'
 export type Radius = 'sharp' | 'rounded' | 'round'
-export type FontChoice = 'manrope' | 'system' | 'serif' | 'mono'
+export type FontChoice = 'public' | 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 
@@ -77,26 +77,27 @@ export const GRADIENTS: Record<string, { label: string; css: string }> = {
   graphite: { label: 'Graphite', css: 'linear-gradient(180deg, #27272a 0%, #09090b 100%)' },
 }
 
-export const ACCENTS = ['#38bdf8', '#60a5fa', '#2dd4bf', '#34d399', '#facc15', '#fb923c', '#f43f5e', '#e5e7eb']
+export const ACCENTS = ['#2f7d4a', '#2c6e9b', '#6b4a2b', '#c2412d', '#38bdf8', '#60a5fa', '#2dd4bf', '#34d399', '#facc15', '#fb923c', '#f43f5e', '#e5e7eb']
 
 export const DEFAULT_APPEARANCE: Appearance = {
-  backgroundMode: 'daily',
+  backgroundMode: 'none',
   photo: PHOTOS[0].src,
   gradient: 'aurora',
   dim: 25,
   blur: 0,
   fullPage: false,
-  accent: '#38bdf8',
-  cardStyle: 'glass',
+  accent: '#2f7d4a',
+  cardStyle: 'trail',
   glassTint: 'clear',
-  radius: 'round',
-  font: 'manrope',
+  radius: 'sharp',
+  font: 'public',
   density: 'comfortable',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 
 /** Complete looks: one tap sets the background, cards, accent and font together. */
 export const PRESETS: { name: string; patch: Partial<Appearance> }[] = [
+  { name: 'Trail', patch: { accent: '#2f7d4a', cardStyle: 'trail', radius: 'sharp', font: 'public', backgroundMode: 'none', dim: 0, blur: 0, fullPage: false } },
   { name: 'Glacier', patch: { accent: '#38bdf8', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'daily', dim: 25, blur: 0, fullPage: false } },
   { name: 'Liquid Glass', patch: { accent: '#60a5fa', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquid', dim: 0, blur: 0 } },
   { name: 'Midnight', patch: { accent: '#7dd3fc', cardStyle: 'liquid', glassTint: 'dark', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquidMidnight', dim: 0, blur: 0 } },
@@ -129,9 +130,22 @@ function normalizeLayout(layout: WidgetSlot[] | undefined): WidgetSlot[] {
   return out
 }
 
+/** Bumped when the default look is replaced, so a saved look from the old design is switched over once. */
+const DESIGN_VERSION = 'trail-1'
+const DESIGN_KEY = 'bettergarmin:design'
+
 function load(): Appearance {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
+    if (localStorage.getItem(DESIGN_KEY) !== DESIGN_VERSION) {
+      // The November 2026 redesign: move a saved look onto the trail defaults, keeping the widget layout, and light theme.
+      localStorage.setItem(DESIGN_KEY, DESIGN_VERSION)
+      localStorage.setItem('bettergarmin:theme', 'light')
+      const kept = raw ? (JSON.parse(raw) as Partial<Appearance>) : {}
+      const next = { ...DEFAULT_APPEARANCE, density: kept.density ?? DEFAULT_APPEARANCE.density, todayLayout: normalizeLayout(kept.todayLayout) }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      return next
+    }
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Appearance>
       return { ...DEFAULT_APPEARANCE, ...parsed, todayLayout: normalizeLayout(parsed.todayLayout) }
@@ -199,6 +213,7 @@ export async function setCustomPhoto(file: File): Promise<void> {
 
 /** Liquid glass is only visible over something, so it always puts the background behind every screen. */
 export function usesFullBackdrop(a: Appearance): boolean {
+  if (a.backgroundMode === 'none') return false
   return a.fullPage || a.cardStyle === 'liquid'
 }
 
@@ -216,6 +231,7 @@ export function useCustomPhoto(): string | null {
 }
 
 const FONT_STACKS: Record<FontChoice, string> = {
+  public: '"Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, -apple-system, sans-serif',
   manrope: '"Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif',
   system: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   serif: 'ui-serif, "New York", Georgia, "Times New Roman", serif',

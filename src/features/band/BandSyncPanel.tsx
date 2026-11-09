@@ -81,7 +81,7 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
         </div>
       )}
 
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className="text-xs text-[var(--tone-red)]">{error}</p>}
       {report && counts && (
         <div className="flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
           <div className="flex flex-wrap gap-2">
@@ -106,7 +106,7 @@ export function BandSyncPanel({ ready }: { ready: boolean }) {
             .filter((o) => o.result === 'failed')
             .slice(0, 5)
             .map((o, i) => (
-              <p key={i} className="text-rose-400">
+              <p key={i} className="text-[var(--tone-red)]">
                 {o.dataType ?? 'File'}: {o.error}
               </p>
             ))}

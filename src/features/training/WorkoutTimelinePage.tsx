@@ -32,9 +32,9 @@ const SOURCE_LABELS: Record<BoundarySource, string> = {
   clamped: 'placeholder',
 }
 const CONFIDENCE_STYLE: Record<Confidence, { label: string; className: string }> = {
-  high: { label: 'High confidence', className: 'bg-emerald-500/15 text-emerald-400' },
-  medium: { label: 'Medium confidence', className: 'bg-sky-500/15 text-sky-400' },
-  low: { label: 'Low confidence', className: 'bg-amber-500/15 text-amber-400' },
+  high: { label: 'High confidence', className: 'bg-[color-mix(in_srgb,var(--tone-green)_15%,transparent)] text-[var(--tone-green)]' },
+  medium: { label: 'Medium confidence', className: 'bg-[color-mix(in_srgb,var(--tone-blue)_15%,transparent)] text-[var(--tone-blue)]' },
+  low: { label: 'Low confidence', className: 'bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] text-[var(--tone-amber)]' },
   none: { label: 'No HR data', className: 'bg-slate-500/20 text-slate-400' },
 }
 
@@ -49,7 +49,7 @@ function NoHeartRateNote({ day }: { day: string }) {
   const fmt = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
   const before = firstDay != null && day.slice(0, 10) < firstDay
   return (
-    <Card className="border-amber-400/30 text-sm text-[var(--text-secondary)]">
+    <Card className="border-[color-mix(in_srgb,var(--tone-amber)_30%,transparent)] text-sm text-[var(--text-secondary)]">
       {before ? (
         <>
           <b className="text-[var(--text-primary)]">No heart rate for this workout.</b> It was on {fmt(day.slice(0, 10))}, but your heart-rate history starts on{' '}
@@ -101,7 +101,7 @@ export function WorkoutTimelinePage() {
       <BackLink />
 
       <div>
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="page-title">{title}</h1>
         <p className="text-sm text-[var(--text-secondary)]">
           {new Date(`${workout.day}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })}
           {workout.gym ? ` · ${workout.gym}` : ''}
@@ -109,7 +109,7 @@ export function WorkoutTimelinePage() {
         <div className="flex flex-wrap items-center gap-3">
           <CompareControl workout={workout} />
           {workout.source === 'element26' && (
-            <Link to={`/training/strength/workout/${workout.id}/review`} className="mt-2 text-xs text-sky-400 hover:text-sky-300">
+            <Link to={`/training/strength/workout/${workout.id}/review`} className="mt-2 text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]">
               Review import{workout.sets.some((s) => s.editedFields?.length) ? ' (edited)' : ''} →
             </Link>
           )}
@@ -152,7 +152,7 @@ export function WorkoutTimelinePage() {
       {hrSource === 'none' && <SyncFirstCard />}
 
       {data.offsetSuggestion && (
-        <Card className="border-amber-400/30 text-sm">
+        <Card className="border-[color-mix(in_srgb,var(--tone-amber)_30%,transparent)] text-sm">
           <p className="font-semibold">Times look shifted — probably a time-zone difference</p>
           <p className="mt-1 text-[var(--text-secondary)]">
             Your logged times don't overlap any Garmin strength activity, but they line up with one recorded at{' '}
@@ -161,7 +161,7 @@ export function WorkoutTimelinePage() {
             {Math.round(data.offsetSuggestion.overlap * 100)}% overlap).
           </p>
           <div className="mt-2 flex gap-3 text-xs">
-            <button type="button" className="text-sky-400 hover:text-sky-300" onClick={() => data.setClockOffset(data.clockOffsetMs + data.offsetSuggestion!.offsetMs)}>
+            <button type="button" className="text-[var(--tone-blue)] hover:text-[var(--tone-blue)]" onClick={() => data.setClockOffset(data.clockOffsetMs + data.offsetSuggestion!.offsetMs)}>
               Apply shift
             </button>
             <span className="text-[var(--text-tertiary)]">You can undo it in Data quality below.</span>
@@ -335,7 +335,7 @@ function SetPanel({
   const isCorrected = analysis.startSource === 'corrected' || analysis.endSource === 'corrected'
 
   return (
-    <Card className="border-rose-400/30">
+    <Card className="border-[color-mix(in_srgb,var(--tone-red)_30%,transparent)]">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <p className="font-semibold">
@@ -412,7 +412,7 @@ function SetPanel({
           Start: <b>{SOURCE_LABELS[analysis.startSource]}</b> · End: <b>{SOURCE_LABELS[analysis.endSource]}</b>
         </p>
         {analysis.issues.map((issue, i) => (
-          <p key={i} className="mt-1 text-amber-400">
+          <p key={i} className="mt-1 text-[var(--tone-amber)]">
             {issue}
           </p>
         ))}
@@ -424,7 +424,7 @@ function SetPanel({
           <NudgeButton onClick={() => nudge('end', -5000)}>−5s</NudgeButton>
           <NudgeButton onClick={() => nudge('end', 5000)}>+5s</NudgeButton>
           {isCorrected && (
-            <button type="button" className="ml-2 text-rose-400 hover:text-rose-300" onClick={() => onCorrect(set.id, null, null)}>
+            <button type="button" className="ml-2 text-[var(--tone-red)] hover:text-[var(--tone-red)]" onClick={() => onCorrect(set.id, null, null)}>
               Reset to imported
             </button>
           )}
@@ -447,10 +447,10 @@ function SetPanel({
       </div>
 
       <div className="mt-3 flex justify-between text-xs">
-        <button type="button" disabled={index === 0} className="text-sky-400 disabled:opacity-30" onClick={() => onSelect(index - 1)}>
+        <button type="button" disabled={index === 0} className="text-[var(--tone-blue)] disabled:opacity-30" onClick={() => onSelect(index - 1)}>
           ← Previous set
         </button>
-        <button type="button" disabled={index >= timeline.sets.length - 1} className="text-sky-400 disabled:opacity-30" onClick={() => onSelect(index + 1)}>
+        <button type="button" disabled={index >= timeline.sets.length - 1} className="text-[var(--tone-blue)] disabled:opacity-30" onClick={() => onSelect(index + 1)}>
           Next set →
         </button>
       </div>
@@ -484,7 +484,7 @@ function BoundaryEditor({
   const changed = start !== analysis.startMs || end !== analysis.endMs
   if (!open) {
     return (
-      <button type="button" className="mt-2 text-sky-400 hover:text-sky-300" onClick={() => setOpen(true)}>
+      <button type="button" className="mt-2 text-[var(--tone-blue)] hover:text-[var(--tone-blue)]" onClick={() => setOpen(true)}>
         Edit boundaries with sliders
       </button>
     )
@@ -493,12 +493,12 @@ function BoundaryEditor({
     <div className="mt-2 flex flex-col gap-2">
       <label className="flex items-center gap-2">
         <span className="w-10 text-[var(--text-tertiary)]">Start</span>
-        <input type="range" min={min} max={end - 1000} step={1000} value={start} onChange={(e) => setStart(Number(e.target.value))} className="flex-1 accent-rose-400" aria-label="Set start" />
+        <input type="range" min={min} max={end - 1000} step={1000} value={start} onChange={(e) => setStart(Number(e.target.value))} className="flex-1 accent-[var(--tone-red)]" aria-label="Set start" />
         <span className="w-20 text-right tabular-nums">{clock(start)}</span>
       </label>
       <label className="flex items-center gap-2">
         <span className="w-10 text-[var(--text-tertiary)]">End</span>
-        <input type="range" min={start + 1000} max={max} step={1000} value={end} onChange={(e) => setEnd(Number(e.target.value))} className="flex-1 accent-rose-400" aria-label="Set end" />
+        <input type="range" min={start + 1000} max={max} step={1000} value={end} onChange={(e) => setEnd(Number(e.target.value))} className="flex-1 accent-[var(--tone-red)]" aria-label="Set end" />
         <span className="w-20 text-right tabular-nums">{clock(end)}</span>
       </label>
       <p className="text-[var(--text-tertiary)]">
@@ -507,7 +507,7 @@ function BoundaryEditor({
         {end > upper ? ' · overlaps the next set' : ''}
       </p>
       <div className="flex gap-3">
-        <button type="button" disabled={!changed} className="text-sky-400 disabled:opacity-40" onClick={() => onSave(start, end)}>
+        <button type="button" disabled={!changed} className="text-[var(--tone-blue)] disabled:opacity-40" onClick={() => onSave(start, end)}>
           Save
         </button>
         <button type="button" className="text-[var(--text-tertiary)]" onClick={() => setOpen(false)}>
@@ -601,15 +601,15 @@ function ExerciseBreakdown({
                     <tr
                       key={s.set.id}
                       onClick={() => onSelect(i)}
-                      className={`cursor-pointer border-t border-[var(--border-panel)] ${i === selectedIndex ? 'bg-rose-500/10' : 'hover:bg-[var(--bg-panel)]'}`}
+                      className={`cursor-pointer border-t border-[var(--border-panel)] ${i === selectedIndex ? 'bg-[color-mix(in_srgb,var(--tone-red)_10%,transparent)]' : 'hover:bg-[var(--bg-panel)]'}`}
                     >
                       <td className="py-2 pr-2">
                         {s.setNumberInExercise}
                         {s.set.isWarmup ? ' WU' : ''}
-                        {s.set.setType === 'drop' && <span className="ml-1 rounded-full bg-orange-500/15 px-1 text-xs text-orange-400">drop</span>}
-                        {s.supersetGroup != null && <span className="ml-1 rounded-full bg-teal-500/15 px-1 text-xs text-teal-400">SS{s.supersetGroup}</span>}
-                        {s.set.editedFields?.length ? <span className="ml-1 text-xs text-sky-400" title="Edited in review">edited</span> : null}
-                        {s.confidence === 'low' || s.confidence === 'none' ? <span className="ml-1 text-amber-400">•</span> : null}
+                        {s.set.setType === 'drop' && <span className="ml-1 rounded-full bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] px-1 text-xs text-[var(--tone-amber)]">drop</span>}
+                        {s.supersetGroup != null && <span className="ml-1 rounded-full bg-[color-mix(in_srgb,var(--tone-teal)_15%,transparent)] px-1 text-xs text-[var(--tone-teal)]">SS{s.supersetGroup}</span>}
+                        {s.set.editedFields?.length ? <span className="ml-1 text-xs text-[var(--tone-blue)]" title="Edited in review">edited</span> : null}
+                        {s.confidence === 'low' || s.confidence === 'none' ? <span className="ml-1 text-[var(--tone-amber)]">•</span> : null}
                       </td>
                       <td className="py-2 pr-2">
                         {formatWeight(s.set.weight, units, 1)} × {s.set.reps}
@@ -633,7 +633,7 @@ function EffortBands({ bandsMs }: { bandsMs: number[] }) {
   const total = bandsMs.reduce((s, v) => s + v, 0)
   if (total === 0) return null
   const labels = ['0–20%', '20–40%', '40–60%', '60–80%', '80–100%']
-  const colors = ['#38bdf8', '#34d399', '#f5a623', '#fb8a3c', '#fb4a59']
+  const colors = ['#2c6e9b', '#2f7d4a', '#c98a14', '#b8612a', '#c2412d']
   return (
     <Card>
       <div className="mb-2 flex items-center gap-2">
@@ -688,7 +688,7 @@ function DataQualityCard({
         <Stat label="Estimated starts" value={`${q.estimatedStarts} / ${timeline.sets.length}`} />
       </div>
       {q.issues.length > 0 && (
-        <ul className="mt-3 flex flex-col gap-1 text-xs text-amber-400">
+        <ul className="mt-3 flex flex-col gap-1 text-xs text-[var(--tone-amber)]">
           {q.issues.map((issue, i) => (
             <li key={i}>• {issue}</li>
           ))}
@@ -701,7 +701,7 @@ function DataQualityCard({
         <NudgeButton onClick={() => onOffset(clockOffsetMs + 10_000)}>+10s</NudgeButton>
         <NudgeButton onClick={() => onOffset(clockOffsetMs + 3_600_000)}>+1h</NudgeButton>
         {clockOffsetMs !== 0 && (
-          <button type="button" className="ml-1 text-rose-400 hover:text-rose-300" onClick={() => onOffset(0)}>
+          <button type="button" className="ml-1 text-[var(--tone-red)] hover:text-[var(--tone-red)]" onClick={() => onOffset(0)}>
             Reset
           </button>
         )}

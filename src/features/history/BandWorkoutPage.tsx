@@ -13,7 +13,7 @@ import { downloadBlob } from '../../lib/download'
 import { formatDuration, sportLabel } from './useWorkoutHistory'
 import { SaveStatus } from './SaveStatus'
 
-const HEART = '#f43f5e'
+const HEART = '#c2412d'
 const humanize = (s: string) => s.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()).trim()
 
 /** One workout downloaded from the band: what was recorded, what wasn't, the user's name and notes, and the original file. */
@@ -88,7 +88,7 @@ export function BandWorkoutPage() {
         ‹ Workout history
       </Link>
       <div>
-        <h1 className="text-2xl font-bold">{entry?.name || sportLabel(activity)}</h1>
+        <h1 className="page-title">{entry?.name || sportLabel(activity)}</h1>
         <p className="text-sm text-[var(--text-secondary)]">
           {sportLabel(activity)} · {start ? start.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }) : 'start time not recorded'}
         </p>
@@ -187,7 +187,7 @@ export function BandWorkoutPage() {
         </label>
         <div className="flex items-center gap-3">
           <Button onClick={save}>Save</Button>
-          {saved && <span className="text-sm text-emerald-500">{saved}</span>}
+          {saved && <span className="text-sm text-[var(--tone-green)]">{saved}</span>}
         </div>
       </Card>
 

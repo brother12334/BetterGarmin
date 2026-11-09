@@ -42,8 +42,8 @@ export function RecoveryCard({ recovery }: { recovery: RecoverySummary }) {
             i.status === 'insufficient' || i.status === 'typical'
               ? 'text-[var(--text-tertiary)]'
               : i.lessRecoveredDirection
-                ? 'text-amber-400'
-                : 'text-sky-400'
+                ? 'text-[var(--tone-amber)]'
+                : 'text-[var(--tone-blue)]'
           return (
             <div key={i.key} className="flex items-center justify-between gap-3 py-2 text-sm">
               <div className="min-w-0">
@@ -134,7 +134,7 @@ export function FindingsTab({ findings, recovery }: { findings: Finding[]; recov
         <Card>
           <button type="button" className="flex w-full items-center justify-between text-sm" onClick={() => setShowPending((v) => !v)}>
             <span className="font-semibold">Waiting for more data ({pending.length})</span>
-            <span className="text-xs text-sky-400">{showPending ? 'Hide' : 'Show'}</span>
+            <span className="text-xs text-[var(--tone-blue)]">{showPending ? 'Hide' : 'Show'}</span>
           </button>
           {showPending && (
             <ul className="mt-2 flex flex-col gap-2 text-xs text-[var(--text-secondary)]">

@@ -158,7 +158,7 @@ function ExperimentResult({ experiment, dataset, onDelete }: { experiment: Exper
               : 'Exploratory — all history, treat as a hypothesis'}
           </p>
         </div>
-        <button type="button" onClick={onDelete} className="text-[var(--text-tertiary)] hover:text-rose-400">
+        <button type="button" onClick={onDelete} className="text-[var(--text-tertiary)] hover:text-[var(--tone-red)]">
           Remove
         </button>
       </div>

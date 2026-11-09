@@ -42,7 +42,7 @@ function Progress() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold">Progress</h1>
+      <h1 className="page-title">Progress</h1>
       <Card className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
           <p className="font-semibold">Workouts per week</p>
@@ -82,7 +82,7 @@ function Progress() {
                   <p className="text-sm tabular-nums text-[var(--text-secondary)]">
                     Latest {p.latest.reps} × {w(p.latest.weight)}
                     {p.previous ? ` · before ${p.previous.reps} × ${w(p.previous.weight)}` : ' · first session'}
-                    {diff != null && diff !== 0 && <span className={diff > 0 ? 'text-emerald-500' : 'text-rose-400'}> ({diff > 0 ? '+' : '−'}{w(Math.abs(diff))} est. 1RM)</span>}
+                    {diff != null && diff !== 0 && <span className={diff > 0 ? 'text-[var(--tone-green)]' : 'text-[var(--tone-red)]'}> ({diff > 0 ? '+' : '−'}{w(Math.abs(diff))} est. 1RM)</span>}
                   </p>
                   <p className="text-xs text-[var(--text-tertiary)]">
                     Best {p.best.reps} × {w(p.best.weight)} on {new Date(`${p.best.day}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

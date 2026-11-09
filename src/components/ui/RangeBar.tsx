@@ -14,34 +14,32 @@ interface RangeBarProps {
   infoDescription?: string
 }
 
-/** A compact, Oura-style row: label + status word, a big number, and a horizontal filled track with a dot at the current value. */
+/** A signpost row: the metric in sign caps with its status word, the value set large on the right, and a straight
+ * trail-marker track with quarter ticks below. */
 export function RangeBar({ label, value, displayValue, min = 0, max = 100, status, color, infoTitle, infoDescription }: RangeBarProps) {
   const pct = value == null ? 0 : Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
 
   return (
     <div className="py-3">
       <div className="flex items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="sign-caps text-sm text-[var(--text-primary)]">{label}</span>
           {status && (
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: STATUS_COLORS[status] }}>
+            <span className="text-xs font-bold" style={{ color: STATUS_COLORS[status] }}>
               {STATUS_LABELS[status]}
             </span>
           )}
           {infoTitle && infoDescription && <InfoButton title={infoTitle}>{infoDescription}</InfoButton>}
         </div>
-        <span className="text-xl font-bold tabular-nums text-[var(--text-primary)]">
+        <span className="text-3xl font-extrabold leading-none text-[var(--text-primary)]">
           {displayValue ?? (value == null ? '—' : Math.round(value))}
         </span>
       </div>
-      <div className="relative mt-3 h-1.5 w-full rounded-full bg-[var(--ring-track)]">
-        <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: `${pct}%`, backgroundColor: color }} />
-        {value != null && (
-          <div
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-[left] duration-700 ease-out"
-            style={{ left: `${pct}%`, backgroundColor: color, borderColor: 'var(--bg-elevated)' }}
-          />
-        )}
+      <div className="relative mt-3 h-2 w-full bg-[var(--ring-track)]">
+        <div className="h-full transition-[width] duration-700 ease-out" style={{ width: `${pct}%`, backgroundColor: color }} />
+        {[25, 50, 75].map((t) => (
+          <span key={t} className="absolute top-0 h-full w-px bg-[var(--bg-panel)]" style={{ left: `${t}%` }} aria-hidden />
+        ))}
       </div>
     </div>
   )

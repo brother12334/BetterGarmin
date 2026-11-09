@@ -81,14 +81,14 @@ export function SleepCoach({ nights, usualWake }: { nights: SleepRow[]; usualWak
           className="absolute left-0 top-6 h-5 border-l-2 border-[var(--text-primary)]"
           style={{
             width: pct(needMin),
-            backgroundImage: 'repeating-linear-gradient(-45deg, #60a5fa 0 2px, transparent 2px 6px)',
+            backgroundImage: 'repeating-linear-gradient(-45deg, #3f7fbf 0 2px, transparent 2px 6px)',
           }}
         />
         <Tick at={pct(needMin)} label={formatHoursMinutes(needMin)} bold />
         {changeMin !== 0 && <Tick at={pct(BASELINE_MIN)} label="8h" side={changeMin > 0 ? 'left' : 'right'} />}
         {changeMin !== 0 && (
           <div className="absolute top-[68px] -translate-x-1/2 text-center" style={{ left: pct((needMin + BASELINE_MIN) / 2) }}>
-            <span className="mx-auto block h-2.5 w-6 rounded-full border-2 border-orange-500" />
+            <span className="mx-auto block h-2.5 w-6 rounded-full border-2 border-[var(--tone-amber)]" />
             <span className="whitespace-nowrap text-xs text-[var(--text-secondary)]">
               {changeMin > 0 ? '+' : '−'}
               {short(changeMin)}

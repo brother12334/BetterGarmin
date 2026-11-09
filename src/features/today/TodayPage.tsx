@@ -4,9 +4,9 @@ import { cn } from '../../lib/cn'
 import { useAppearance, usesFullBackdrop, type WidgetId } from '../../app/appearance'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
-import { Ring } from '../../components/ui/Ring'
 import { RangeBar } from '../../components/ui/RangeBar'
 import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
+import { TrailBlaze, TRAIL_GRADES, gradeForReadiness } from '../../components/ui/TrailBlaze'
 import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { InfoButton } from '../../components/ui/InfoButton'
@@ -26,7 +26,7 @@ import { useEnergyReserve } from './useEnergyReserve'
 import { TrainingWidget } from './TrainingWidget'
 import { EnergyReserveCard } from './EnergyReserveCard'
 import { EnergyForecastCard } from './EnergyForecastCard'
-import { STATUS_COLORS, STATUS_LABELS, statusForInverseScore, statusForScore } from '../../lib/statusWords'
+import { statusForInverseScore, statusForScore } from '../../lib/statusWords'
 
 interface TodayData {
   day: string
@@ -218,47 +218,42 @@ function ReadinessHero({
   score: number | null
   recommendation: string | null
 }) {
-  const status = statusForScore(score)
-  const color = status ? STATUS_COLORS[status] : METRIC_COLORS.readiness.solid
-  // With a full-screen backdrop the page itself already shows it, so the hero stays transparent.
-  const fullPage = usesFullBackdrop(useAppearance())
+  const grade = gradeForReadiness(score)
+  const a = useAppearance()
+  // A chosen backdrop photo shows as a strip above the sign, unless it already fills the whole page.
+  const photoStrip = a.backgroundMode !== 'none' && !usesFullBackdrop(a)
 
   return (
-    <div className={cn('relative -mx-4 overflow-hidden md:-mx-8', atTop ? '-mt-[calc(1.5rem+env(safe-area-inset-top))] rounded-b-card pt-[env(safe-area-inset-top)]' : 'rounded-card')}>
-      {!fullPage && (
-        <div className="absolute inset-0">
-          <MountainBackdrop height={320} />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] from-25% via-[var(--bg-base)]/70 via-60% to-transparent" />
+    <section className={cn('-mx-4 md:mx-0', atTop && '-mt-[calc(1.5rem+env(safe-area-inset-top))]')}>
+      {photoStrip && (
+        <div className="h-28 overflow-hidden" aria-hidden>
+          <MountainBackdrop height={112} />
         </div>
       )}
-      <div className="relative flex flex-col gap-5 px-4 pb-8 pt-6 md:px-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">Today</h1>
-          <p className="text-sm text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{formattedDay}</p>
-        </div>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="rounded-full" style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.45))' }}>
-            <Ring value={score} metric="readiness" size={176} strokeWidth={14} />
-          </div>
-          <div className="flex max-w-xs flex-col items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color }}>
-                {status ? STATUS_LABELS[status] : 'Readiness'}
-              </span>
-              <InfoButton title="Readiness (BetterGarmin estimate)">
-                {recommendation
-                  ? `${recommendation} Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline.`
-                  : "BetterGarmin's recovery/readiness score, combining sleep, resting heart rate, training load, and stress. Needs a bit more history to establish your personal baseline."}
-              </InfoButton>
-            </div>
-            {recommendation && (
-              // Without a full-page photo this line sits where the hero fades into the page, so it uses the theme's text colour.
-              <p className={cn('text-sm leading-relaxed', fullPage ? 'text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]' : 'text-[var(--text-secondary)]')}>{recommendation}</p>
-            )}
-          </div>
-        </div>
+      <div className={cn('sign-band flex items-baseline justify-between gap-3 px-4 pb-3 md:rounded-t-card', atTop && !photoStrip ? 'pt-[calc(env(safe-area-inset-top)+1rem)]' : 'pt-3')}>
+        <h1 className="sign-caps text-lg">Today</h1>
+        <p className="text-sm font-semibold opacity-80">{formattedDay}</p>
       </div>
-    </div>
+      <div className="glass-panel flex flex-col gap-3 border-t-0 px-4 pb-5 pt-5 md:rounded-b-card">
+        <div className="flex items-center gap-4">
+          <TrailBlaze grade={grade} size={64} />
+          <div className="min-w-0 flex-1">
+            <p className="text-2xl font-extrabold leading-tight">{grade ? TRAIL_GRADES[grade].name : 'No grade yet'}</p>
+            <p className="text-sm font-semibold text-[var(--text-secondary)]">{grade ? TRAIL_GRADES[grade].effort : 'Readiness needs more history'}</p>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-5xl font-extrabold leading-none">{score ?? '–'}</span>
+            <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)]">
+              Readiness
+              <InfoButton title="Readiness (BetterGarmin estimate)">
+                {`${recommendation ? recommendation + ' ' : ''}Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline. The trail grade follows the same bands: 80+ black diamond, 60–79 blue square, 40–59 green circle, under 40 trail closed.`}
+              </InfoButton>
+            </span>
+          </div>
+        </div>
+        {recommendation && <p className="border-t border-[var(--border-panel)] pt-3 text-sm text-[var(--text-secondary)]">{recommendation}</p>}
+      </div>
+    </section>
   )
 }
 
@@ -307,7 +302,7 @@ function SyncBar() {
   const running = garminPull.status === 'running'
   return (
     <div className="-mt-2 flex items-center justify-between gap-3 text-sm">
-      <span className={garminPull.status === 'error' ? 'text-rose-400' : 'text-[var(--text-tertiary)]'}>
+      <span className={garminPull.status === 'error' ? 'text-[var(--tone-red)]' : 'text-[var(--text-tertiary)]'}>
         {running
           ? garminPull.via === 'band'
             ? 'Syncing from your band…'

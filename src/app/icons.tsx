@@ -19,12 +19,12 @@ export function Logo({ size = 32, rounded = true, ...props }: IconProps & { size
     <svg width={size} height={size} viewBox="0 0 64 64" {...props}>
       <defs>
         <linearGradient id="orbitA" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="0%" stopColor="#2c6e9b" />
           <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
         <linearGradient id="orbitB" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#34d399" />
-          <stop offset="100%" stopColor="#38bdf8" />
+          <stop offset="0%" stopColor="#2f7d4a" />
+          <stop offset="100%" stopColor="#2c6e9b" />
         </linearGradient>
       </defs>
       {rounded && <rect width="64" height="64" rx="16" fill="#0a0b0f" />}

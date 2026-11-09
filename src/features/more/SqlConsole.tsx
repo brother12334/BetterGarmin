@@ -72,7 +72,7 @@ export function SqlConsole() {
         onChange={(e) => setSql(e.target.value)}
         rows={4}
         spellCheck={false}
-        className="w-full rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-3 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-sky-400/50"
+        className="w-full rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] p-3 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-[color-mix(in_srgb,var(--tone-blue)_50%,transparent)]"
       />
       <div className="flex items-center gap-2">
         <Button loading={running} variant="secondary" onClick={run} disabled={running || !selectedKind}>
@@ -88,7 +88,7 @@ export function SqlConsole() {
         )}
       </div>
 
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error && <p className="text-sm text-[var(--tone-red)]">{error}</p>}
 
       {result && (
         <div className="overflow-x-auto rounded-control border border-[var(--border-panel)]">

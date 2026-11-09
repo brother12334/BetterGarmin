@@ -78,7 +78,7 @@ function pointsOf(series: Record<string, unknown>): Raw[] {
 function seriesColor(series: Record<string, unknown>, pts: Raw[]): string {
   const ls = series.lineStyle as { color?: string } | undefined
   const is = series.itemStyle as { color?: string } | undefined
-  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#38bdf8'
+  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#2c6e9b'
 }
 
 /** Averages samples into fixed time buckets (centred), so a day reads as a calm shape instead of hundreds of spikes. */

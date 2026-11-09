@@ -1,3 +1,4 @@
+import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Chart } from '../../components/ui/Chart'
@@ -42,19 +43,15 @@ export function EnergyReserveCard({
         data: curve.map((p) => [p.timestamp.replace(' ', 'T'), p.value]),
         smooth: true,
         symbol: 'none',
-        lineStyle: { color: '#34d399', width: 2 },
-        areaStyle: {
-          color: {
-            type: 'linear' as const,
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(52, 211, 153, 0.35)' },
-              { offset: 1, color: 'rgba(56, 189, 248, 0.02)' },
-            ],
-          },
+        // Drawn as a hike's elevation profile: an inked ridge line over solid terrain, with a "you are here" post.
+        lineStyle: { color: 'var(--text-primary)', width: 2 },
+        areaStyle: { color: METRIC_COLORS.energy.solid, opacity: 0.28 },
+        markLine: {
+          symbol: 'none',
+          silent: true,
+          lineStyle: { color: 'var(--text-primary)', type: 'solid' as const, width: 1 },
+          label: { formatter: 'You are here', position: 'insideEndTop' as const, color: 'var(--text-primary)', fontWeight: 700, fontSize: 10 },
+          data: [{ xAxis: curve[curve.length - 1].timestamp.replace(' ', 'T') }],
         },
       },
     ],
@@ -73,7 +70,7 @@ export function EnergyReserveCard({
       <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
         {biggestDrain && (
           <div className="rounded-control bg-[var(--bg-panel)] p-3">
-            <p className="font-medium text-rose-400">Biggest drain</p>
+            <p className="font-medium text-[var(--tone-red)]">Biggest drain</p>
             <p className="mt-1 text-[var(--text-secondary)]">
               {formatTime(biggestDrain.startTimestamp)} – {formatTime(biggestDrain.endTimestamp)} ·{' '}
               {Math.round(biggestDrain.delta)} pts
@@ -82,7 +79,7 @@ export function EnergyReserveCard({
         )}
         {bestRecharge && (
           <div className="rounded-control bg-[var(--bg-panel)] p-3">
-            <p className="font-medium text-emerald-400">Best recharge</p>
+            <p className="font-medium text-[var(--tone-green)]">Best recharge</p>
             <p className="mt-1 text-[var(--text-secondary)]">
               {formatTime(bestRecharge.startTimestamp)} – {formatTime(bestRecharge.endTimestamp)} · +
               {Math.round(bestRecharge.delta)} pts

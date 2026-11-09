@@ -108,7 +108,7 @@ export function ImportReviewPage() {
         ← Back to workout
       </Link>
       <div>
-        <h1 className="text-2xl font-bold">Review import</h1>
+        <h1 className="page-title">Review import</h1>
         <p className="text-sm text-[var(--text-secondary)]">
           {workout.title || (workout.split !== 'custom' ? SPLIT_NAMES[workout.split] : 'Workout')} · {new Date(`${workout.day}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })}
         </p>
@@ -132,16 +132,16 @@ export function ImportReviewPage() {
         </div>
         <ul className="flex flex-col gap-2 text-sm text-[var(--text-secondary)]">
           {parsedWarnings.map((w) => (
-            <li key={w} className="text-amber-400">
+            <li key={w} className="text-[var(--tone-amber)]">
               • {w}
             </li>
           ))}
           {duplicates.size > 0 && (
-            <li className="text-amber-400">
+            <li className="text-[var(--tone-amber)]">
               • {duplicates.size} set(s) look like duplicates (same exercise, load and reps logged within 10 s).{' '}
               <button
                 type="button"
-                className="text-sky-400 underline"
+                className="text-[var(--tone-blue)] underline"
                 onClick={async () => {
                   for (const id of duplicates) await saveSetFields(workout.id, id, { excluded: true })
                   await load()
@@ -151,7 +151,7 @@ export function ImportReviewPage() {
               </button>
             </li>
           )}
-          {unrecognized.length > 0 && <li className="text-amber-400">• Not recognized as a known exercise: {unrecognized.join(', ')} — check the name and muscle group below.</li>}
+          {unrecognized.length > 0 && <li className="text-[var(--tone-amber)]">• Not recognized as a known exercise: {unrecognized.join(', ')} — check the name and muscle group below.</li>}
           {parsedWarnings.length === 0 && duplicates.size === 0 && unrecognized.length === 0 && <li>Nothing looks wrong. You can still edit anything below.</li>}
         </ul>
 
@@ -166,7 +166,7 @@ export function ImportReviewPage() {
             Weights were really kg
           </Button>
           {settings.weightScale !== 1 && (
-            <button type="button" className="text-rose-400" onClick={async () => { await saveWeightScale(workout.id, 1); await load() }}>
+            <button type="button" className="text-[var(--tone-red)]" onClick={async () => { await saveWeightScale(workout.id, 1); await load() }}>
               Undo units fix
             </button>
           )}
@@ -222,7 +222,7 @@ export function ImportReviewPage() {
                 const e = effectiveById.get(s.id)!
                 const f = fieldsById.get(s.id) ?? {}
                 return (
-                  <tr key={s.id} className={`border-t border-[var(--border-panel)] ${e.excluded ? 'opacity-40' : ''} ${duplicates.has(s.id) ? 'bg-amber-500/5' : ''}`}>
+                  <tr key={s.id} className={`border-t border-[var(--border-panel)] ${e.excluded ? 'opacity-40' : ''} ${duplicates.has(s.id) ? 'bg-[color-mix(in_srgb,var(--tone-amber)_5%,transparent)]' : ''}`}>
                     <td className="py-2 pr-2">
                       {e.exercise}
                       {s.atEpochMs != null && <span className="block text-xs text-[var(--text-tertiary)]">{formatTime(s.atEpochMs, { seconds: true })}</span>}
@@ -244,11 +244,11 @@ export function ImportReviewPage() {
                     </td>
                     <td className="py-2 pr-2">
                       <input type="checkbox" checked={e.isWarmup} onChange={(ev) => setFields(s.id, { isWarmup: ev.target.checked === s.isWarmup ? undefined : ev.target.checked })} aria-label="Warm-up" />
-                      {f.isWarmup !== undefined && <span className="ml-1 text-xs text-sky-400">edited</span>}
+                      {f.isWarmup !== undefined && <span className="ml-1 text-xs text-[var(--tone-blue)]">edited</span>}
                     </td>
                     <td className="py-2 pr-2">
                       <input type="checkbox" checked={!!e.excluded} onChange={(ev) => setFields(s.id, { excluded: ev.target.checked ? true : undefined })} aria-label="Exclude set" />
-                      {duplicates.has(s.id) && <span className="ml-1 text-amber-400">dup?</span>}
+                      {duplicates.has(s.id) && <span className="ml-1 text-[var(--tone-amber)]">dup?</span>}
                     </td>
                   </tr>
                 )
@@ -259,7 +259,7 @@ export function ImportReviewPage() {
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
           <span className="text-[var(--text-tertiary)]">{editCount === 0 ? 'No edits — showing the import as-is.' : `${editCount} edit(s) applied on top of the import.`}</span>
           {editCount > 0 && (
-            <button type="button" className="text-rose-400 hover:text-rose-300" onClick={async () => { await resetWorkoutEdits(workout.id); await load() }}>
+            <button type="button" className="text-[var(--tone-red)] hover:text-[var(--tone-red)]" onClick={async () => { await resetWorkoutEdits(workout.id); await load() }}>
               Reset all edits
             </button>
           )}
@@ -304,7 +304,7 @@ function ExerciseRow({
         <p className="text-xs text-[var(--text-tertiary)]">
           Imported as <b className="text-[var(--text-secondary)]">{original}</b> ({MUSCLE_GROUP_LABELS[originalCategory]})
         </p>
-        {!known && <span className="rounded-full bg-amber-500/15 px-2 text-xs text-amber-400">unrecognized</span>}
+        {!known && <span className="rounded-full bg-[color-mix(in_srgb,var(--tone-amber)_15%,transparent)] px-2 text-xs text-[var(--tone-amber)]">unrecognized</span>}
       </div>
       <div className="flex flex-wrap gap-2">
         <input
@@ -339,11 +339,11 @@ function ExerciseRow({
         </Button>
       </div>
       {suggestion && (
-        <button type="button" className="self-start text-xs text-sky-400 hover:text-sky-300" onClick={() => setName(suggestion)}>
+        <button type="button" className="self-start text-xs text-[var(--tone-blue)] hover:text-[var(--tone-blue)]" onClick={() => setName(suggestion)}>
           Did you mean “{suggestion}”? (matching names keeps its history together)
         </button>
       )}
-      {(current !== original || currentCategory !== originalCategory) && <p className="text-xs text-sky-400">Shown as {current} ({MUSCLE_GROUP_LABELS[currentCategory]})</p>}
+      {(current !== original || currentCategory !== originalCategory) && <p className="text-xs text-[var(--tone-blue)]">Shown as {current} ({MUSCLE_GROUP_LABELS[currentCategory]})</p>}
     </div>
   )
 }
@@ -376,10 +376,10 @@ function NumberCell({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-        className={`w-16 rounded-control border bg-[var(--bg-panel)] px-2 py-1 tabular-nums ${edited ? 'border-sky-400/60' : 'border-[var(--border-panel)]'}`}
+        className={`w-16 rounded-control border bg-[var(--bg-panel)] px-2 py-1 tabular-nums ${edited ? 'border-[color-mix(in_srgb,var(--tone-blue)_60%,transparent)]' : 'border-[var(--border-panel)]'}`}
       />
       {edited && was && (
-        <button type="button" title={`Imported: ${was}. Click to restore.`} className="text-xs text-sky-400" onClick={() => onCommit(null)}>
+        <button type="button" title={`Imported: ${was}. Click to restore.`} className="text-xs text-[var(--tone-blue)]" onClick={() => onCommit(null)}>
           was {was}
         </button>
       )}

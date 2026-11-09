@@ -25,10 +25,10 @@ interface Panel {
 }
 
 const PANELS: Panel[] = [
-  { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: '#fb4a59', get: (d) => d.restingHr },
-  { key: 'hrv', label: 'HRV', unit: 'ms', color: '#34d399', get: (d) => d.hrv },
-  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#8b7bf6', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
-  { key: 'steps', label: 'Steps', unit: '', color: '#38bdf8', get: (d) => d.steps },
+  { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: '#c2412d', get: (d) => d.restingHr },
+  { key: 'hrv', label: 'HRV', unit: 'ms', color: '#2f7d4a', get: (d) => d.hrv },
+  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#4f4fae', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
+  { key: 'steps', label: 'Steps', unit: '', color: '#2c6e9b', get: (d) => d.steps },
 ]
 
 /** Trailing 28-day median ± 1.5 MAD, only where ≥14 earlier values exist. */
@@ -86,7 +86,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
       yAxisIndex: vi,
       barMaxWidth: 10,
       data: workoutsInRange.map((s) => ({ value: [x(s.day), Math.round(s.volumeKg / 100) / 10], workoutId: s.workoutId, timed: s.timed, title: s.title })),
-      itemStyle: { color: '#2dd4bf', borderRadius: [4, 4, 0, 0] },
+      itemStyle: { color: '#1f7a78', borderRadius: [4, 4, 0, 0] },
     })
 
     return {
@@ -130,7 +130,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
                   setCustom(null)
                   setRangeDays(r.days)
                 }}
-                className={`rounded-full px-3 py-1 ${!custom && rangeDays === r.days ? 'bg-sky-500/20 text-sky-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`rounded-full px-3 py-1 ${!custom && rangeDays === r.days ? 'bg-[color-mix(in_srgb,var(--tone-blue)_20%,transparent)] text-[var(--tone-blue)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 {r.label}
               </button>
