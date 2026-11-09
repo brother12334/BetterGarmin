@@ -95,6 +95,8 @@ export function TodayPage() {
   }
 
   const { summary, sleep, hrv } = data
+  // Garmin reports -1/-2 for "no stress reading yet"; show those as missing, not as a score.
+  const stressAvg = summary?.stress_avg != null && summary.stress_avg >= 0 ? summary.stress_avg : null
   const insights = buildTodayInsights(summary, sleep, hrv)
   const formattedDay = new Date(`${data.day}T00:00:00`).toLocaleDateString(undefined, {
     weekday: 'long',
@@ -130,8 +132,8 @@ export function TodayPage() {
         <MetricBlock
           metric="stress"
           label="Stress"
-          value={summary?.stress_avg != null ? String(Math.round(summary.stress_avg)) : '—'}
-          sub={statusWord(statusForInverseScore(summary?.stress_avg), 'average today')}
+          value={stressAvg != null ? String(Math.round(stressAvg)) : '—'}
+          sub={statusWord(statusForInverseScore(stressAvg), 'average today')}
           info={{ title: 'Stress', text: "A 0-100 estimate of today's stress, from heart-rate variability relative to your resting heart rate. Below 25 is calm, 25-50 is typical daily stress, above 50 means your body is working harder than usual." }}
         />
         <MetricBlock
