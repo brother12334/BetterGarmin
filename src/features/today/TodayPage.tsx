@@ -88,7 +88,6 @@ export function TodayPage() {
     return (
       <div className="flex flex-col gap-6">
         <SyncBar />
-        <VersionTag />
         <LiveHeartRateCard />
         <Card className="text-center text-[var(--text-secondary)]">
           {hasGarmin
@@ -119,7 +118,6 @@ export function TodayPage() {
     sync: (
       <>
         <SyncBar />
-        <VersionTag />
       </>
     ),
     training: <TrainingWidget />,
@@ -156,7 +154,8 @@ export function TodayPage() {
     forecast: <EnergyForecastCard day={data.day} />,
     energy: <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />,
     stats: (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      // One signboard split by hairlines, not four separate cards.
+      <Card className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--border-panel)] p-0 sm:grid-cols-4">
         <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />
         <StatCard label="Floors" value={summary?.floors_up ?? 0} />
         <StatCard label="Active calories" value={summary?.calories_active ?? 0} />
@@ -166,7 +165,7 @@ export function TodayPage() {
           decimals={1}
           suffix={` ${distanceUnitLabel(units)}`}
         />
-      </div>
+      </Card>
     ),
     lastNight: <HowYouSlept day={data.day} />,
     insights: (
@@ -271,13 +270,13 @@ function StatCard({
   suffix?: string
 }) {
   return (
-    <Card className="p-4">
-      <p className="text-xs font-medium text-[var(--text-tertiary)]">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">
+    <div className="bg-[var(--bg-elevated)] p-4">
+      <p className="sign-caps text-xs text-[var(--text-secondary)]">{label}</p>
+      <p className="mt-1 text-3xl font-extrabold">
         <StatNumber value={value} decimals={decimals} suffix={suffix} />
       </p>
       {goal != null && <p className="text-xs text-[var(--text-tertiary)]">of {goal.toLocaleString()} goal</p>}
-    </Card>
+    </div>
   )
 }
 
@@ -320,6 +319,3 @@ function SyncBar() {
   )
 }
 
-function VersionTag() {
-  return <p className="-mt-4 text-xs text-[var(--text-tertiary)]">v{__APP_VERSION__}</p>
-}

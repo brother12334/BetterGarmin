@@ -201,42 +201,20 @@ export function DetailChart({
   )
 }
 
-function textColor(): string {
-  return getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#f4f5f7'
-}
-
-/** A radial gauge for a 0–max value. */
+/** A 0–max value as a signpost: the label in sign caps, the number large, and a straight trail-marker track. */
 export function Dial({ label, value, max = 100, color, caption }: { label: string; value: number | null; max?: number; color: string; caption?: string }) {
+  const pct = value == null ? 0 : Math.max(0, Math.min(100, (value / max) * 100))
   return (
-    <Card className="flex flex-col items-center p-3">
-      <span className="text-xs font-semibold text-[var(--text-secondary)]">{label}</span>
-      <Chart
-        className="w-full"
-        height={150}
-        option={{
-          tooltip: { show: false },
-          series: [
-            {
-              type: 'gauge',
-              startAngle: 220,
-              endAngle: -40,
-              min: 0,
-              max,
-              radius: '92%',
-              progress: { show: value != null, width: 12, roundCap: true, itemStyle: { color } },
-              axisLine: { roundCap: true, lineStyle: { width: 12, color: [[1, 'rgba(140,150,170,0.18)']] } },
-              pointer: { show: false },
-              axisTick: { show: false },
-              splitLine: { show: false },
-              axisLabel: { show: false },
-              detail: { fontSize: 28, fontWeight: 800, color: textColor(), offsetCenter: [0, '4%'], formatter: value == null ? '—' : '{value}' },
-              title: { show: false },
-              data: [{ value: value ?? 0 }],
-            },
-          ],
-        }}
-      />
-      {caption && <span className="-mt-3 text-xs text-[var(--text-tertiary)]">{caption}</span>}
+    <Card className="flex flex-col gap-2 p-4">
+      <span className="sign-caps text-xs text-[var(--text-secondary)]">{label}</span>
+      <span className="text-4xl font-extrabold leading-none">{value == null ? '—' : Math.round(value)}</span>
+      <div className="relative h-2 w-full bg-[var(--ring-track)]" aria-hidden>
+        <div className="h-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+        {[25, 50, 75].map((t) => (
+          <span key={t} className="absolute top-0 h-full w-px bg-[var(--bg-elevated)]" style={{ left: `${t}%` }} />
+        ))}
+      </div>
+      {caption && <span className="text-xs text-[var(--text-tertiary)]">{caption}</span>}
     </Card>
   )
 }

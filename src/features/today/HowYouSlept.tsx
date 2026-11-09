@@ -114,11 +114,11 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
 
       {events.length > 0 ? <StageTimeline events={events} /> : <StackedBar parts={minutes} total={inBed} />}
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-px border-y border-[var(--border-panel)] bg-[var(--border-panel)]">
         {minutes.map((s) => {
           const pct = Math.round((s.min / inBed) * 100)
           return (
-            <div key={s.key} className="rounded-control bg-[var(--bg-panel)] px-3 py-3">
+            <div key={s.key} className="bg-[var(--bg-elevated)] px-3 py-3">
               <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}

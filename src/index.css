@@ -39,8 +39,8 @@
   --band: #0f110f;
   --band-text: #f3f4ef;
   --accent: #2f7d4a;
-  --radius-card: 6px;
-  --radius-control: 6px;
+  --radius-card: 2px;
+  --radius-control: 4px;
   --bg-base: #161916;
   --bg-elevated: #1f231f;
   --bg-panel: #272c27;
@@ -168,13 +168,16 @@ body {
   color: var(--band-text);
 }
 .page-title {
+  /* A sign plate: white caps routed into a black board. */
   display: inline-block;
-  border-bottom: 4px solid var(--text-primary);
-  padding-bottom: 2px;
-  font-size: 1.5rem;
-  line-height: 2rem;
+  background: var(--band);
+  color: var(--band-text);
+  padding: 0.25rem 0.75rem;
+  border-radius: 2px;
+  font-size: 1.375rem;
+  line-height: 1.875rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 /* Card titles read as sign lettering in the trail style: heavy, not shouted (long titles stay in normal case). */

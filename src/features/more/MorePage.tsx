@@ -38,7 +38,7 @@ export function MorePage() {
 
       <Link to="/customize">
         <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-[var(--accent)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--accent)]">
             <CustomizeIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">

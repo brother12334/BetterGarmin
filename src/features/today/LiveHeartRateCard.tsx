@@ -17,7 +17,7 @@ export function LiveHeartRateCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-red)_10%,transparent)] text-[var(--tone-red)]"
+              className="flex h-8 w-8 items-center justify-center text-[var(--tone-red)]"
             >
               <HealthIcon width={22} height={22} />
             </div>
@@ -68,7 +68,7 @@ function LatestReading({ latest }: { latest: ReturnType<typeof useLatestHeartRat
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-[color-mix(in_srgb,var(--tone-red)_10%,transparent)] text-[var(--tone-red)]">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--tone-red)]">
           <HealthIcon width={22} height={22} />
         </div>
         <div>

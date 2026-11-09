@@ -38,10 +38,10 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen w-full">
       <PageBackdrop />
-      <aside className="sticky top-0 hidden h-screen w-56 flex-col gap-1 border-r border-[var(--border-panel)] p-4 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-56 flex-col gap-1 bg-[var(--band)] p-4 text-[var(--band-text)] md:flex">
         <div className="mb-6 flex items-center gap-2 px-2">
-          <Logo size={32} className="rounded-control" />
-          <span className="text-lg font-bold">BetterGarmin</span>
+          <Logo size={28} className="rounded-control" />
+          <span className="sign-caps text-base">BetterGarmin</span>
         </div>
         {TABS.map((tab) => (
           <NavLink
@@ -51,7 +51,8 @@ export function AppShell() {
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-control px-3 py-3 text-sm font-medium transition-colors',
-                isActive ? 'bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                // The sign band language: the current section sits on a white plate.
+                isActive ? 'bg-[var(--band-text)] font-bold text-[var(--band)]' : 'text-white/75 hover:text-white',
               )
             }
           >

@@ -238,7 +238,7 @@ const FONT_STACKS: Record<FontChoice, string> = {
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
 }
 const RADII: Record<Radius, { card: string; control: string }> = {
-  sharp: { card: '6px', control: '6px' },
+  sharp: { card: '2px', control: '4px' },
   rounded: { card: '14px', control: '10px' },
   round: { card: '24px', control: '16px' },
 }

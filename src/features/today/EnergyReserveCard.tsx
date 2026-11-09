@@ -1,4 +1,3 @@
-import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { Card } from '../../components/ui/Card'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Chart } from '../../components/ui/Chart'
@@ -45,12 +44,13 @@ export function EnergyReserveCard({
         symbol: 'none',
         // Drawn as a hike's elevation profile: an inked ridge line over solid terrain, with a "you are here" post.
         lineStyle: { color: 'var(--text-primary)', width: 2 },
-        areaStyle: { color: METRIC_COLORS.energy.solid, opacity: 0.28 },
+        // Earth under the ridge line, like the shaded ground of a trail profile.
+        areaStyle: { color: '#6b4a2b', opacity: 0.16 },
         markLine: {
           symbol: 'none',
           silent: true,
           lineStyle: { color: 'var(--text-primary)', type: 'solid' as const, width: 1 },
-          label: { formatter: 'You are here', position: 'insideEndTop' as const, color: 'var(--text-primary)', fontWeight: 700, fontSize: 10 },
+          label: { formatter: 'YOU ARE HERE', position: 'end' as const, rotate: 0, align: 'right' as const, color: 'var(--text-primary)', fontWeight: 800, fontSize: 10 },
           data: [{ xAxis: curve[curve.length - 1].timestamp.replace(' ', 'T') }],
         },
       },
@@ -67,23 +67,24 @@ export function EnergyReserveCard({
         </InfoButton>
       </div>
       <Chart option={option} height={180} />
-      <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+      {/* Waypoints of the day as signpost rows, not tiles. */}
+      <div className="mt-2 divide-y divide-[var(--border-panel)] border-t border-[var(--border-panel)] text-sm">
         {biggestDrain && (
-          <div className="rounded-control bg-[var(--bg-panel)] p-3">
-            <p className="font-medium text-[var(--tone-red)]">Biggest drain</p>
-            <p className="mt-1 text-[var(--text-secondary)]">
-              {formatTime(biggestDrain.startTimestamp)} – {formatTime(biggestDrain.endTimestamp)} ·{' '}
-              {Math.round(biggestDrain.delta)} pts
-            </p>
+          <div className="flex items-baseline justify-between gap-3 py-2">
+            <span className="sign-caps text-xs text-[var(--tone-red)]">Biggest drain</span>
+            <span className="text-[var(--text-secondary)]">
+              {formatTime(biggestDrain.startTimestamp)}–{formatTime(biggestDrain.endTimestamp)}
+            </span>
+            <span className="font-extrabold">{Math.round(biggestDrain.delta)}</span>
           </div>
         )}
         {bestRecharge && (
-          <div className="rounded-control bg-[var(--bg-panel)] p-3">
-            <p className="font-medium text-[var(--tone-green)]">Best recharge</p>
-            <p className="mt-1 text-[var(--text-secondary)]">
-              {formatTime(bestRecharge.startTimestamp)} – {formatTime(bestRecharge.endTimestamp)} · +
-              {Math.round(bestRecharge.delta)} pts
-            </p>
+          <div className="flex items-baseline justify-between gap-3 py-2">
+            <span className="sign-caps text-xs text-[var(--tone-green)]">Best recharge</span>
+            <span className="text-[var(--text-secondary)]">
+              {formatTime(bestRecharge.startTimestamp)}–{formatTime(bestRecharge.endTimestamp)}
+            </span>
+            <span className="font-extrabold">+{Math.round(bestRecharge.delta)}</span>
           </div>
         )}
       </div>
