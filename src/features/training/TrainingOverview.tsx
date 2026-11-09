@@ -129,12 +129,14 @@ function SportMix({ mix }: { mix: { name: string; value: number }[] }) {
       </p>
       <div className="mt-3 flex flex-col gap-2">
         {sorted.map((m) => (
-          <div key={m.name} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-2 text-sm font-semibold">
-            <span className="truncate">{m.name}</span>
+          <div key={m.name} className="flex flex-col gap-1 text-sm font-semibold">
+            <span className="flex justify-between gap-2">
+              <span>{m.name}</span>
+              <span className="tabular-nums">{m.value.toLocaleString()} min</span>
+            </span>
             <span className="h-3 rounded-full bg-[var(--bg-panel)]">
               <span className="block h-full rounded-full bg-[var(--block-ink)]" style={{ width: `${Math.max(3, (m.value / top.value) * 100)}%` }} />
             </span>
-            <span className="tabular-nums">{m.value.toLocaleString()} min</span>
           </div>
         ))}
       </div>

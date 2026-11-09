@@ -285,7 +285,7 @@ export function DetailChart({
   const legend = rest.legend ? { ...(rest.legend as object), textStyle: { color: labelColor, fontWeight: 700 } } : undefined
   // Bars with value labels at their ends need room on the right.
   const labelled = allSeries.some((x) => (x.label as { show?: boolean } | undefined)?.show)
-  const grid = { left: 4, right: labelled ? 40 : 4, top: legend ? 28 : 8, bottom: 4, containLabel: true }
+  const grid = { left: 12, right: labelled ? 40 : 12, top: legend ? 28 : 8, bottom: 4, containLabel: true }
   // A chart without axes (the sport-mix pie) must not get one: an axis with no grid crashed ECharts and left the card empty.
   const finalOption = (baseX ? { ...rest, legend, grid, xAxis, yAxis, series } : { ...rest, series }) as EChartsOption
   const headline = givenHeadline ?? (baseX ? headlineFor(headlinePts, intraday, active, formatterOf(option), unit) : null)

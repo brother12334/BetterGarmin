@@ -144,7 +144,8 @@ export function HealthPage() {
     if (!steps.length) return []
     const byDay = new Map(steps.map(([t, v]) => [new Date(t).toDateString(), v]))
     const lastT = steps[steps.length - 1][0]
-    const n = Math.max(7, Math.round((lastT - steps[0][0]) / 86_400_000) + 1)
+    // The last 30 days at most, so each day gets a chunky bar instead of a hairline (the long history is in Insights).
+    const n = Math.min(30, Math.max(7, Math.round((lastT - steps[0][0]) / 86_400_000) + 1))
     return Array.from({ length: n }, (_, i) => {
       const d = new Date(lastT)
       d.setDate(d.getDate() - (n - 1 - i))
