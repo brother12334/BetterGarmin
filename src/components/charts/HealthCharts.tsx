@@ -54,8 +54,20 @@ export function BigStat({
           }}
         />
       )}
+      {trend && trend.length > 1 && (
+        // The line's scale in words: where the shown stretch started and ended.
+        <p className="flex justify-between text-xs font-semibold opacity-75">
+          <span>{endLabel(trend[0])}</span>
+          <span>{endLabel(trend[trend.length - 1])}</span>
+        </p>
+      )}
     </div>
   )
+}
+
+function endLabel([t, v]: Point): string {
+  const value = Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v * 10) / 10)
+  return `${new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${value}`
 }
 
 type Raw = { t: number; v: number; color?: string }
