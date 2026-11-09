@@ -173,6 +173,12 @@ body {
   background: var(--block);
   color: var(--block-ink);
   border-radius: var(--radius-card);
+  /* Anything set inside a block (labels, buttons, rules) reads in the block's ink. */
+  --text-primary: var(--block-ink);
+  --text-secondary: color-mix(in srgb, var(--block-ink) 82%, transparent);
+  --text-tertiary: color-mix(in srgb, var(--block-ink) 72%, transparent);
+  --border-panel: color-mix(in srgb, var(--block-ink) 22%, transparent);
+  --bg-panel: color-mix(in srgb, var(--block-ink) 10%, transparent);
 }
 .page-title {
   font-size: 2.125rem;

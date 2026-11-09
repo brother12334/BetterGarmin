@@ -13,7 +13,6 @@ import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, get
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
 import { useData } from '../../app/DataProvider'
-import { Button } from '../../components/ui/Button'
 import { formatRelativeTime } from '../../lib/relativeTime'
 import { useUnits } from '../../app/units'
 import { convertDistance, distanceUnitLabel } from '../../lib/units'
@@ -230,7 +229,10 @@ function ReadinessHero({
         </div>
       )}
       <div>
-        <p className="text-sm font-semibold text-[var(--text-secondary)]">{formattedDay}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-[var(--text-secondary)]">{formattedDay}</p>
+          <SyncChip />
+        </div>
         <h1 className="page-title">{greeting()}, here's today</h1>
       </div>
       <MetricBlock
@@ -313,26 +315,39 @@ function TodaySkeleton() {
 }
 
 /** One-tap sync: straight from the band over Bluetooth, with the cloud copy as the fallback. */
+/** Sync status messages (running, errors, notes, offline). The Sync now control itself sits in the hero as a chip. */
 function SyncBar() {
-  const { lastSynced, pullFromGarmin, garminPull, cloudStatus, online } = useData()
+  const { lastSynced, garminPull, online } = useData()
+  const running = garminPull.status === 'running'
+  const message = running
+    ? garminPull.via === 'band'
+      ? 'Syncing from your band…'
+      : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… about 2 minutes'
+    : !online && garminPull.status !== 'error'
+      ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
+      : garminPull.status === 'error'
+        ? garminPull.message
+        : garminPull.note ?? null
+  if (!message) return null
+  return <p className={cn('-mt-1 text-sm font-semibold', garminPull.status === 'error' ? 'text-[var(--tone-red)]' : 'text-[var(--text-secondary)]')}>{message}</p>
+}
+
+function SyncChip() {
+  const { lastSynced, pullFromGarmin, garminPull, cloudStatus } = useData()
   const running = garminPull.status === 'running'
   return (
-    <div className="-mt-2 flex items-center justify-between gap-3 text-sm">
-      <span className={garminPull.status === 'error' ? 'text-[var(--tone-red)]' : 'text-[var(--text-tertiary)]'}>
-        {running
-          ? garminPull.via === 'band'
-            ? 'Syncing from your band…'
-            : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… about 2 minutes'
-          : !online && garminPull.status !== 'error'
-          ? `Offline · saved data from ${formatRelativeTime(lastSynced)}`
-          : garminPull.status === 'error'
-            ? garminPull.message
-            : garminPull.note ?? `Synced ${formatRelativeTime(lastSynced)}`}
-      </span>
-      <Button loading={running} variant="secondary" onClick={() => pullFromGarmin()} disabled={running || cloudStatus === 'syncing'} className="shrink-0">
-        {running ? 'Syncing…' : 'Sync now'}
-      </Button>
-    </div>
+    <button
+      type="button"
+      onClick={() => pullFromGarmin()}
+      disabled={running || cloudStatus === 'syncing'}
+      aria-busy={running || undefined}
+      className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-1.5 text-xs font-bold text-[var(--bg-base)] disabled:opacity-60"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className={running ? 'animate-spin' : undefined} aria-hidden>
+        <path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5" />
+      </svg>
+      {running ? 'Syncing…' : `Sync · ${formatRelativeTime(lastSynced)}`}
+    </button>
   )
 }
 

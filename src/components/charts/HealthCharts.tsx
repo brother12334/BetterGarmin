@@ -4,7 +4,7 @@ import { blockFor } from '../ui/metricColors'
 import { Card } from '../ui/Card'
 import { Chart } from '../ui/Chart'
 import { InfoButton } from '../ui/InfoButton'
-import { AXIS_TEXT, GRID_LINE, fade, rgba, type Point } from './chartKit'
+import { AXIS_TEXT, GRID_LINE, rgba, type Point } from './chartKit'
 
 /**
  * Building blocks for the "big numbers + detail" and "rings & dials" chart style: a headline number with a
@@ -29,31 +29,32 @@ export function BigStat({
   trend?: Point[]
   info?: string
 }) {
+  // Each headline stat is its metric's colour block; the recent trend is drawn in the block's ink.
+  const { block, ink } = blockFor(color)
   return (
-    <Card className="flex flex-col gap-1 p-4">
+    <div className="metric-block flex flex-col gap-1 p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
       <div className="flex items-center gap-2">
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-xs font-semibold text-[var(--text-secondary)]">{label}</span>
+        <span className="blk-label text-sm">{label}</span>
         {info && <InfoButton title={label}>{info}</InfoButton>}
       </div>
-      <p className="text-3xl font-extrabold tabular-nums leading-tight">
+      <p className="blk-num mt-1 text-[2.75rem]">
         {value ?? '—'}
-        {value != null && unit && <span className="ml-1 text-sm font-semibold text-[var(--text-tertiary)]">{unit}</span>}
+        {value != null && unit && <span className="ml-1 text-base font-bold tracking-normal opacity-75">{unit}</span>}
       </p>
-      {sub && <p className="text-xs text-[var(--text-tertiary)]">{sub}</p>}
+      {sub && <p className="text-[0.8125rem] font-semibold opacity-80">{sub}</p>}
       {trend && trend.length > 1 && (
         <Chart
-          height={46}
+          height={40}
           option={{
             grid: { left: 0, right: 0, top: 4, bottom: 2 },
             tooltip: { show: false },
             xAxis: { type: 'time', show: false },
             yAxis: { type: 'value', show: false, scale: true },
-            series: [{ type: 'line', data: trend, smooth: true, showSymbol: false, lineStyle: { color, width: 2.5 }, areaStyle: { color: fade(color, 0.22) } }],
+            series: [{ type: 'line', data: trend, smooth: true, showSymbol: false, lineStyle: { color: ink, width: 2.5 } }],
           }}
         />
       )}
-    </Card>
+    </div>
   )
 }
 

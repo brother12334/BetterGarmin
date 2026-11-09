@@ -164,7 +164,7 @@ export function HealthPage() {
 
       {/* Dials: where you are right now. */}
       <div className="grid grid-cols-2 gap-3">
-        <Dial label="Body Battery" value={today?.bb_max ?? null} color={ENERGY} caption={today?.bb_min != null ? `low ${today.bb_min}` : 'peak today'} />
+        <Dial label="Energy peak" value={today?.bb_max ?? null} color={ENERGY} caption={today?.bb_min != null ? `today's high · low ${today.bb_min}` : "today's high"} />
         <Dial label="Stress" value={today?.stress_avg ?? null} color={STRESS} caption="average today" />
       </div>
 

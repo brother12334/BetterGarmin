@@ -72,7 +72,7 @@ export function EnergyReserveCard({
       <div className="mt-2 divide-y divide-[var(--border-panel)] border-t border-[var(--border-panel)] text-sm">
         {biggestDrain && (
           <div className="flex items-baseline justify-between gap-3 py-2">
-            <span className="blk-label text-xs text-[var(--tone-red)]">Biggest drain</span>
+            <span className="blk-label flex items-center gap-2 text-xs"><i className="h-2.5 w-2.5 rounded-full bg-[#ff7a59]" aria-hidden />Biggest drain</span>
             <span className="text-[var(--text-secondary)]">
               {formatTime(biggestDrain.startTimestamp)}–{formatTime(biggestDrain.endTimestamp)}
             </span>
@@ -81,7 +81,7 @@ export function EnergyReserveCard({
         )}
         {bestRecharge && (
           <div className="flex items-baseline justify-between gap-3 py-2">
-            <span className="blk-label text-xs text-[var(--tone-green)]">Best recharge</span>
+            <span className="blk-label flex items-center gap-2 text-xs"><i className="h-2.5 w-2.5 rounded-full bg-[#c7f05a] ring-1 ring-[#121212]/20" aria-hidden />Best recharge</span>
             <span className="text-[var(--text-secondary)]">
               {formatTime(bestRecharge.startTimestamp)}–{formatTime(bestRecharge.endTimestamp)}
             </span>
