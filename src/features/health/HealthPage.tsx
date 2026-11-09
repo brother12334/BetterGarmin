@@ -27,7 +27,8 @@ const TREND_DAYS = 14
 const HEART = METRIC_COLORS.heart.solid
 const STRESS = METRIC_COLORS.stress.solid
 const ENERGY = METRIC_COLORS.energy.solid
-const HRV = METRIC_COLORS.readiness.solid
+// Violet belongs to readiness alone; HRV takes the neutral block.
+const HRV = METRIC_COLORS.neutral.solid
 const SPO2 = '#8f7dff'
 const WEIGHT = METRIC_COLORS.neutral.solid
 
@@ -199,7 +200,7 @@ export function HealthPage() {
           trend={tail(data.hrv)}
           info="Heart-rate variability overnight. Compare it with your own baseline rather than with other people."
         />
-        <BigStat label="Steps" value={last(steps)?.toLocaleString() ?? null} sub={stepGoal ? `goal ${stepGoal.toLocaleString()}` : undefined} color={ENERGY} trend={tail(steps)} />
+        <BigStat label="Steps" value={last(steps)?.toLocaleString() ?? null} sub={stepGoal ? `goal ${stepGoal.toLocaleString()}` : undefined} color={METRIC_COLORS.neutral.solid} trend={tail(steps)} />
         <BigStat
           label="Blood oxygen"
           value={today?.spo2_avg ?? null}

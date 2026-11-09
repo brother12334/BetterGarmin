@@ -88,7 +88,7 @@ export function TrainingFeedPage() {
       </div>
       <Link to="/training/strength">
         <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--tone-teal)_30%,transparent)] transition-colors hover:border-[color-mix(in_srgb,var(--tone-teal)_60%,transparent)]">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--tone-teal)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--text-primary)]">
             <TrainingIcon width={22} height={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -173,7 +173,7 @@ export function TrainingFeedPage() {
         {activities.map((activity) => (
           <Link key={activity.activity_id} to={`/training/${activity.activity_id}`}>
             <Card className="flex items-center gap-4 transition-colors hover:bg-white/5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--tone-teal)]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--text-primary)]">
                 <TrainingIcon width={20} height={20} />
               </div>
               <div className="min-w-0 flex-1">

@@ -70,13 +70,13 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
           color={TRAIN}
           caption={usualWeekMin > 0 ? '% of your usual week' : 'needs a few weeks of history'}
         />
-        <Dial label="Load this week" value={Math.round(load(week))} max={Math.max(100, Math.round(load(prevWeeks) / 4) * 2)} color="#e0457b" caption="Garmin training load" />
+        <Dial label="Load this week" value={Math.round(load(week))} max={Math.max(100, Math.round(load(prevWeeks) / 4) * 2)} color={TRAIN} caption="Garmin training load" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <BigStat label="Workouts" value={week.length} sub="last 7 days" color={TRAIN} trend={loadPts.slice(-14)} />
-        <BigStat label="Active time" value={`${Math.floor(weekMin / 60)}h ${weekMin % 60}m`} sub="last 7 days" color="#5b3df5" trend={minPts.slice(-14)} />
-        <BigStat label="Distance" value={weekDist.toFixed(1)} unit={distanceUnitLabel(units)} sub="last 7 days" color="#5a8a00" />
+        <BigStat label="Active time" value={`${Math.floor(weekMin / 60)}h ${weekMin % 60}m`} sub="last 7 days" color={TRAIN} trend={minPts.slice(-14)} />
+        <BigStat label="Distance" value={weekDist.toFixed(1)} unit={distanceUnitLabel(units)} sub="last 7 days" color={METRIC_COLORS.neutral.solid} />
         <BigStat label="Avg heart rate" value={hrs.length ? Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) : null} unit="bpm" sub="during workouts" color="#e0457b" />
       </div>
 

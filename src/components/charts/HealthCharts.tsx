@@ -1,3 +1,4 @@
+import { cn } from '../../lib/cn'
 import { useState } from 'react'
 import type { EChartsOption } from 'echarts'
 import { blockFor } from '../ui/metricColors'
@@ -32,12 +33,12 @@ export function BigStat({
   // Each headline stat is its metric's colour block; the recent trend is drawn in the block's ink.
   const { block, ink } = blockFor(color)
   return (
-    <div className="metric-block flex flex-col gap-1 p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
+    <div className="metric-block flex flex-col gap-1 self-start p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
       <div className="flex items-center gap-2">
         <span className="blk-label text-sm">{label}</span>
         {info && <InfoButton title={label}>{info}</InfoButton>}
       </div>
-      <p className="blk-num mt-1 text-[2.75rem]">
+      <p className={cn('blk-num mt-1 whitespace-nowrap', String(value ?? '').length > 5 ? 'text-[2rem]' : 'text-[2.75rem]')}>
         {value ?? '—'}
         {value != null && unit && <span className="ml-1 text-base font-bold tracking-normal opacity-75">{unit}</span>}
       </p>
@@ -66,7 +67,7 @@ export function BigStat({
 }
 
 function endLabel([t, v]: Point): string {
-  const value = Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v * 10) / 10)
+  const value = Math.abs(v) >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v))
   return `${new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${value}`
 }
 

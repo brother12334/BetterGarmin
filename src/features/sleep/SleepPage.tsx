@@ -150,13 +150,13 @@ export function SleepPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <BigStat label="Total sleep" value={formatHoursMinutes(totalMin)} color={SLEEP} trend={totalH.slice(-14)} />
-        <BigStat label="Deep" value={Math.round(mins(lastNight.deep_sleep))} unit="min" color="#2a1b8f" trend={deep.slice(-14)} />
-        <BigStat label="REM" value={Math.round(mins(lastNight.rem_sleep))} unit="min" color="#5b3df5" trend={rem.slice(-14)} />
+        <BigStat label="Deep" value={Math.round(mins(lastNight.deep_sleep))} unit="min" color={SLEEP} trend={deep.slice(-14)} />
+        <BigStat label="REM" value={Math.round(mins(lastNight.rem_sleep))} unit="min" color={SLEEP} trend={rem.slice(-14)} />
         <BigStat
           label="Usual bedtime"
           value={avgBed == null ? null : clockLabel(avgBed)}
           sub="average of the last week"
-          color="#ff7a59"
+          color={SLEEP}
           trend={bed.slice(-14)}
         />
       </div>

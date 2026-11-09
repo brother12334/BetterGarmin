@@ -1,3 +1,4 @@
+import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Card } from '../../components/ui/Card'
@@ -63,7 +64,7 @@ export function InsightsPage() {
             <p className="font-semibold">Intelligence</p>
             <p className="text-xs text-[var(--text-tertiary)]">Recovery momentum, illness radar, sleep timing and debt, long-term trends</p>
           </div>
-          <span className="text-[var(--text-tertiary)]">›</span>
+          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
         </Card>
       </Link>
       <div className="sticky top-0 z-10 -mx-1 flex gap-1 rounded-control bg-[var(--bg-base)]/80 p-1 backdrop-blur" role="tablist">
@@ -124,14 +125,14 @@ function WeeklyRecap({ data }: { data: DailyMetrics[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
-        <Dial label="Avg sleep score" value={r(avg('sleepScore'))} color="#5b3df5" caption="this week" />
+        <Dial label="Avg sleep score" value={r(avg('sleepScore'))} color={METRIC_COLORS.sleep.solid} caption="this week" />
         <Dial label="Avg stress" value={r(avg('stressAvg'))} color="#f05a36" caption="this week" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <BigStat label="Steps" value={totalSteps.toLocaleString()} sub="this week" color="#5a8a00" trend={trend('steps')} />
+        <BigStat label="Steps" value={totalSteps.toLocaleString()} sub="this week" color={METRIC_COLORS.neutral.solid} trend={trend('steps')} />
         <BigStat label="Resting HR" value={r(avg('restingHr'))} unit="bpm" sub="weekly average" color="#e0457b" trend={trend('restingHr')} />
-        <BigStat label="Sleep" value={sleepH == null ? null : `${Math.floor(sleepH / 60)}h ${Math.round(sleepH % 60)}m`} sub="nightly average" color="#5b3df5" trend={trend('sleepMinutes')} />
-        <BigStat label="Calories" value={r(avg('calories'))?.toLocaleString() ?? null} sub="daily average" color="#5b3df5" trend={trend('calories')} />
+        <BigStat label="Sleep" value={sleepH == null ? null : `${Math.floor(sleepH / 60)}h ${Math.round(sleepH % 60)}m`} sub="nightly average" color={METRIC_COLORS.sleep.solid} trend={trend('sleepMinutes')} />
+        <BigStat label="Calories" value={r(avg('calories'))?.toLocaleString() ?? null} sub="daily average" color={METRIC_COLORS.neutral.solid} trend={trend('calories')} />
       </div>
     </>
   )
