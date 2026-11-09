@@ -1,4 +1,4 @@
-import { BigStat, DetailChart, Dial } from '../../components/charts/HealthCharts'
+import { BigStat, DetailChart, Dial, Hl } from '../../components/charts/HealthCharts'
 import { detailGrid, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useUnits } from '../../app/units'
@@ -7,7 +7,6 @@ import type { ActivityRow } from '../../db/types'
 import { hmsToMinutes } from '../../lib/duration'
 
 const TRAIN = METRIC_COLORS.training.solid
-const SPORT_COLORS = ['#d49a00', '#e0457b', '#5a8a00', '#5b3df5', '#f05a36', '#8b867f']
 const DAY = 86_400_000
 
 const dayStart = (ts: string) => {
@@ -51,10 +50,9 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
   const avg7: Point[] = days.map((t) => [t, Math.round(loadPts.filter(([x]) => x > t - 7 * DAY && x <= t).reduce((s, [, v]) => s + v, 0) / 7)])
 
   const sports = [...new Set(dated.map((a) => a.sport ?? 'other'))]
-  const mix = sports.map((s, i) => ({
+  const mix = sports.map((s) => ({
     name: label(s),
     value: Math.round(minutes(dated.filter((a) => (a.sport ?? 'other') === s))),
-    itemStyle: { color: SPORT_COLORS[i % SPORT_COLORS.length] },
   }))
   const startPct = days.length > 30 ? Math.round((1 - 30 / days.length) * 100) : 0
 
@@ -113,17 +111,33 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
         />
       )}
 
-      {mix.length > 1 && (
-        <DetailChart
-          title="Sport mix"
-          hint="minutes per sport"
-          height={230}
-          option={{
-            tooltip: { trigger: 'item', formatter: '{b}: {c} min ({d}%)' },
-            series: [{ type: 'pie', radius: ['48%', '76%'], padAngle: 2, itemStyle: { borderRadius: 6 }, label: { color: '#8b867f', fontSize: 10 }, data: mix }],
-          }}
-        />
-      )}
+      {mix.length > 1 && <SportMix mix={mix} />}
     </>
+  )
+}
+
+/** Minutes per sport as the training block: a headline naming the main sport, then one ink bar per sport. */
+function SportMix({ mix }: { mix: { name: string; value: number }[] }) {
+  const sorted = [...mix].sort((a, b) => b.value - a.value)
+  const total = sorted.reduce((a, b) => a + b.value, 0)
+  const top = sorted[0]
+  return (
+    <div className="metric-block p-4" style={{ ['--block' as string]: METRIC_COLORS.training.block, ['--block-ink' as string]: METRIC_COLORS.training.blockInk }}>
+      <p className="blk-label text-sm opacity-80">Sport mix</p>
+      <p className="mt-1.5 text-[1.375rem] font-extrabold leading-tight tracking-tight">
+        Mostly <Hl>{top.name.toLowerCase()}</Hl>, {Math.round((top.value / total) * 100)}% of your {total.toLocaleString()} minutes.
+      </p>
+      <div className="mt-3 flex flex-col gap-2">
+        {sorted.map((m) => (
+          <div key={m.name} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-2 text-sm font-semibold">
+            <span className="truncate">{m.name}</span>
+            <span className="h-3 rounded-full bg-[var(--bg-panel)]">
+              <span className="block h-full rounded-full bg-[var(--block-ink)]" style={{ width: `${Math.max(3, (m.value / top.value) * 100)}%` }} />
+            </span>
+            <span className="tabular-nums">{m.value.toLocaleString()} min</span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

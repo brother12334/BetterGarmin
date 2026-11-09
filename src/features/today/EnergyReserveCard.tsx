@@ -3,26 +3,19 @@ import { Hl } from '../../components/charts/HealthCharts'
 import { rgba } from '../../components/charts/chartKit'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { Chart } from '../../components/ui/Chart'
-import type { EnergyPoint, EnergySegment } from '../../scores/energyReserve'
+import type { EnergyPoint } from '../../scores/energyReserve'
 import { formatHour, formatTime as formatClockTime } from '../../lib/clock'
 
 function formatTime(ts: string): string {
   return formatClockTime(new Date(ts.replace(' ', 'T')))
 }
 
-export function EnergyReserveCard({
-  curve,
-  biggestDrain,
-  bestRecharge,
-}: {
-  curve: EnergyPoint[]
-  biggestDrain: EnergySegment | null
-  bestRecharge: EnergySegment | null
-}) {
+export function EnergyReserveCard({ curve }: { curve: EnergyPoint[] }) {
   if (curve.length < 2) return null
 
   const ink = METRIC_COLORS.energy.blockInk
   const last = curve[curve.length - 1]
+  const low = curve.reduce((a, b) => (b.value < a.value ? b : a))
   const option = {
     grid: { left: 4, right: 4, top: 8, bottom: 4, containLabel: true },
     xAxis: {
@@ -65,9 +58,9 @@ export function EnergyReserveCard({
         </InfoButton>
       </div>
       <p className="mt-1.5 text-[1.375rem] font-extrabold leading-tight tracking-tight">
-        At <Hl>{Math.round(last.value)}</Hl> now
-        {biggestDrain ? `, biggest drop ${Math.round(biggestDrain.delta)} at ${formatTime(biggestDrain.startTimestamp)}` : ''}
-        {bestRecharge ? `, best recharge +${Math.round(bestRecharge.delta)}` : ''}.
+        {/* Says what the line shows: where the day started, where it is now, and its low point. */}
+        At <Hl>{Math.round(last.value)}</Hl> now, from {Math.round(curve[0].value)} at the start of the day
+        {low.value < Math.min(curve[0].value, last.value) ? `, low ${Math.round(low.value)} at ${formatTime(low.timestamp)}` : ''}.
       </p>
       <div className="mt-2">
         <Chart option={option} height={150} />

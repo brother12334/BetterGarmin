@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { BigStat, DetailChart, Dial } from '../../components/charts/HealthCharts'
+import { BigStat, DetailChart, Dial, Hl } from '../../components/charts/HealthCharts'
 import { detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
@@ -164,11 +164,11 @@ export function SleepPage() {
       <DetailChart
         title="Last night vs your average"
           metric="sleep"
-        hint={`average of ${nights.length} nights`}
+        headline={vsAverageHeadline(STAGES.map((st) => ({ label: st.label, last: Math.round(mins(lastNight[st.key])), avg: Math.round(nights.reduce((sum, r) => sum + mins(r[st.key]), 0) / nights.length) })))}
+        hint={`bars: last night (dark) vs your average of ${nights.length} nights (light)`}
         height={220}
         option={{
           grid: { left: 8, right: 44, top: 30, bottom: 8, containLabel: true },
-          legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8b867f', fontSize: 10 } },
           tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => `${v} min` },
           xAxis: { type: 'value', axisLabel: { color: '#8b867f', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(140,150,170,0.15)', type: 'dashed' } } },
           yAxis: { type: 'category', inverse: true, data: STAGES.map((st) => st.label), axisLabel: { color: '#8b867f' }, axisLine: { show: false }, axisTick: { show: false } },
@@ -266,5 +266,17 @@ export function SleepPage() {
         Stages and scores are Garmin's estimates.
       </p>
     </div>
+  )
+}
+
+/** Names the stage that moved most against your average, in minutes. */
+function vsAverageHeadline(rows: { label: string; last: number; avg: number }[]): ReactNode {
+  const most = rows.reduce((a, b) => (Math.abs(b.last - b.avg) > Math.abs(a.last - a.avg) ? b : a))
+  const diff = most.last - most.avg
+  if (Math.abs(diff) < 5) return <>Close to your average in every stage.</>
+  return (
+    <>
+      {most.label} was <Hl>{Math.abs(diff)}m {diff > 0 ? 'more' : 'less'}</Hl> than usual ({most.last}m vs {most.avg}m).
+    </>
   )
 }

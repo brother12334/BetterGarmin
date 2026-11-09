@@ -254,7 +254,6 @@ export function HealthPage() {
           hint={showStepAvg ? 'line = 7-day average' : 'more days fill in as you sync'}
           option={{
             grid: { ...detailGrid, top: 34, right: 34, bottom: stepSlots.length > 21 ? 26 : 8 },
-            legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8b867f', fontSize: 10 }, data: showStepAvg ? ['Steps', '7-day average'] : ['Steps'] },
             dataZoom:
               stepSlots.length > 21
                 ? [{ type: 'inside', start: startPct(stepSlots.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(stepSlots.length, 21), end: 100, bottom: 2, right: 46 }]
@@ -380,14 +379,16 @@ export function HealthPage() {
   )
 }
 
-/** "9,840 a day this week, goal hit 4 of 7 days" from the step chart's own daily slots. */
+/** "9,840 steps a day over 90 days, 13,170 today" from the step chart's own daily slots. */
 function stepHeadline(slots: { t: number; v: number | null }[]): ReactNode {
-  const week = slots.slice(-7).filter((s): s is { t: number; v: number } => s.v != null)
-  if (!week.length) return null
-  const avg = Math.round(week.reduce((a, b) => a + b.v, 0) / week.length)
+  // Over every day the chart shows, so the sentence and the bars cover the same stretch.
+  const shown = slots.filter((s): s is { t: number; v: number } => s.v != null)
+  if (!shown.length) return null
+  const avg = Math.round(shown.reduce((a, b) => a + b.v, 0) / shown.length)
+  const last = shown[shown.length - 1].v
   return (
     <>
-      <Hl>{avg.toLocaleString()}</Hl> steps a day over the last {week.length} days.
+      <Hl>{avg.toLocaleString()}</Hl> steps a day over {shown.length} days, {last.toLocaleString()} today.
     </>
   )
 }

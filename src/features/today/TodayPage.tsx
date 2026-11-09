@@ -152,7 +152,7 @@ export function TodayPage() {
       </div>
     ),
     forecast: <EnergyForecastCard day={data.day} />,
-    energy: <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />,
+    energy: <EnergyReserveCard curve={energy.curve} />,
     stats: (
       // Steps lead in the colour blocks; the rest share one panel split by hairlines.
       <Card className="grid grid-cols-3 gap-px overflow-hidden bg-[var(--border-panel)] p-0">

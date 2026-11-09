@@ -27,8 +27,8 @@ interface Panel {
 const PANELS: Panel[] = [
   { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: '#e0457b', get: (d) => d.restingHr },
   { key: 'hrv', label: 'HRV', unit: 'ms', color: '#5a8a00', get: (d) => d.hrv },
-  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#5b3df5', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
-  { key: 'steps', label: 'Steps', unit: '', color: '#5b3df5', get: (d) => d.steps },
+  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#5a8a00', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
+  { key: 'steps', label: 'Steps', unit: '', color: '#8b867f', get: (d) => d.steps },
 ]
 
 /** Trailing 28-day median ± 1.5 MAD, only where ≥14 earlier values exist. */

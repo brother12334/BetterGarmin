@@ -139,6 +139,8 @@ function inkSeries(s: Record<string, unknown>, i: number, ink: string): Record<s
   if (s.type === 'bar') {
     out.itemStyle = { ...(s.itemStyle as object), color, borderRadius: [6, 6, 6, 6] }
     out.barMaxWidth = 14
+    out.showBackground = false
+    if (s.label) out.label = { ...(s.label as object), color: ink, fontWeight: 700 }
   } else {
     out.lineStyle = { ...(s.lineStyle as object), color, width: i === 0 ? 3 : 2, shadowBlur: 0 }
     out.itemStyle = { ...(s.itemStyle as object), color, borderColor: color }
@@ -259,7 +261,8 @@ export function DetailChart({
     axisTick: { show: false },
     splitLine: { show: false },
     ...(active?.from != null ? { min: active.from, max: active.to } : {}),
-    axisLabel: { ...(baseX?.axisLabel as object), color: labelColor, fontSize: 11, fontWeight: 700 },
+    // Edge labels align inward so the first and last dates never clip at the block's edge.
+    axisLabel: { ...(baseX?.axisLabel as object), color: labelColor, fontSize: 11, fontWeight: 700, alignMinLabel: 'left', alignMaxLabel: 'right', ...(baseX?.type === 'value' && { show: false }) },
     ...(!intraday && allPts.length > 0 && {
       // At most about four date labels whatever the span, so dates never run into each other.
       minInterval: Math.max(1, Math.ceil(((active?.to ?? max) - (active?.from ?? min)) / DAY / 4)) * DAY,
@@ -280,7 +283,9 @@ export function DetailChart({
       : { ...baseY, axisLabel: { show: false }, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
     : undefined
   const legend = rest.legend ? { ...(rest.legend as object), textStyle: { color: labelColor, fontWeight: 700 } } : undefined
-  const grid = { left: 4, right: 4, top: legend ? 28 : 8, bottom: 4, containLabel: true }
+  // Bars with value labels at their ends need room on the right.
+  const labelled = allSeries.some((x) => (x.label as { show?: boolean } | undefined)?.show)
+  const grid = { left: 4, right: labelled ? 40 : 4, top: legend ? 28 : 8, bottom: 4, containLabel: true }
   // A chart without axes (the sport-mix pie) must not get one: an axis with no grid crashed ECharts and left the card empty.
   const finalOption = (baseX ? { ...rest, legend, grid, xAxis, yAxis, series } : { ...rest, series }) as EChartsOption
   const headline = givenHeadline ?? (baseX ? headlineFor(headlinePts, intraday, active, formatterOf(option), unit) : null)
