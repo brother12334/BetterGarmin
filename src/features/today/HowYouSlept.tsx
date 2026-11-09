@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/ui/Card'
+import { METRIC_COLORS } from '../../components/ui/metricColors'
+import { Hl } from '../../components/charts/HealthCharts'
 import { InfoButton } from '../../components/ui/InfoButton'
 import { getSleepEventsForDay, getSleepRange } from '../../db/queries'
 import type { SleepEventRow, SleepRow } from '../../db/types'
@@ -16,10 +18,11 @@ import { formatTime } from '../../lib/clock'
 type Stage = 'awake' | 'rem' | 'light' | 'deep'
 
 const STAGES: { key: Stage; label: string; color: string; column: keyof SleepRow; typical: string }[] = [
-  { key: 'awake', label: 'Awake', color: '#ff7a59', column: 'awake', typical: 'brief wakings are normal' },
-  { key: 'rem', label: 'REM', color: '#5b3df5', column: 'rem_sleep', typical: 'typically 20–25%' },
-  { key: 'light', label: 'Light', color: '#8f7dff', column: 'light_sleep', typical: 'typically about half' },
-  { key: 'deep', label: 'Deep', color: '#2a1b8f', column: 'deep_sleep', typical: 'typically 13–23%' },
+  // Drawn in the sleep block's ink: deeper sleep in stronger ink, awake faintest.
+  { key: 'awake', label: 'Awake', color: 'rgba(18,18,18,0.3)', column: 'awake', typical: 'brief wakings are normal' },
+  { key: 'rem', label: 'REM', color: 'rgba(18,18,18,0.75)', column: 'rem_sleep', typical: 'typically 20–25%' },
+  { key: 'light', label: 'Light', color: 'rgba(18,18,18,0.5)', column: 'light_sleep', typical: 'typically about half' },
+  { key: 'deep', label: 'Deep', color: '#121212', column: 'deep_sleep', typical: 'typically 13–23%' },
 ]
 
 const LOOKBACK_DAYS = 3
@@ -90,11 +93,11 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
   const wake = clock(sleep.end)
 
   return (
-    <Card>
+    <div className="metric-block p-4" style={{ ['--block' as string]: METRIC_COLORS.sleep.block, ['--block-ink' as string]: METRIC_COLORS.sleep.blockInk }}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <p className="blk-label text-sm">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
+            <p className="blk-label text-sm opacity-80">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
             <InfoButton title="Sleep stages">
               Stages are Garmin's estimates from heart rate, heart-rate variability and movement. The typical ranges are
               general adult guidance, not targets. Stage mix varies from night to night and between people.
@@ -106,11 +109,10 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
             </p>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold tabular-nums">{formatHoursMinutes(asleep)}</p>
-          <p className="text-xs text-[var(--text-tertiary)]">asleep{sleep.score != null ? ` · score ${sleep.score}` : ''}</p>
-        </div>
       </div>
+      <p className="mt-1.5 text-[1.375rem] font-extrabold leading-tight tracking-tight">
+        <Hl>{formatHoursMinutes(asleep)}</Hl> asleep{sleep.score != null ? `, score ${sleep.score}` : ''}.
+      </p>
 
       {events.length > 0 ? <StageTimeline events={events} /> : <StackedBar parts={minutes} total={inBed} />}
 
@@ -118,7 +120,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
         {minutes.map((s) => {
           const pct = Math.round((s.min / inBed) * 100)
           return (
-            <div key={s.key} className="bg-[var(--bg-elevated)] px-3 py-3">
+            <div key={s.key} className="bg-[var(--block)] px-3 py-3">
               <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}
@@ -134,7 +136,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
           )
         })}
       </div>
-    </Card>
+    </div>
   )
 }
 

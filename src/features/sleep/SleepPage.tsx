@@ -163,6 +163,7 @@ export function SleepPage() {
 
       <DetailChart
         title="Last night vs your average"
+          metric="sleep"
         hint={`average of ${nights.length} nights`}
         height={220}
         option={{
@@ -191,6 +192,7 @@ export function SleepPage() {
       {bed.length > 0 && wake.length > 0 && (
         <DetailChart
           title="Bedtime and wake time"
+          metric="sleep"
           hint="shaded = your usual ±30 min"
           option={{
             grid: { ...detailGrid, top: 30 },
@@ -228,6 +230,7 @@ export function SleepPage() {
       {scores.length > 1 && (
         <DetailChart
           title="Sleep score"
+          metric="sleep"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct(scores.length, 21)),
@@ -247,6 +250,7 @@ export function SleepPage() {
 
       <DetailChart
         title="Sleep debt"
+          metric="sleep"
         hint="against 8 hours a night"
         info={`Running total of how far short of 8 hours you've slept over the last ${HISTORY_DAYS} days. Going down means you're catching up.`}
         option={{

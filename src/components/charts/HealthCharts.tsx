@@ -1,11 +1,10 @@
 import { cn } from '../../lib/cn'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { EChartsOption } from 'echarts'
-import { blockFor } from '../ui/metricColors'
-import { Card } from '../ui/Card'
+import { blockFor, METRIC_COLORS, type MetricKey } from '../ui/metricColors'
 import { Chart } from '../ui/Chart'
 import { InfoButton } from '../ui/InfoButton'
-import { AXIS_TEXT, GRID_LINE, rgba, type Point } from './chartKit'
+import { rgba, type Point } from './chartKit'
 
 /**
  * Building blocks for the "big numbers + detail" and "rings & dials" chart style: a headline number with a
@@ -93,7 +92,7 @@ function pointsOf(series: Record<string, unknown>): Raw[] {
 function seriesColor(series: Record<string, unknown>, pts: Raw[]): string {
   const ls = series.lineStyle as { color?: string } | undefined
   const is = series.itemStyle as { color?: string } | undefined
-  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#5b3df5'
+  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? METRIC_COLORS.neutral.solid
 }
 
 /** Averages samples into fixed time buckets (centred), so a day reads as a calm shape instead of hundreds of spikes. */
@@ -125,22 +124,101 @@ function rangesFor(min: number, max: number, intraday: boolean): Range[] {
 }
 
 
+/** An ink colour at some opacity, for the secondary series and fills drawn on a block. */
+function inkAlpha(ink: string, a: number): string {
+  return ink.startsWith('#') ? rgba(ink, a) : `color-mix(in srgb, ${ink} ${Math.round(a * 100)}%, transparent)`
+}
+
+/** Restyles a series to sit on its block: chunky rounded ink bars or a heavy ink line, secondary series lighter. */
+function inkSeries(s: Record<string, unknown>, i: number, ink: string): Record<string, unknown> {
+  const color = i === 0 ? ink : inkAlpha(ink, 0.45)
+  const data = Array.isArray(s.data)
+    ? (s.data as unknown[]).map((d) => (d && typeof d === 'object' && !Array.isArray(d) && 'itemStyle' in (d as object) ? { ...(d as object), itemStyle: { color } } : d))
+    : s.data
+  const out: Record<string, unknown> = { ...s, data }
+  if (s.type === 'bar') {
+    out.itemStyle = { ...(s.itemStyle as object), color, borderRadius: [6, 6, 6, 6] }
+    out.barMaxWidth = 14
+  } else {
+    out.lineStyle = { ...(s.lineStyle as object), color, width: i === 0 ? 3 : 2, shadowBlur: 0 }
+    out.itemStyle = { ...(s.itemStyle as object), color, borderColor: color }
+    if (s.areaStyle) out.areaStyle = { color: inkAlpha(ink, 0.12) }
+  }
+  if (s.markArea) out.markArea = { ...(s.markArea as object), itemStyle: { color: inkAlpha(ink, 0.1) } }
+  if (s.markLine) {
+    const ml = s.markLine as { lineStyle?: object; label?: object }
+    out.markLine = { ...ml, lineStyle: { ...ml.lineStyle, color: inkAlpha(ink, 0.6) }, label: { ...ml.label, color: ink } }
+  }
+  return out
+}
+
+/** The chart's own number formatting (a time-of-day axis, hours, …), so the headline says values the way the chart does. */
+function formatterOf(option: EChartsOption): (v: number) => string {
+  const y = (Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis) as { axisLabel?: { formatter?: unknown } } | undefined
+  const f = y?.axisLabel?.formatter
+  if (typeof f === 'function') return (v: number) => String((f as (v: number) => string)(v))
+  if (typeof f === 'string') return (v: number) => f.replace('{value}', String(Math.round(v * 10) / 10))
+  return (v: number) => (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : String(Math.round(v * 10) / 10))
+}
+
+/** A plain-language headline computed from the chart's own points: the day's peak, or the period's average. */
+function headlineFor(pts: Raw[], intraday: boolean, range: Range | undefined, fmt: (v: number) => string, unit?: string): ReactNode {
+  const shown = pts.filter((p) => (range?.from == null || p.t >= range.from) && (range?.to == null || p.t <= range.to))
+  if (!shown.length) return null
+  const u = unit ? ` ${unit}` : ''
+  const last = shown[shown.length - 1]
+  const peak = shown.reduce((a, b) => (b.v > a.v ? b : a))
+  if (intraday) {
+    const at = new Date(peak.t).toLocaleTimeString([], { hour: 'numeric' })
+    return (
+      <>
+        Peaked at <Hl>{fmt(peak.v)}{u}</Hl> around {at}, latest {fmt(last.v)}{u}.
+      </>
+    )
+  }
+  const avg = shown.reduce((a, b) => a + b.v, 0) / shown.length
+  const span = range?.key === 'week' ? 'this week' : range?.key === 'month' ? 'this month' : range?.key === 'quarter' ? 'over 3 months' : 'overall'
+  return (
+    <>
+      <Hl>{fmt(avg)}{u}</Hl> on average {span}, latest {fmt(last.v)}{u}
+      {/* A "high" means nothing for times of day (bedtimes), so it's left out there. */}
+      {/[AP]M|:/.test(fmt(peak.v)) ? '' : `, high ${fmt(peak.v)}${u}`}.
+    </>
+  )
+}
+
+/** The key number in a headline, set on an ink pill so it reads first. */
+export function Hl({ children }: { children: ReactNode }) {
+  return <span className="rounded-lg bg-[var(--block-ink)] px-1.5 text-[var(--block)]">{children}</span>
+}
+
 /**
- * A titled card holding a large chart, with no pinch or drag. Day charts show the whole day as blocks, one rounded
- * bar per hour; history charts get one-tap chips for the time span.
+ * A chart as its measure's colour block: a plain-language headline worked out from the data, then the chart in the
+ * block's ink (chunky rounded bars or a heavy line, no grid, no y-axis). Day charts show the whole day, one bar per
+ * hour; history charts get one-tap chips for the time span. A chart with no axes (the sport-mix pie) keeps its own
+ * colours on a white block.
  */
 export function DetailChart({
   title,
   hint,
   option,
-  height = 240,
+  height = 200,
   info,
+  unit,
+  metric,
+  headline: givenHeadline,
 }: {
   title: string
   hint?: string
   option: EChartsOption
   height?: number
   info?: string
+  /** Shown after the numbers in the headline, e.g. "bpm". */
+  unit?: string
+  /** Which colour block to use when the series colours don't say (a gradient-coloured line, mixed bars). */
+  metric?: MetricKey
+  /** A headline written by the caller, for charts whose points the generic one can't read (category axes). */
+  headline?: ReactNode
 }) {
   const allSeries = (Array.isArray(option.series) ? option.series : option.series ? [option.series] : []) as Record<string, unknown>[]
   const allPts = allSeries.flatMap(pointsOf)
@@ -155,22 +233,33 @@ export function DetailChart({
   const [key, setKey] = useState<string | undefined>(undefined)
   const active = ranges.find((r) => r.key === (key ?? defaultKey))
 
-  const reshaped = intraday
-  const series = reshaped
-    ? allSeries.map((s) => {
-        const pts = pointsOf(s)
-        const color = seriesColor(s, pts)
-        const data = bucket(pts, HOUR)
-        return { type: 'bar', data, barWidth: '70%', barMaxWidth: 10, itemStyle: { color, borderRadius: [4, 4, 0, 0] } }
-      })
-    : allSeries
-
-  const { dataZoom: _dropped, ...rest } = option
-  void _dropped
   const baseX = (Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis) as Record<string, unknown>
+  const primaryPts = allSeries[0] ? pointsOf(allSeries[0]) : []
+  const neutral = { block: METRIC_COLORS.neutral.block, ink: METRIC_COLORS.neutral.blockInk }
+  const { block, ink } = metric
+    ? { block: METRIC_COLORS[metric].block, ink: METRIC_COLORS[metric].blockInk }
+    : baseX && allSeries[0]
+      ? blockFor(seriesColor(allSeries[0], primaryPts))
+      : neutral
+  // Day charts show hourly bars, so the headline quotes the hourly figures you can see, not single raw readings.
+  const headlinePts: Raw[] = intraday ? bucket(primaryPts, HOUR).map(([t, v]) => ({ t, v })) : primaryPts
+
+  const shaped = intraday
+    ? allSeries.map((s) => ({ type: 'bar', data: bucket(pointsOf(s), HOUR), barWidth: '70%' }) as Record<string, unknown>)
+    : allSeries
+  const series = baseX ? shaped.map((s, i) => inkSeries(s, i, ink)) : allSeries
+
+  const { dataZoom: _dropped, visualMap: _vm, ...rest } = option
+  void _dropped
+  void _vm
+  const labelColor = inkAlpha(ink, 0.65)
   const xAxis = {
     ...baseX,
+    axisLine: { show: false },
+    axisTick: { show: false },
+    splitLine: { show: false },
     ...(active?.from != null ? { min: active.from, max: active.to } : {}),
+    axisLabel: { ...(baseX?.axisLabel as object), color: labelColor, fontSize: 11, fontWeight: 700 },
     ...(!intraday && allPts.length > 0 && {
       // At most about four date labels whatever the span, so dates never run into each other.
       minInterval: Math.max(1, Math.ceil(((active?.to ?? max) - (active?.from ?? min)) / DAY / 4)) * DAY,
@@ -179,31 +268,41 @@ export function DetailChart({
       // Ticks every 2 hours, labelled only at 6a, 12p and 6p (short, so they fit on a phone).
       minInterval: 2 * HOUR,
       maxInterval: 2 * HOUR,
-      axisLabel: { ...(baseX?.axisLabel as object), fontSize: 11, hideOverlap: true, formatter: (v: number) => ({ 6: '6a', 12: '12p', 18: '6p' } as Record<number, string>)[new Date(v).getHours()] ?? '' },
+      axisLabel: { color: labelColor, fontSize: 11, fontWeight: 700, hideOverlap: true, formatter: (v: number) => ({ 6: '6a', 12: '12p', 18: '6p' } as Record<number, string>)[new Date(v).getHours()] ?? '' },
     }),
   }
-  const grid = intraday ? { ...(rest.grid as object), left: 8, right: 24, containLabel: true } : rest.grid
+  const baseY = (Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis) as Record<string, unknown> | undefined
+  // No y-axis or grid: the headline carries the numbers and the shape carries the rest.
+  // A category y-axis (a horizontal bar chart) keeps its labels, in ink.
+  const yAxis = baseY
+    ? baseY.type === 'category'
+      ? { ...baseY, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { ...(baseY.axisLabel as object), color: labelColor, fontWeight: 700 } }
+      : { ...baseY, axisLabel: { show: false }, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } }
+    : undefined
+  const legend = rest.legend ? { ...(rest.legend as object), textStyle: { color: labelColor, fontWeight: 700 } } : undefined
+  const grid = { left: 4, right: 4, top: legend ? 28 : 8, bottom: 4, containLabel: true }
   // A chart without axes (the sport-mix pie) must not get one: an axis with no grid crashed ECharts and left the card empty.
-  const finalOption = (baseX ? { ...rest, grid, xAxis, series } : { ...rest, series }) as EChartsOption
+  const finalOption = (baseX ? { ...rest, legend, grid, xAxis, yAxis, series } : { ...rest, series }) as EChartsOption
+  const headline = givenHeadline ?? (baseX ? headlineFor(headlinePts, intraday, active, formatterOf(option), unit) : null)
 
   return (
-    <Card className="p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <p className="font-semibold">{title}</p>
-          {info && <InfoButton title={title}>{info}</InfoButton>}
-          {hint && <span className="text-[11px] text-[var(--text-tertiary)]">{hint}</span>}
-        </div>
+    <div className="metric-block p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
+      <div className="flex items-center gap-2">
+        <p className="blk-label text-sm opacity-80">{title}</p>
+        {info && <InfoButton title={title}>{info}</InfoButton>}
       </div>
+      {headline && <p className="mt-1.5 text-[1.375rem] font-extrabold leading-tight tracking-tight">{headline}</p>}
+      {hint && <p className="mt-1 text-xs font-semibold opacity-70">{hint}</p>}
       {ranges.length > 1 && (
-        <div className="mb-2 flex gap-1">
+        <div className="mt-3 flex gap-1">
           {ranges.map((r) => (
             <button
               key={r.key}
               type="button"
               onClick={() => setKey(r.key)}
-              className={`min-w-0 flex-1 truncate rounded-full px-1 py-1 text-[11px] font-medium transition-colors ${
-                r.key === active?.key ? 'bg-[var(--accent)] text-black' : 'bg-[var(--ring-track)] text-[var(--text-secondary)]'
+              aria-pressed={r.key === active?.key}
+              className={`min-w-0 flex-1 truncate rounded-full px-1 py-1.5 text-xs font-bold transition-colors ${
+                r.key === active?.key ? 'bg-[var(--block-ink)] text-[var(--block)]' : 'bg-[var(--bg-panel)] text-[var(--text-primary)]'
               }`}
             >
               {r.label}
@@ -211,8 +310,10 @@ export function DetailChart({
           ))}
         </div>
       )}
-      <Chart height={height} option={finalOption} />
-    </Card>
+      <div className="mt-2">
+        <Chart height={height} option={finalOption} />
+      </div>
+    </div>
   )
 }
 
@@ -230,44 +331,55 @@ export function Dial({ label, value, color, caption }: { label: string; value: n
 
 /** Average value per hour of the day, drawn as bars around a 24-hour clock. */
 export function ClockRing({ title, perHour, color, unit, highlightAbove, info }: { title: string; perHour: (number | null)[]; color: string; unit: string; highlightAbove?: number; info?: string }) {
-  const values = perHour.filter((v): v is number => v != null)
-  const lo = values.length ? Math.max(0, Math.min(...values) - 15) : 0
+  // Drawn as a colour block: a headline naming the highest and lowest hours, then 24 ink bars (above-normal hours solid).
+  const { block, ink } = blockFor(color)
+  const known = perHour.map((v, h) => ({ v, h })).filter((x): x is { v: number; h: number } => x.v != null)
+  const lo = known.length ? Math.max(0, Math.min(...known.map((x) => x.v)) - 10) : 0
+  const hi = known.length ? known.reduce((a, b) => (b.v > a.v ? b : a)) : null
+  const low = known.length ? known.reduce((a, b) => (b.v < a.v ? b : a)) : null
+  const hour = (h: number) => new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: 'numeric' })
   return (
-    <Card className="p-4">
-      <div className="mb-1 flex items-center gap-2">
-        <p className="font-semibold">{title}</p>
+    <div className="metric-block p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
+      <div className="flex items-center gap-2">
+        <p className="blk-label text-sm opacity-80">{title}</p>
         {info && <InfoButton title={title}>{info}</InfoButton>}
       </div>
-      <Chart
-        height={280}
-        option={{
-          tooltip: { trigger: 'item', formatter: (p: unknown) => {
-            const { name, value } = p as { name: string; value: number | null }
-            return value == null ? `${name}:00 · no data` : `${name}:00 · ${value} ${unit}`
-          } },
-          polar: { radius: ['16%', '80%'] },
-          angleAxis: {
-            type: 'category',
-            data: [...Array(24).keys()].map(String),
-            startAngle: 90,
-            axisLine: { lineStyle: { color: GRID_LINE } },
-            axisTick: { show: false },
-            axisLabel: { color: AXIS_TEXT, fontSize: 9, interval: 2 },
-          },
-          radiusAxis: { min: lo, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: GRID_LINE, type: 'dashed' } } },
-          series: [
-            {
-              type: 'bar',
-              coordinateSystem: 'polar',
-              data: perHour.map((v) => ({
-                value: v,
-                itemStyle: { color: highlightAbove != null && v != null && v > highlightAbove ? color : rgba(color, 0.5), borderRadius: 4 },
-              })),
+      {hi && low && (
+        <p className="mt-1.5 text-[1.375rem] font-extrabold leading-tight tracking-tight">
+          Highest around {hour(hi.h)} at <Hl>{Math.round(hi.v)} {unit}</Hl>, lowest around {hour(low.h)} at {Math.round(low.v)}.
+        </p>
+      )}
+      <div className="mt-2">
+        <Chart
+          height={150}
+          option={{
+            tooltip: { trigger: 'item', formatter: (p: unknown) => {
+              const { name, value } = p as { name: string; value: number | null }
+              return value == null ? `${hour(Number(name))} · no data` : `${hour(Number(name))} · ${value} ${unit}`
+            } },
+            grid: { left: 4, right: 4, top: 8, bottom: 4, containLabel: true },
+            xAxis: {
+              type: 'category',
+              data: [...Array(24).keys()].map(String),
+              axisLine: { show: false },
+              axisTick: { show: false },
+              axisLabel: { color: inkAlpha(ink, 0.65), fontSize: 11, fontWeight: 700, interval: 0, formatter: (v: string) => ({ 0: '12a', 6: '6a', 12: '12p', 18: '6p' } as Record<string, string>)[v] ?? '' },
             },
-          ],
-        }}
-      />
-    </Card>
+            yAxis: { type: 'value', min: lo, show: false },
+            series: [
+              {
+                type: 'bar',
+                barMaxWidth: 14,
+                data: perHour.map((v) => ({
+                  value: v,
+                  itemStyle: { color: highlightAbove != null && v != null && v > highlightAbove ? ink : inkAlpha(ink, 0.45), borderRadius: 6 },
+                })),
+              },
+            ],
+          }}
+        />
+      </div>
+    </div>
   )
 }
 

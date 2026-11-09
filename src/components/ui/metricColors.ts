@@ -25,5 +25,6 @@ export const METRIC_COLORS: Record<MetricKey, MetricColor> = {
 /** The block for a chart/text colour, so a component given only a colour can still fill with the metric's block. */
 export function blockFor(color: string): { block: string; ink: string } {
   const m = Object.values(METRIC_COLORS).find((c) => c.solid.toLowerCase() === color.toLowerCase())
-  return m ? { block: m.block, ink: m.blockInk } : { block: 'var(--bg-elevated)', ink: 'var(--text-primary)' }
+  // Unknown colours get the neutral white block (concrete values: the block's own text colours derive from its ink).
+  return m ? { block: m.block, ink: m.blockInk } : { block: METRIC_COLORS.neutral.block, ink: METRIC_COLORS.neutral.blockInk }
 }

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { BigStat, ClockRing, DetailChart, Dial } from '../../components/charts/HealthCharts'
+import { BigStat, ClockRing, DetailChart, Dial, Hl } from '../../components/charts/HealthCharts'
 import { GLASS_SLIDER, detailGrid, fade, rgba, timeAxis, valueAxis, zoom, type Point } from '../../components/charts/chartKit'
 import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { useData } from '../../app/DataProvider'
@@ -215,6 +215,7 @@ export function HealthPage() {
       {data.allDayHr.length > 0 && (
         <DetailChart
           title="Heart rate today"
+          unit="bpm"
           option={{
             grid: detailGrid,
             dataZoom: zoom(),
@@ -248,6 +249,8 @@ export function HealthPage() {
       {steps.length > 0 && (
         <DetailChart
           title="Steps"
+          metric="neutral"
+          headline={stepHeadline(stepSlots)}
           hint={showStepAvg ? 'line = 7-day average' : 'more days fill in as you sync'}
           option={{
             grid: { ...detailGrid, top: 34, right: 34, bottom: stepSlots.length > 21 ? 26 : 8 },
@@ -303,6 +306,8 @@ export function HealthPage() {
       {data.rhr.length > 1 && (
         <DetailChart
           title="Resting heart rate"
+          metric="heart"
+          unit="bpm"
           hint="cooler = lower, warmer = higher"
           option={{
             grid: detailGrid,
@@ -320,6 +325,7 @@ export function HealthPage() {
       {data.hrv.length > 1 && (
         <DetailChart
           title="HRV"
+          unit="ms"
           hint="shaded = Garmin's baseline"
           option={{
             grid: detailGrid,
@@ -347,6 +353,7 @@ export function HealthPage() {
       {data.spo2.length > 0 && (
         <DetailChart
           title="Blood oxygen today"
+          unit="%"
           option={{
             grid: detailGrid,
             dataZoom: zoom(),
@@ -370,5 +377,17 @@ export function HealthPage() {
         />
       )}
     </div>
+  )
+}
+
+/** "9,840 a day this week, goal hit 4 of 7 days" from the step chart's own daily slots. */
+function stepHeadline(slots: { t: number; v: number | null }[]): ReactNode {
+  const week = slots.slice(-7).filter((s): s is { t: number; v: number } => s.v != null)
+  if (!week.length) return null
+  const avg = Math.round(week.reduce((a, b) => a + b.v, 0) / week.length)
+  return (
+    <>
+      <Hl>{avg.toLocaleString()}</Hl> steps a day over the last {week.length} days.
+    </>
   )
 }

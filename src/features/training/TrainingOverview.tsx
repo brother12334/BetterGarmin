@@ -83,6 +83,7 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
       {loadPts.length > 0 && (
         <DetailChart
           title="Training load"
+          metric="training"
           hint="bars = day, line = 7-day average"
           option={{
             grid: detailGrid,
@@ -100,6 +101,8 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
       {minPts.length > 0 && (
         <DetailChart
           title="Active minutes"
+          metric="training"
+          unit="min"
           option={{
             grid: detailGrid,
             dataZoom: zoom(startPct),
