@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T00:57:05.782831Z",
+  "title": "Design System: BetterGarmin",
+  "extensions": {
+    "colorMeta": {
+      "band-ink": {
+        "role": "primary",
+        "displayName": "Sign Band Ink"
+      },
+      "stone-ground": {
+        "role": "neutral",
+        "displayName": "Trail Stone"
+      },
+      "signboard": {
+        "role": "neutral",
+        "displayName": "Signboard"
+      },
+      "forest": {
+        "role": "secondary",
+        "displayName": "Forest Blaze"
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "Trail Sky"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Value",
+        "purpose": "Readiness and signpost numbers."
+      },
+      "label": {
+        "displayName": "Sign Caps",
+        "purpose": "Signpost labels, stats, short panel titles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 6px 18px rgba(21,24,20,0.18)",
+        "purpose": "Floating tab bar only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "track-fill",
+        "value": "width 700ms ease-out",
+        "purpose": "Signpost tracks fill to their value."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Signboard",
+      "kind": "card",
+      "refersTo": "signboard",
+      "description": "The only panel: flat board with a hairline rule.",
+      "html": "<div class=\"ds-board\"><p class=\"ds-caps\">Energy Reserve</p><p class=\"ds-num\">77</p></div>",
+      "css": ".ds-board{background:#f8f9f5;border:1px solid rgba(21,24,20,.16);border-radius:2px;padding:20px;font-family:'Public Sans',system-ui,sans-serif;color:#151814}.ds-caps{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;margin:0}.ds-num{font-weight:800;font-size:48px;line-height:1;margin:8px 0 0;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Page title plate",
+      "kind": "custom",
+      "refersTo": "page-title-plate",
+      "description": "Black sign plate with white caps.",
+      "html": "<h1 class=\"ds-plate\">Health</h1>",
+      "css": ".ds-plate{display:inline-block;background:#0f110f;color:#f3f4ef;padding:4px 12px;border-radius:2px;font:800 22px/30px 'Public Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:0}"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Forest fill, white text.",
+      "html": "<button class=\"ds-btn\">Sync now</button>",
+      "css": ".ds-btn{background:#2f7d4a;color:#fff;border:0;border-radius:4px;padding:8px 16px;font:600 14px 'Public Sans',system-ui,sans-serif}"
+    },
+    {
+      "name": "Tab bar",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Black band, current tab on a white plate.",
+      "html": "<nav class=\"ds-tabs\"><span class=\"on\">Today</span><span>Health</span><span>Sleep</span></nav>",
+      "css": ".ds-tabs{display:flex;gap:4px;background:#0f110f;border-radius:4px;padding:6px;font:600 13px 'Public Sans',system-ui,sans-serif}.ds-tabs span{flex:1;text-align:center;padding:10px;color:rgba(255,255,255,.75)}.ds-tabs .on{background:#f3f4ef;color:#0f110f;border-radius:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The trailhead sign",
+    "overview": "National-park signage on a light stone ground: black header bands, flat hairline signboards, heavy tabular numbers, trail blazes as the only filled symbols. Readiness is a trail grade; the day's energy is an elevation profile.",
+    "keyCharacteristics": [
+      "Black sign bands and title plates",
+      "Flat signboards split by hairlines",
+      "Heavy tabular numbers",
+      "Trail grade blazes",
+      "Elevation-profile energy chart"
+    ],
+    "rules": [
+      {
+        "name": "One colour per metric",
+        "body": "Heart brick, sleep dusk indigo, stress ochre, energy forest, training river teal, readiness sky.",
+        "section": "colors"
+      },
+      {
+        "name": "Flat boards",
+        "body": "No shadows, blur or glass on panels; hairlines separate.",
+        "section": "elevation"
+      },
+      {
+        "name": "Caps for short labels only",
+        "body": "Signpost labels and short titles in 800 caps; long titles in sentence case.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do show every value large and right-aligned",
+      "Do split boards with hairlines"
+    ],
+    "donts": [
+      "Don't use rings, glass or glows",
+      "Don't nest cards",
+      "Don't use blazes outside the trail grade"
+    ]
+  }
+}
