@@ -2,15 +2,16 @@ import { useEffect, useSyncExternalStore } from 'react'
 
 /** Every widget on the Today screen that can be moved or hidden. */
 export const TODAY_WIDGETS = [
+  // Default order follows the morning glance: how am I (readiness, sleep/stress/energy), then how the day may go.
   { id: 'hero', label: 'Readiness & backdrop' },
   { id: 'sync', label: 'Sync now bar' },
-  { id: 'training', label: 'Training (latest workout)' },
-  { id: 'heartRate', label: 'Heart rate' },
   { id: 'bars', label: 'Sleep / Stress / Energy bars' },
-  { id: 'energy', label: 'Energy Reserve curve' },
   { id: 'forecast', label: 'Energy forecast' },
+  { id: 'training', label: 'Training (latest workout)' },
+  { id: 'energy', label: 'Energy Reserve curve' },
   { id: 'stats', label: 'Steps, floors, calories, distance' },
   { id: 'lastNight', label: 'How you slept (sleep stages)' },
+  { id: 'heartRate', label: 'Heart rate' },
   { id: 'insights', label: "Today's insights" },
 ] as const
 

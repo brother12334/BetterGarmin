@@ -208,3 +208,17 @@ body {
 :root[data-theme="light"] {
   --nav-surface: #16181d;
 }
+
+/* Browser surfaces carry the accent too: text selection, keyboard focus, and caret. */
+::selection {
+  background: color-mix(in srgb, var(--accent, #38bdf8) 40%, transparent);
+  color: var(--text-primary);
+}
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent, #38bdf8);
+  outline-offset: 2px;
+}
+input,
+textarea {
+  caret-color: var(--accent, #38bdf8);
+}

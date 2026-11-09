@@ -58,7 +58,7 @@ export function SqlConsole() {
         <select
           value={selectedKind ?? ''}
           onChange={(e) => setKind(e.target.value as DbKind)}
-          className="rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
+          className="w-full min-w-0 truncate rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-sm text-[var(--text-primary)]"
         >
           {loadedKinds.map((k) => (
             <option key={k} value={k}>

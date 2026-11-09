@@ -31,7 +31,9 @@ const STATE_DOT: Record<string, string> = {
 }
 
 /** Direct Bluetooth connection to a Garmin CIRQA band: status, test alert, experimental file listing and a protocol log. */
-export function BandCard() {
+/** `bare` drops the card surface, for when it sits inside another panel (More's folded Bluetooth section). */
+export function BandCard({ bare = false }: { bare?: boolean } = {}) {
+  const Shell = bare ? 'div' : Card
   const b = useBand()
   const lastSync = useLastBandSync()
   const [alertResult, setAlertResult] = useState<string | null>(null)
@@ -68,7 +70,7 @@ export function BandCard() {
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Shell className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold">Garmin band (CIRQA)</p>
@@ -166,7 +168,7 @@ export function BandCard() {
           </pre>
         )}
       </div>
-    </Card>
+    </Shell>
   )
 }
 

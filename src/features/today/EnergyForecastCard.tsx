@@ -45,9 +45,12 @@ export function EnergyForecastCard({ day }: { day: string }) {
       type: 'time' as const,
       min: at(now.hour),
       max: at(23),
-      splitNumber: 4,
+      minInterval: 2 * 3600_000,
+      maxInterval: 2 * 3600_000,
       axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-      axisLabel: { color: 'var(--text-tertiary)', formatter: formatHour, hideOverlap: true },
+      axisLabel: { color: 'var(--text-tertiary)', // Only 6a/12p/6p: full times collided on a phone.
+        formatter: (v: number) => ([6, 12, 18].includes(new Date(v).getHours()) && new Date(v).getMinutes() === 0 ? formatHour(v) : ''),
+        hideOverlap: true },
     },
     yAxis: { type: 'value' as const, min: 0, max: 100, splitLine: { lineStyle: { color: 'var(--border-panel)' } }, axisLabel: { color: 'var(--text-tertiary)' } },
     series: [

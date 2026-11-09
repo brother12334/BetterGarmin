@@ -50,6 +50,61 @@ export function MorePage() {
       </Link>
 
       <Card>
+        <p className="mb-1 font-semibold">Cloud sync</p>
+        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
+          Your data from Garmin's cloud, synced every 15 minutes by a job you host yourself, even while the app is closed. Sync now refreshes it straight away. One-time
+          setup with your own free Cloudflare account; see <code>docs/cloud-sync.md</code> for the walkthrough and what it changes about privacy.
+        </p>
+
+        {cloudConfigured ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[var(--text-secondary)]">
+                Status: {cloudStatus === 'syncing' ? 'Syncing…' : cloudStatus === 'error' ? 'Error' : 'Connected'}
+              </span>
+              <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
+            </div>
+            {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
+            {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
+            {garminPull.status === 'idle' && garminPull.note && <p className="text-sm text-[var(--text-secondary)]">{garminPull.note}</p>}
+            {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
+            <div className="flex gap-2">
+              <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
+                {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
+              </Button>
+              <Button variant="ghost" onClick={disconnectCloud}>
+                Disconnect
+              </Button>
+            </div>
+          </div>
+        ) : showConnectForm ? (
+          <div className="flex flex-col gap-3">
+            <CloudSetupWizard onDone={() => setShowConnectForm(false)} />
+            <p className="text-xs text-[var(--text-tertiary)]">Already have a Worker?</p>
+            <CloudConnectForm onConnected={() => setShowConnectForm(false)} />
+          </div>
+        ) : (
+          <Button variant="secondary" onClick={() => setShowConnectForm(true)}>
+            Set up automatic sync
+          </Button>
+        )}
+      </Card>
+
+      <Card>
+        <p className="mb-1 font-semibold">Sync source</p>
+        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
+          What Sync now uses. The Garmin cloud copy is recommended; direct band sync needs Bluetooth (Bluefy) and is unreliable on iPhone.
+        </p>
+        <div className="flex gap-2">
+          {(['cloud', 'band'] as const).map((src) => (
+            <Button key={src} variant={syncSource === src ? 'primary' : 'secondary'} onClick={() => setSyncSource(src)} className="flex-1">
+              {src === 'cloud' ? 'Garmin cloud copy' : 'Band (Bluetooth)'}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
         <p className="mb-3 font-semibold">Appearance</p>
         <div className="flex gap-2">
           {(['system', 'light', 'dark'] as const).map((t) => (
@@ -57,21 +112,6 @@ export function MorePage() {
               {t === 'light' && <SunIcon width={15} height={15} />}
               {t === 'dark' && <MoonIcon width={15} height={15} />}
               {t}
-            </Button>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <p className="mb-1 font-semibold">Sync source</p>
-        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          What Sync now uses. The Garmin cloud copy works whenever Garmin Connect syncs your band. Direct band sync reads the band over
-          Bluetooth in Bluefy, but on iPhone the band often stops showing up in the device list once it's paired.
-        </p>
-        <div className="flex gap-2">
-          {(['cloud', 'band'] as const).map((src) => (
-            <Button key={src} variant={syncSource === src ? 'primary' : 'secondary'} onClick={() => setSyncSource(src)} className="flex-1">
-              {src === 'cloud' ? 'Garmin cloud copy' : 'Band (Bluetooth)'}
             </Button>
           ))}
         </div>
@@ -102,7 +142,15 @@ export function MorePage() {
         </Card>
       )}
 
-      <BandCard />
+      {/* Direct Bluetooth use of the band is obsolete for now (unreliable on iPhone); kept, folded away. */}
+      <details className="glass-panel group rounded-card p-5">
+        <summary className="cursor-pointer list-none font-semibold">
+          Bluetooth band tools <span className="font-normal text-[var(--text-tertiary)]">· obsolete</span>
+        </summary>
+        <div className="mt-4">
+          <BandCard bare />
+        </div>
+      </details>
 
       <Card>
         <p className="mb-3 font-semibold">Clock</p>
@@ -159,47 +207,6 @@ export function MorePage() {
             </Button>
           )}
         </div>
-      </Card>
-
-      <Card>
-        <p className="mb-1 font-semibold">Cloud sync (backup)</p>
-        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          Optional backup. Sync now pulls straight from your band over Bluetooth first; the cloud copy is only used when the band can't be reached. Keeps data current via a scheduled sync you host yourself — no manual file drops. Requires a one-time setup with your own
-          free Cloudflare account; see <code>docs/cloud-sync.md</code> for the full walkthrough and what it changes about privacy.
-        </p>
-
-        {cloudConfigured ? (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">
-                Status: {cloudStatus === 'syncing' ? 'Syncing…' : cloudStatus === 'error' ? 'Error' : 'Connected'}
-              </span>
-              <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
-            </div>
-            {cloudError && <p className="text-sm text-rose-400">{cloudError}</p>}
-            {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
-            {garminPull.status === 'idle' && garminPull.note && <p className="text-sm text-[var(--text-secondary)]">{garminPull.note}</p>}
-            {garminPull.status === 'error' && <p className="text-sm text-rose-400">{garminPull.message}</p>}
-            <div className="flex gap-2">
-              <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
-                {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
-              </Button>
-              <Button variant="ghost" onClick={disconnectCloud}>
-                Disconnect
-              </Button>
-            </div>
-          </div>
-        ) : showConnectForm ? (
-          <div className="flex flex-col gap-3">
-            <CloudSetupWizard onDone={() => setShowConnectForm(false)} />
-            <p className="text-xs text-[var(--text-tertiary)]">Already have a Worker?</p>
-            <CloudConnectForm onConnected={() => setShowConnectForm(false)} />
-          </div>
-        ) : (
-          <Button variant="secondary" onClick={() => setShowConnectForm(true)}>
-            Set up automatic sync
-          </Button>
-        )}
       </Card>
 
       <Card>

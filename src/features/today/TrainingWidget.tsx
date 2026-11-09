@@ -15,7 +15,8 @@ export function TrainingWidget() {
     <Card className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
         <p className="font-semibold">Training</p>
-        <span className="text-xs text-[var(--text-tertiary)]">Band synced {lastSync ? formatRelativeTime(new Date(lastSync)) : 'never'}</span>
+        {/* Direct band sync is opt-in now; only mention it once it has actually been used. */}
+        {lastSync && <span className="text-xs text-[var(--text-tertiary)]">Band synced {formatRelativeTime(new Date(lastSync))}</span>}
       </div>
       {latest && (
         <Link to={latest.kind === 'band' ? `/training/history/${encodeURIComponent(latest.id)}` : latest.kind === 'log' ? `/training/strength/workout/${latest.workout.id}` : '/training/history'} className="flex flex-col gap-1">

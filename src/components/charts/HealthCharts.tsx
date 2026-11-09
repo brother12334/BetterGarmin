@@ -168,7 +168,8 @@ export function DetailChart({
     }),
   }
   const grid = intraday ? { ...(rest.grid as object), left: 8, right: 24, containLabel: true } : rest.grid
-  const finalOption = { ...rest, grid, xAxis, series } as EChartsOption
+  // A chart without axes (the sport-mix pie) must not get one: an axis with no grid crashed ECharts and left the card empty.
+  const finalOption = (baseX ? { ...rest, grid, xAxis, series } : { ...rest, series }) as EChartsOption
 
   return (
     <Card className="p-4">
