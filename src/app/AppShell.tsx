@@ -38,7 +38,8 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen w-full">
       <PageBackdrop />
-      <aside className="sticky top-0 hidden h-screen w-56 flex-col gap-1 bg-[var(--band)] p-4 text-[var(--band-text)] md:flex">
+      <aside className="hidden w-56 shrink-0 self-stretch bg-[var(--band)] text-[var(--band-text)] md:block">
+        <div className="sticky top-0 flex flex-col gap-1 p-4">
         <div className="mb-6 flex items-center gap-2 px-2">
           <Logo size={28} className="rounded-control" />
           <span className="sign-caps text-base">BetterGarmin</span>
@@ -60,10 +61,11 @@ export function AppShell() {
             {tab.label}
           </NavLink>
         ))}
+        </div>
       </aside>
 
       <div className="flex min-h-screen w-full flex-1 flex-col pb-32 md:pb-0">
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] md:px-8">
+        <main className="w-full max-w-3xl flex-1 px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] md:px-8">
           <Outlet />
         </main>
       </div>

@@ -24,8 +24,10 @@ export function EnergyReserveCard({
       type: 'time' as const,
       minInterval: 2 * 3600_000,
       maxInterval: 2 * 3600_000,
-      axisLine: { lineStyle: { color: 'var(--border-panel)' } },
-      axisLabel: { color: 'var(--text-tertiary)', // Only 6a/12p/6p: full times collided on a phone.
+      // Hour waypoints: ink posts every two hours, labelled in trail-map caps at 6 AM, noon and 6 PM.
+      axisLine: { lineStyle: { color: 'var(--text-primary)', width: 1.5 } },
+      axisTick: { show: true, length: 6, lineStyle: { color: 'var(--text-primary)', width: 1.5 } },
+      axisLabel: { color: 'var(--text-primary)', fontWeight: 800, fontSize: 10, // Only 6a/12p/6p: full times collided on a phone.
         formatter: (v: number) => ([6, 12, 18].includes(new Date(v).getHours()) && new Date(v).getMinutes() === 0 ? formatHour(v) : ''),
         hideOverlap: true },
     },
@@ -60,7 +62,7 @@ export function EnergyReserveCard({
   return (
     <Card>
       <div className="mb-2 flex items-center gap-2">
-        <p className="font-semibold">Energy Reserve</p>
+        <p className="sign-caps text-sm">Energy Reserve</p>
         <InfoButton title="Energy Reserve">
           BetterGarmin's own estimate of your energy reserves across the day, from your stress samples. Not
           Garmin's Body Battery — see docs/scores/energy-reserve.md for the formula.

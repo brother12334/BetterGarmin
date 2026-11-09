@@ -172,7 +172,7 @@ export function TodayPage() {
       <>
       {insights.length > 0 && (
         <Card>
-          <p className="mb-3 font-semibold">Today's insights</p>
+          <p className="mb-3 sign-caps text-sm">Today's insights</p>
           <ul className="flex flex-col gap-3">
             {insights.map((insight, i) => (
               <motion.li

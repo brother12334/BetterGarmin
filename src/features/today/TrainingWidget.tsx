@@ -12,9 +12,9 @@ export function TrainingWidget() {
   const latest = items?.find((i) => i.kind !== 'log') ?? items?.[0]
   if (!latest) return null
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-2 py-4">
       <div className="flex items-baseline justify-between">
-        <p className="font-semibold">Training</p>
+        <p className="sign-caps text-sm">Training</p>
         {/* Direct band sync is opt-in now; only mention it once it has actually been used. */}
         {lastSync && <span className="text-xs text-[var(--text-tertiary)]">Band synced {formatRelativeTime(new Date(lastSync))}</span>}
       </div>

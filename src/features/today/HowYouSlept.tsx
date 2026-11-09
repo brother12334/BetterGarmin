@@ -70,7 +70,7 @@ export function HowYouSlept({ day }: { day: string }) {
   if (night === null) {
     return (
       <Card>
-        <p className="font-semibold">How you slept</p>
+        <p className="sign-caps text-sm">How you slept</p>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
           No sleep recorded in the last few nights yet. Wear your watch to bed; the breakdown appears after it syncs
           the next morning.
@@ -94,7 +94,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-semibold">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
+            <p className="sign-caps text-sm">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
             <InfoButton title="Sleep stages">
               Stages are Garmin's estimates from heart rate, heart-rate variability and movement. The typical ranges are
               general adult guidance, not targets. Stage mix varies from night to night and between people.

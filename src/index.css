@@ -168,8 +168,10 @@ body {
   color: var(--band-text);
 }
 .page-title {
-  /* A sign plate: white caps routed into a black board. */
+  /* A sign plate: white caps routed into a black board, always sized to its word. */
   display: inline-block;
+  width: fit-content;
+  align-self: flex-start;
   background: var(--band);
   color: var(--band-text);
   padding: 0.25rem 0.75rem;
