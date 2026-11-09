@@ -1,52 +1,52 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-09T00:57:05.782831Z",
+  "generatedAt": "2026-11-09T01:33:47.791975+00:00",
   "title": "Design System: BetterGarmin",
   "extensions": {
     "colorMeta": {
-      "band-ink": {
+      "readiness-violet": {
         "role": "primary",
-        "displayName": "Sign Band Ink"
+        "displayName": "Readiness Violet"
       },
-      "stone-ground": {
-        "role": "neutral",
-        "displayName": "Trail Stone"
-      },
-      "signboard": {
-        "role": "neutral",
-        "displayName": "Signboard"
-      },
-      "forest": {
+      "sleep-lime": {
         "role": "secondary",
-        "displayName": "Forest Blaze"
+        "displayName": "Sleep Lime"
       },
-      "sky": {
+      "stress-coral": {
         "role": "tertiary",
-        "displayName": "Trail Sky"
+        "displayName": "Stress Coral"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Value",
-        "purpose": "Readiness and signpost numbers."
+        "displayName": "Readiness",
+        "purpose": "The readiness number only."
       },
-      "label": {
-        "displayName": "Sign Caps",
-        "purpose": "Signpost labels, stats, short panel titles."
+      "number": {
+        "displayName": "Block number",
+        "purpose": "Giant numbers in metric blocks."
       }
     },
     "shadows": [
       {
         "name": "float",
-        "value": "0 6px 18px rgba(21,24,20,0.18)",
-        "purpose": "Floating tab bar only."
+        "value": "0 10px 30px rgba(18,18,18,0.18)",
+        "purpose": "Tab bar only."
       }
     ],
     "motion": [
       {
-        "name": "track-fill",
-        "value": "width 700ms ease-out",
-        "purpose": "Signpost tracks fill to their value."
+        "name": "tab-bubble",
+        "value": "spring stiffness 420 damping 36",
+        "purpose": "The violet bubble sliding between word tabs."
       }
     ],
     "breakpoints": [
@@ -58,73 +58,66 @@
   },
   "components": [
     {
-      "name": "Signboard",
+      "name": "Readiness block",
       "kind": "card",
-      "refersTo": "signboard",
-      "description": "The only panel: flat board with a hairline rule.",
-      "html": "<div class=\"ds-board\"><p class=\"ds-caps\">Energy Reserve</p><p class=\"ds-num\">77</p></div>",
-      "css": ".ds-board{background:#f8f9f5;border:1px solid rgba(21,24,20,.16);border-radius:2px;padding:20px;font-family:'Public Sans',system-ui,sans-serif;color:#151814}.ds-caps{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;margin:0}.ds-num{font-weight:800;font-size:48px;line-height:1;margin:8px 0 0;font-variant-numeric:tabular-nums}"
+      "refersTo": "readiness-block",
+      "description": "Violet field, giant readiness number, verdict.",
+      "html": "<div class=\"ds-r\"><span>Readiness</span><b>57</b><i>Easy session, not a PR day.</i></div>",
+      "css": ".ds-r{background:#5b3df5;color:#fff;border-radius:26px;padding:20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;position:relative;min-height:200px}.ds-r span{font-weight:700;font-size:14px}.ds-r b{display:block;font-size:110px;font-weight:800;letter-spacing:-.04em;line-height:1}.ds-r i{position:absolute;right:20px;top:20px;width:140px;text-align:right;font-style:normal;font-weight:800;font-size:20px}"
     },
     {
-      "name": "Page title plate",
-      "kind": "custom",
-      "refersTo": "page-title-plate",
-      "description": "Black sign plate with white caps.",
-      "html": "<h1 class=\"ds-plate\">Health</h1>",
-      "css": ".ds-plate{display:inline-block;background:#0f110f;color:#f3f4ef;padding:4px 12px;border-radius:2px;font:800 22px/30px 'Public Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:0}"
+      "name": "Metric block",
+      "kind": "card",
+      "refersTo": "metric-block",
+      "description": "A measure's colour field with one giant number.",
+      "html": "<div class=\"ds-m\"><span>Sleep</span><b>67</b><small>7h 49m</small></div>",
+      "css": ".ds-m{background:#c7f05a;color:#121212;border-radius:26px;padding:16px;font-family:'Bricolage Grotesque',system-ui,sans-serif;width:170px}.ds-m span{font-weight:700;font-size:14px}.ds-m b{display:block;font-size:56px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:8px}.ds-m small{font-weight:600;font-size:13px;opacity:.8}"
     },
     {
-      "name": "Primary button",
-      "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Forest fill, white text.",
-      "html": "<button class=\"ds-btn\">Sync now</button>",
-      "css": ".ds-btn{background:#2f7d4a;color:#fff;border:0;border-radius:4px;padding:8px 16px;font:600 14px 'Public Sans',system-ui,sans-serif}"
-    },
-    {
-      "name": "Tab bar",
+      "name": "Word tab bar",
       "kind": "nav",
       "refersTo": "tab-bar",
-      "description": "Black band, current tab on a white plate.",
-      "html": "<nav class=\"ds-tabs\"><span class=\"on\">Today</span><span>Health</span><span>Sleep</span></nav>",
-      "css": ".ds-tabs{display:flex;gap:4px;background:#0f110f;border-radius:4px;padding:6px;font:600 13px 'Public Sans',system-ui,sans-serif}.ds-tabs span{flex:1;text-align:center;padding:10px;color:rgba(255,255,255,.75)}.ds-tabs .on{background:#f3f4ef;color:#0f110f;border-radius:4px}"
+      "description": "Big word tabs, current one in a violet bubble.",
+      "html": "<nav class=\"ds-t\"><b>Today</b><span>Health</span><span>Training</span></nav>",
+      "css": ".ds-t{background:#121212;border-radius:28px 28px 0 0;padding:12px;display:flex;gap:4px;font-family:'Bricolage Grotesque',system-ui,sans-serif}.ds-t *{font-size:22px;font-weight:800;padding:8px 16px;border-radius:999px;color:rgba(255,255,255,.45)}.ds-t b{background:#5b3df5;color:#fff}"
+    },
+    {
+      "name": "Sync chip",
+      "kind": "chip",
+      "refersTo": "button-primary",
+      "description": "Compact ink pill beside the date.",
+      "html": "<button class=\"ds-s\">Sync \u00b7 4m ago</button>",
+      "css": ".ds-s{background:#121212;color:#f4f1ec;border:0;border-radius:999px;padding:6px 12px;font:700 12px 'Bricolage Grotesque',system-ui,sans-serif}"
     }
   ],
   "narrative": {
-    "northStar": "The trailhead sign",
-    "overview": "National-park signage on a light stone ground: black header bands, flat hairline signboards, heavy tabular numbers, trail blazes as the only filled symbols. Readiness is a trail grade; the day's energy is an elevation profile.",
+    "northStar": "Your day as a recap",
+    "overview": "Each measure owns a full field of colour with one giant number on warm paper; readiness leads in violet with a short verdict; navigation is big word tabs.",
     "keyCharacteristics": [
-      "Black sign bands and title plates",
-      "Flat signboards split by hairlines",
-      "Heavy tabular numbers",
-      "Trail grade blazes",
-      "Elevation-profile energy chart"
+      "Metric colour blocks",
+      "Giant Bricolage numbers",
+      "Violet readiness block",
+      "Word tab bar"
     ],
     "rules": [
       {
-        "name": "One colour per metric",
-        "body": "Heart brick, sleep dusk indigo, stress ochre, energy forest, training river teal, readiness sky.",
+        "name": "One colour per metric family",
+        "body": "Readiness violet, sleep lime, stress coral, energy black/lime, heart pink, training sunflower, neutral white.",
         "section": "colors"
       },
       {
-        "name": "Flat boards",
-        "body": "No shadows, blur or glass on panels; hairlines separate.",
+        "name": "Flat colour",
+        "body": "No borders, shadows, rings or glass on blocks.",
         "section": "elevation"
-      },
-      {
-        "name": "Caps for short labels only",
-        "body": "Signpost labels and short titles in 800 caps; long titles in sentence case.",
-        "section": "typography"
       }
     ],
     "dos": [
-      "Do show every value large and right-aligned",
-      "Do split boards with hairlines"
+      "Do show the number big",
+      "Do keep metric colours consistent"
     ],
     "donts": [
-      "Don't use rings, glass or glows",
-      "Don't nest cards",
-      "Don't use blazes outside the trail grade"
+      "Don't use violet except for readiness and the current tab",
+      "Don't let values wrap"
     ]
   }
 }

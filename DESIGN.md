@@ -1,132 +1,117 @@
 ---
 name: BetterGarmin
-description: A private health dashboard for one Garmin CIRQA band, read like a trailhead sign.
+description: A private health dashboard for one Garmin CIRQA band, as bold colour blocks.
 colors:
-  stone-ground: "#e8ebe4"
-  signboard: "#f8f9f5"
-  inset-stone: "#eceee8"
-  band-ink: "#0f110f"
-  band-text: "#f3f4ef"
-  ink: "#151814"
-  ink-secondary: "#474c44"
-  ink-tertiary: "#686e64"
-  forest: "#2f7d4a"
-  sky: "#2c6e9b"
-  brick: "#c2412d"
-  ochre: "#c98a14"
-  dusk-indigo: "#4f4fae"
-  river-teal: "#1f7a78"
-  earth: "#6b4a2b"
-  blaze-blue: "#1f5fa8"
-  night-ground: "#161916"
-  night-board: "#1f231f"
+  paper: "#f4f1ec"
+  white-block: "#ffffff"
+  inset: "#ece8e1"
+  ink: "#121212"
+  ink-secondary: "#4a4640"
+  ink-tertiary: "#6c6760"
+  readiness-violet: "#5b3df5"
+  sleep-lime: "#c7f05a"
+  stress-coral: "#ff7a59"
+  energy-black: "#121212"
+  heart-pink: "#ffb8e0"
+  training-sunflower: "#ffd23f"
+  night-ground: "#0e0e0e"
+  night-panel: "#1c1c1c"
 typography:
-  title:
-    fontFamily: "Public Sans Variable, Public Sans, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1.375rem"
-    fontWeight: 800
-    letterSpacing: "0.04em"
   display:
-    fontFamily: "Public Sans Variable, Public Sans, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "3rem"
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "8.25rem"
     fontWeight: 800
     lineHeight: 1
-    fontFeature: "tnum"
+    letterSpacing: "-0.04em"
   headline:
-    fontFamily: "Public Sans Variable, Public Sans, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1.5rem"
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "2.125rem"
     fontWeight: 800
+    letterSpacing: "-0.03em"
+  number:
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "3.5rem"
+    fontWeight: 800
+    letterSpacing: "-0.04em"
+    fontFeature: "tnum"
   label:
-    fontFamily: "Public Sans Variable, Public Sans, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 800
-    letterSpacing: "0.04em"
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 700
   body:
-    fontFamily: "Public Sans Variable, Public Sans, ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
 rounded:
-  card: "2px"
-  control: "4px"
+  block: "26px"
+  pill: "999px"
 spacing:
   gutter: "16px"
-  card: "20px"
+  grid-gap: "10px"
 components:
-  signboard:
-    backgroundColor: "{colors.signboard}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.card}"
+  readiness-block:
+    backgroundColor: "{colors.readiness-violet}"
+    textColor: "{colors.white-block}"
+    typography: "{typography.display}"
+    rounded: "{rounded.block}"
     padding: "20px"
-  page-title-plate:
-    backgroundColor: "{colors.band-ink}"
-    textColor: "{colors.band-text}"
-    typography: "{typography.title}"
-    rounded: "{rounded.card}"
-    padding: "4px 12px"
-  button-primary:
-    backgroundColor: "{colors.forest}"
-    textColor: "#ffffff"
-    rounded: "{rounded.control}"
-    padding: "8px 16px"
-  button-secondary:
-    backgroundColor: "{colors.inset-stone}"
+  metric-block:
+    rounded: "{rounded.block}"
+    padding: "16px"
+  panel:
+    backgroundColor: "{colors.white-block}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.block}"
+    padding: "20px"
+  button-primary:
+    backgroundColor: "{colors.readiness-violet}"
+    textColor: "#ffffff"
+    rounded: "{rounded.pill}"
     padding: "8px 16px"
   tab-bar:
-    backgroundColor: "{colors.band-ink}"
-    textColor: "{colors.band-text}"
-    rounded: "{rounded.control}"
-    height: "64px"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper}"
+    height: "72px"
 ---
 
 # Design System: BetterGarmin
 
 ## Overview
 
-**North star: the trailhead sign.** Every morning the owner reads their body the way a hiker reads the board at a trailhead: one grade says which trail they can take today, a signpost lists the distances, and a profile shows the climb ahead. The interface is national-park signage on a light stone ground: black header bands with white bold caps, flat signboards ruled with hairlines, heavy tabular numbers, and trail blazes as the only filled symbols.
-
-It refuses the category default (dark glass cards, progress rings, neon accents) and the clinical look of a lab chart. Hierarchy comes from scale contrast and weight, not decoration. Light by default, because it is read in morning daylight; a night-trail theme keeps the same system on a dark ground.
-
-Signature moves: readiness as a **trail grade** (black diamond 80+, blue square 60–79, green circle 40–59, trail closed under 40, the readiness score's own bands), and the day's energy as a **hike's elevation profile** with hour waypoint posts and a "YOU ARE HERE" marker.
+**North star: your day as a recap.** Like a year-in-review story, each measure owns a full field of colour with one giant number, so the morning glance reads in a second: the violet readiness block with a short verdict, then sleep, stress, energy and steps as a two-by-two grid of colour. Warm paper ground, near-black ink, Bricolage Grotesque at heavy weights. It refuses rings, glass, thin grey cards and dashboard chrome. Light by default (read in morning daylight); a dark theme keeps the same blocks on a near-black ground.
 
 ## Colors
 
-Restrained ground, committed ink. Stone ground (`stone-ground`) under off-white signboards (`signboard`); inner sections use `inset-stone`. Black (`band-ink`) owns the header bands, page-title plates, tab bar and desktop sidebar. Metric colours come from the trail and mean one thing everywhere: heart brick, sleep dusk indigo, stress ochre, energy forest, training river teal, readiness sky. State text uses the `--tone-*` tokens (red, blue, amber, green, teal, violet), which have darker day values and lighter night values so text keeps 4.5:1 contrast on both grounds. Blaze colours (forest circle, `blaze-blue` square, black diamond, brick closed sign) are reserved for the trail grade.
+**One colour per metric family, everywhere.** Readiness violet (white text; violet is readiness and the current-tab bubble only), sleep lime, stress coral, energy black with lime numerals, heart pink, training sunflower; steps, distance, calories, HRV and other neutral stats are white blocks. Charts use deeper "solid" versions of the same hues so lines read on white (`metricColors.ts`: `solid` for charts and text, `block`/`blockInk` for fills). State text uses `--tone-*` tokens tuned per theme for contrast.
 
 ## Typography
 
-Public Sans (self-hosted, variable) for everything, with tabular figures app-wide. Labels on signposts, stats, waypoints and short panel titles are 800-weight caps with 0.04em tracking. Values are large and heavy (3xl to 5xl, 800). Body copy stays sentence case at 14px. Long titles (Insights findings, workout names) stay in sentence case, set heavy, because caps hurt reading at length.
+Bricolage Grotesque only. Numbers at 800 with -0.04em tracking: 8.25rem for readiness, 3.5rem in metric blocks, 2.75rem in stat blocks (2rem for values over five characters, never wrapped). Labels 700 in sentence case. Screen titles 2.125rem 800.
 
 ## Layout
 
-Single column at phone width with 16px gutters; the Today sign runs full bleed under the safe area. Today follows the morning glance: the sign (grade + readiness), sync row, the Sleep / Stress / Energy signpost, energy forecast, training, energy profile, stats, sleep, heart rate, insights. On desktop an ink sidebar runs full height and the content column sits beside it.
+Phone-first single column, 16px gutters, 10px between blocks. Today: date with a compact Sync chip, a greeting title, the readiness block, the 2x2 metric grid, then training (sunflower), forecast and energy chart, stats, sleep detail, heart rate (pink) and insights. Detail charts and settings live on white panels.
 
 ## Elevation & Depth
 
-Flat. No shadows on panels, no blur, no glass. Separation comes from 1px hairline rules (`--border-panel`) and the stone/board contrast. Only the floating tab bar carries one soft offset shadow (`--shadow-float`).
+Flat colour. No shadows or borders on blocks or panels; the dark tab bar alone carries one soft shadow.
 
 ## Shapes
 
-Near-square: 2px panels and plates, 4px controls. Tracks are straight bars with quarter ticks, not rounded pills. Blazes are the only geometric icons with fill.
+26px corners on blocks and panels; pills for buttons, chips and the tab bubble.
 
 ## Components
 
-- **Signboard (`.glass-panel` in the trail style):** off-white board, hairline rule, 2px corners. Never nest boards; split a board with hairlines (stats, sleep stages) instead.
-- **Sign band / page-title plate (`.sign-band`, `.page-title`):** black with white caps; plates are sized to their word on every screen.
-- **Signpost row (`RangeBar`):** caps label and status word left, heavy number right, segmented track below.
-- **Signpost tile (`Dial`):** caps label, large number, segmented track, caption. Replaces gauge rings everywhere.
-- **Trail blaze (`TrailBlaze`):** grade symbol plus grade name; used for readiness.
-- **Elevation profile:** ink ridge line over translucent earth, ink baseline with two-hour posts, bold 6 AM / 12 PM / 6 PM labels, YOU ARE HERE post; waypoint rows below for biggest drain and best recharge.
-- **Tab bar:** black band, white icons, current tab on a white plate.
-- **Buttons:** primary forest fill with white text; secondary inset stone with a hairline; ghost text only. Visible accent focus ring.
+- **MetricBlock / Dial / BigStat:** a metric's colour field with label, giant number, caption; mini trends drawn in the block's ink with start and end values labelled. Content inside a block inherits the block's ink (text, buttons, rules) via `.metric-block`.
+- **Readiness block:** violet, 130px number, verdict top-right from the readiness bands (80/60/40), status and recommendation below.
+- **Sync chip:** ink pill beside the date; status messages appear under the hero only while relevant.
+- **Word tab bar:** dark bar docked to the bottom, large word tabs that scroll sideways, the current tab in a sliding violet bubble. Desktop sidebar mirrors it.
+- **Panels:** white, for charts, sleep stages, insights and settings.
 
 ## Do's and Don'ts
 
-- Do keep one colour per metric across every screen.
-- Do show the number: every signpost carries its value large and right-aligned.
-- Do split boards with hairlines rather than nesting cards.
-- Don't use rings, glass, blur, glows or gradients.
-- Don't put long text in caps.
-- Don't add eyebrow labels above headings.
-- Don't use the blaze shapes for anything but the trail grade.
+- Do keep each metric in its family colour on every screen.
+- Do show the number big; every block carries its value.
+- Don't use violet for anything but readiness and the current tab.
+- Don't add rings, glass, gradients, borders or shadows on blocks.
+- Don't let long values wrap; step the size down.
