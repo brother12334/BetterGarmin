@@ -209,22 +209,23 @@ export function MorePage() {
       )}
 
       <SectionTitle>Tools</SectionTitle>
-      <Block>
-        <div>
-          <Fold title="Export CSV" note="Your history as spreadsheet files">
-            <QuickExport />
-          </Fold>
-          <Fold title="Backup and restore" note="Everything on this phone, in one file">
-            <BackupCard bare />
-          </Fold>
-          <Fold title="Workout reminder" note="Only while the app is open">
-            <RemindersCard bare />
-          </Fold>
-          <Fold title="SQL console" note="Read-only queries on your GarminDB files">
-            <SqlConsole />
-          </Fold>
-        </div>
-      </Block>
+      {/* One block per tool, like Settings: no divided list. */}
+      {(
+        [
+          ['Export CSV', 'Your history as spreadsheet files', <QuickExport key="x" />],
+          ['Backup and restore', 'Everything on this phone, in one file', <BackupCard key="b" bare />],
+          ['Workout reminder', 'Only while the app is open', <RemindersCard key="r" bare />],
+          ['SQL console', 'Read-only queries on your GarminDB files', <SqlConsole key="q" />],
+        ] as const
+      ).map(([title, note, body]) => (
+        <Block key={title} className="py-4">
+          <div>
+            <Fold title={title} note={note}>
+              {body}
+            </Fold>
+          </div>
+        </Block>
+      ))}
       {/* Forgetting data is kept apart from routine tools, on coral. */}
       <Block metric="stress">
         <div>

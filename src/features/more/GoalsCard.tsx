@@ -90,7 +90,7 @@ function GoalBlock({ metric, label, value, sub }: { metric: MetricKey; label: st
   return (
     <div className="metric-block flex flex-col p-3" style={{ ['--block' as string]: metric === 'neutral' ? '#f4f1ec' : c.block, ['--block-ink' as string]: metric === 'neutral' ? '#121212' : c.blockInk }}>
       <span className="blk-label text-sm">{label}</span>
-      <span className="blk-num mt-1 text-[2rem]">{value == null ? '—' : `${Math.round(value)}%`}</span>
+      <span className="blk-num mt-1 text-[1.625rem]">{value == null ? '—' : `${Math.round(value)}%`}</span>
       {sub && <span className="mt-1 text-xs font-semibold opacity-75">{sub}</span>}
     </div>
   )
