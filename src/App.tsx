@@ -5,7 +5,6 @@ import { useData } from './app/DataProvider'
 import { AppShell } from './app/AppShell'
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow'
 import { Skeleton } from './components/ui/Skeleton'
-import { useApplyAppearance } from './app/appearance'
 
 const TodayPage = lazy(() => import('./features/today/TodayPage').then((m) => ({ default: m.TodayPage })))
 const MorePage = lazy(() => import('./features/more/MorePage').then((m) => ({ default: m.MorePage })))
@@ -44,7 +43,6 @@ function RouteFallback() {
 
 export default function App() {
   const { status } = useData()
-  useApplyAppearance()
   useReminderScheduler()
 
   if (status === 'restoring') {

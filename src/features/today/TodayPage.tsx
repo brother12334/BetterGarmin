@@ -1,10 +1,9 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '../../lib/cn'
-import { useAppearance, usesFullBackdrop, type WidgetId } from '../../app/appearance'
+import { useAppearance, type WidgetId } from '../../app/appearance'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
-import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
 import { MetricBlock } from '../../components/ui/MetricBlock'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { StatNumber } from '../../components/ui/StatNumber'
@@ -111,7 +110,7 @@ export function TodayPage() {
         ? { label: 'Energy at wake', value: data.wakeEnergy }
         : { label: 'Energy', value: summary?.bb_charged || null }
   const widgets: Record<WidgetId, ReactNode> = {
-    hero: <ReadinessHero atTop={layout.find((w) => w.visible)?.id === 'hero'} formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
+    hero: <ReadinessHero formattedDay={formattedDay} score={readiness?.score ?? null} recommendation={readiness?.recommendation ?? null} />,
     sync: (
       <>
         <SyncBar />
@@ -199,35 +198,25 @@ export function TodayPage() {
           <Fragment key={slot.id}>{widgets[slot.id]}</Fragment>
         ))}
       <Link to="/customize" className="self-center text-xs font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-        Customize this screen
+        Rearrange this screen
       </Link>
     </div>
   )
 }
 
 function ReadinessHero({
-  atTop,
   formattedDay,
   score,
   recommendation,
 }: {
-  atTop: boolean
   formattedDay: string
   score: number | null
   recommendation: string | null
 }) {
-  const a = useAppearance()
-  // A chosen backdrop photo shows as a band above the title, unless it already fills the whole page.
-  const photoStrip = a.backgroundMode !== 'none' && !usesFullBackdrop(a)
   const status = statusForScore(score)
 
   return (
     <section className="flex flex-col gap-3">
-      {photoStrip && (
-        <div className={cn('-mx-4 h-28 overflow-hidden md:mx-0 md:rounded-card', atTop && '-mt-[calc(1.5rem+env(safe-area-inset-top))]')} aria-hidden>
-          <MountainBackdrop height={112} />
-        </div>
-      )}
       <div>
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-[var(--text-secondary)]">{formattedDay}</p>

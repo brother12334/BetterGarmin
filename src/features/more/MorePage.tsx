@@ -158,8 +158,8 @@ export function MorePage() {
       <div className="grid grid-cols-2 gap-2.5">
         <Link to="/customize" className="block">
           <Block metric="energy" className="flex h-full min-h-36 flex-col justify-between">
-            <h2 className="text-lg font-extrabold">Customize</h2>
-            <p className="text-[1.75rem] font-extrabold leading-none tracking-tight">Make it yours →</p>
+            <h2 className="text-lg font-extrabold">Today screen</h2>
+            <p className="text-[1.75rem] font-extrabold leading-none tracking-tight">Rearrange →</p>
           </Block>
         </Link>
         <Block className="flex min-h-36 flex-col justify-between">

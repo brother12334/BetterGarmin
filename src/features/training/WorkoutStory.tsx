@@ -58,7 +58,7 @@ function Spark({ series, color }: { series: HrSample[]; color: string }) {
   )
 }
 
-/** A story card in the user's own card style (glass, liquid, solid, outline), washed with the card's colour. */
+/** A story card on a panel, washed with the card's colour. */
 function Slide({ tint, label, children, footer }: { tint: string; label: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="glass-panel relative flex w-[86%] shrink-0 snap-center flex-col justify-between gap-4 overflow-hidden rounded-card p-5 sm:w-[360px]" style={{ minHeight: 300 }}>

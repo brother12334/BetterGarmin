@@ -32,7 +32,7 @@ Built on the user's own data with no Garmin app UI in between: GarminDB pulls fr
 
 ## Capabilities and Constraints
 
-- Screens: Today, Health, Training (strength/Element 26 workouts, history, progress), Sleep, Insights (including Intelligence), More (settings, sync source, cloud sync, backup, reminders, SQL console, band tools), Customize.
+- Screens: Today, Health, Training (strength/Element 26 workouts, history, progress), Sleep, Insights (including Intelligence), More (settings, sync source, cloud sync, backup, reminders, SQL console, band tools), Rearrange Today.
 - All existing features must be kept.
 - React + Vite + TypeScript + Tailwind v4 PWA, deployed to GitHub Pages; sql.js runs the GarminDB databases in a worker.
 - Health values never leave the device except to the user's own storage.
@@ -40,7 +40,7 @@ Built on the user's own data with no Garmin app UI in between: GarminDB pulls fr
 ## Brand Commitments
 
 - Name: BetterGarmin. Dual Orbit logo.
-- The visual design is open (November 2026: the owner asked for a complete remake; liquid glass, photo backgrounds and the old Customize looks are no longer binding). Customize may be rebuilt around the new look.
+- The visual design is open (November 2026: the owner asked for a complete remake; liquid glass, photo backgrounds and the old Customize looks are no longer binding). There is one look, colour blocks (November 2026: the owner removed all customizable looks); only the Today layout (order and visibility) is user-arrangeable, plus light/dark.
 - The owner disliked the old look as generic, too busy, hard to read at a glance, and dark/moody. A new look must not feel clinical/medical or playful/gamified, and must not hide numbers.
 - Independent project, not affiliated with Garmin; not medical advice.
 

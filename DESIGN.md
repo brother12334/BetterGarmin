@@ -78,7 +78,7 @@ components:
 
 ## Overview
 
-**North star: your day as a recap.** Like a year-in-review story, each measure owns a full field of colour with one giant number, so the morning glance reads in a second: the violet readiness block with a short verdict, then sleep, stress, energy and steps as a two-by-two grid of colour. Warm paper ground, near-black ink, Bricolage Grotesque at heavy weights. It refuses rings, glass, thin grey cards and dashboard chrome. Light by default (read in morning daylight); a dark theme keeps the same blocks on a near-black ground.
+**North star: your day as a recap.** Like a year-in-review story, each measure owns a full field of colour with one giant number, so the morning glance reads in a second: the violet readiness block with a short verdict, then sleep, stress, energy and steps as a two-by-two grid of colour. Warm paper ground, near-black ink, Bricolage Grotesque at heavy weights. It refuses rings, glass, thin grey cards and dashboard chrome. Light by default (read in morning daylight); a dark theme keeps the same blocks on a near-black ground. This is the only look: there are no presets, backgrounds or card styles; the owner can only reorder or hide Today's widgets (Rearrange Today).
 
 ## Colors
 

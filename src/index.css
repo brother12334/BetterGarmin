@@ -146,28 +146,12 @@ body {
   }
 }
 
+/* Panels are borderless white blocks with big corners (the app's one look). */
 .glass-panel {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-panel);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
 }
 
-/* Card styles chosen in Customize. Blocks (the default): borderless white blocks with big corners. */
-:root[data-card="blocks"] .glass-panel {
-  background: var(--bg-elevated);
-  border-color: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-:root[data-card="trail"] .glass-panel {
-  background: var(--bg-elevated);
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
 /* A filled metric block: its colour is the whole surface. Set --block and --block-ink inline. */
 .metric-block {
   background: var(--block);
@@ -186,7 +170,7 @@ body {
   font-weight: 800;
   letter-spacing: -0.03em;
 }
-:root[data-card="blocks"] .glass-panel :where(p.font-semibold:first-child, div:first-child > p.font-semibold:first-child) {
+.glass-panel :where(p.font-semibold:first-child, div:first-child > p.font-semibold:first-child) {
   font-weight: 700;
   font-size: 1rem;
 }
@@ -197,73 +181,6 @@ body {
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
-}
-
-:root[data-card="solid"] .glass-panel {
-  background: var(--bg-elevated);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-:root[data-card="outline"] .glass-panel {
-  background: transparent;
-  box-shadow: none;
-  border-color: color-mix(in srgb, var(--accent, #38bdf8) 35%, var(--border-panel));
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-/* Liquid Glass: frosted, saturated blur with a bright rim and a soft specular highlight. */
-:root[data-card="liquid"] .glass-panel {
-  background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.65),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
-    inset 0 0 24px rgba(255, 255, 255, 0.07),
-    0 12px 32px rgba(8, 20, 60, 0.22);
-  backdrop-filter: blur(28px) saturate(185%);
-  -webkit-backdrop-filter: blur(28px) saturate(185%);
-  text-shadow: 0 1px 2px rgba(0, 25, 80, 0.35);
-}
-:root:not([data-theme="light"])[data-card="liquid"] {
-  /* The grey secondary text disappears against blue glass; lift it toward white. */
-  --text-secondary: rgba(255, 255, 255, 0.92);
-  --text-tertiary: rgba(255, 255, 255, 0.78);
-  --border-panel: rgba(255, 255, 255, 0.22);
-}
-/* Clear glass over a bright photo (fog, sky, snow) leaves white text with nothing dark behind it.
-   A light smoky base keeps every label readable without losing the glass look. */
-:root:not([data-theme="light"])[data-card="liquid"]:not([data-glass="dark"]) .glass-panel {
-  background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    linear-gradient(rgba(12, 18, 34, 0.3), rgba(12, 18, 34, 0.3));
-  text-shadow: 0 1px 3px rgba(0, 10, 30, 0.55);
-}
-:root[data-card="liquid"][data-glass="dark"] .glass-panel {
-  background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(160deg, rgba(8, 10, 20, 0.55), rgba(8, 10, 20, 0.35));
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
-    0 14px 36px rgba(0, 0, 0, 0.45);
-}
-:root[data-theme="light"][data-card="liquid"]:not([data-glass="dark"]) .glass-panel {
-  background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 60%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25));
-  border-color: rgba(255, 255, 255, 0.85);
-}
-
-/* Over a full-screen photo, glass cards need a little more body to stay readable. */
-:root[data-full-backdrop="on"][data-card="glass"] .glass-panel {
-  background: color-mix(in srgb, var(--bg-base) 55%, transparent);
-}
-:root[data-full-backdrop="on"] body {
-  background: var(--bg-base);
 }
 
 .no-scrollbar::-webkit-scrollbar {

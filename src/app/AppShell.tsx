@@ -5,7 +5,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { NavBar } from './NavBar'
 import { TABS } from './navConfig'
 import { cn } from '../lib/cn'
-import { PageBackdrop } from '../components/ui/MountainBackdrop'
 import { Logo } from './icons'
 
 
@@ -18,7 +17,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/training/, 'Training'],
   [/^\/sleep/, 'Sleep'],
   [/^\/insights/, 'Insights'],
-  [/^\/customize/, 'Customize'],
+  [/^\/customize/, 'Rearrange Today'],
   [/^\/more/, 'More'],
 ]
 
@@ -37,7 +36,6 @@ export function AppShell() {
   useDocumentTitle()
   return (
     <div className="flex min-h-screen w-full">
-      <PageBackdrop />
       <aside className="hidden w-56 shrink-0 self-stretch bg-[var(--band)] text-[var(--band-text)] md:block">
         <div className="sticky top-0 flex flex-col gap-1 p-4">
         <div className="mb-6 flex items-center gap-2 px-2">

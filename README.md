@@ -63,7 +63,7 @@ run BetterGarmin from now on:
 | --- | --- | --- |
 | **How to open the app** | The **Safari Home Screen app** | Safari tab + beacio, Bluefy, WebBLE: complicated and obsolete, see below |
 | **Getting your data in** | [Cloud sync](docs/cloud-sync.md), automatic every 15 minutes (the default sync source) | [Sync straight from the band](#syncing-from-the-band) or [GarminDB files](#getting-your-data) |
-| **Look** | The **Glacier** preset (default) | 7 other presets in Customize |
+| **Today layout** | The default order | More → Today screen → Rearrange (reorder or hide cards) |
 | **Clock and units** | Whatever your phone uses (default) | More → Clock / Units |
 
 ### Other ways to open it (obsolete)
