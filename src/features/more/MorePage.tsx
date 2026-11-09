@@ -1,253 +1,455 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
-import { useTheme } from '../../app/theme'
-import { useUnits } from '../../app/units'
-import { BackupCard } from './BackupCard'
-import { RemindersCard } from './RemindersCard'
-import { BandCard } from '../band/BandCard'
-import { setClockFormat, useClockFormat } from '../../lib/clock'
-import { fullscreenSupported, setFullscreenPref, useFullscreenPref } from '../../lib/fullscreen'
-import { useData } from '../../app/DataProvider'
-import { CustomizeIcon, SunIcon, MoonIcon } from '../../app/icons'
-import { CloudConnectForm } from '../onboarding/CloudConnectForm'
-import { CloudSetupWizard } from '../onboarding/CloudSetupWizard'
-import { formatRelativeTime } from '../../lib/relativeTime'
-import { GoalsCard } from './GoalsCard'
-import { QuickExport } from './QuickExport'
-import { SqlConsole } from './SqlConsole'
-import { setSyncSource, useSyncSource } from '../../lib/syncSource'
+import { useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "../../components/ui/Button";
+import { Hl } from "../../components/charts/HealthCharts";
+import {
+  METRIC_COLORS,
+  type MetricKey,
+} from "../../components/ui/metricColors";
+import { useTheme } from "../../app/theme";
+import { useUnits } from "../../app/units";
+import { BackupCard } from "./BackupCard";
+import { RemindersCard } from "./RemindersCard";
+import { BandCard } from "../band/BandCard";
+import { setClockFormat, useClockFormat } from "../../lib/clock";
+import {
+  fullscreenSupported,
+  setFullscreenPref,
+  useFullscreenPref,
+} from "../../lib/fullscreen";
+import { useData } from "../../app/DataProvider";
+import { CloudConnectForm } from "../onboarding/CloudConnectForm";
+import { CloudSetupWizard } from "../onboarding/CloudSetupWizard";
+import { formatRelativeTime } from "../../lib/relativeTime";
+import { GoalsCard } from "./GoalsCard";
+import { QuickExport } from "./QuickExport";
+import { SqlConsole } from "./SqlConsole";
+import { setSyncSource, useSyncSource } from "../../lib/syncSource";
+import { cn } from "../../lib/cn";
+
+/** A colour block for a section, in a metric's colours or a given pair. */
+function Block({
+  metric,
+  colors,
+  className,
+  children,
+}: {
+  metric?: MetricKey;
+  colors?: [string, string];
+  className?: string;
+  children: ReactNode;
+}) {
+  const [block, ink] = colors ?? [
+    METRIC_COLORS[metric ?? "neutral"].block,
+    METRIC_COLORS[metric ?? "neutral"].blockInk,
+  ];
+  return (
+    <section
+      className={cn("metric-block p-5", className)}
+      style={{ ["--block" as string]: block, ["--block-ink" as string]: ink }}
+    >
+      {children}
+    </section>
+  );
+}
+
+/** A row of pill choices; the chosen one is an ink pill. */
+function Pills<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: [T, string][];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={value === v}
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors",
+            value === v
+              ? "bg-[var(--block-ink)] text-[var(--block)]"
+              : "bg-[var(--bg-panel)] text-[var(--text-primary)]",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One setting: its name and a short note on the left, the control under it. */
+function Row({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  note?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2 border-t border-[var(--border-panel)] py-4 first:border-t-0 first:pt-0 last:pb-0">
+      <div>
+        <p className="text-base font-bold">{title}</p>
+        {note && <p className="text-xs font-semibold opacity-70">{note}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** A fold-out row for tools that are used now and then. */
+function Fold({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  note?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group border-t border-[var(--border-panel)] py-4 first:border-t-0 first:pt-0 last:pb-0">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+        <span>
+          <span className="block text-base font-bold">{title}</span>
+          {note && (
+            <span className="block text-xs font-semibold opacity-70">
+              {note}
+            </span>
+          )}
+        </span>
+        <span
+          className="text-xl font-bold transition-transform group-open:rotate-45"
+          aria-hidden
+        >
+          +
+        </span>
+      </summary>
+      <div className="mt-4">{children}</div>
+    </details>
+  );
+}
 
 export function MorePage() {
-  const { theme, setTheme } = useTheme()
-  const { units, setUnits } = useUnits()
-  const syncSource = useSyncSource()
-  const clock = useClockFormat()
-  const fullscreen = useFullscreenPref()
-  const { source, loadedKinds, forgetData, cloudConfigured, cloudStatus, cloudError, lastSynced, disconnectCloud, pullFromGarmin, garminPull } = useData()
-  const [confirming, setConfirming] = useState(false)
-  const [showConnectForm, setShowConnectForm] = useState(false)
+  const { theme, setTheme } = useTheme();
+  const { units, setUnits } = useUnits();
+  const syncSource = useSyncSource();
+  const clock = useClockFormat();
+  const fullscreen = useFullscreenPref();
+  const {
+    source,
+    loadedKinds,
+    forgetData,
+    cloudConfigured,
+    cloudStatus,
+    cloudError,
+    lastSynced,
+    disconnectCloud,
+    pullFromGarmin,
+    garminPull,
+  } = useData();
+  const [confirming, setConfirming] = useState(false);
+  const [showConnectForm, setShowConnectForm] = useState(false);
+  const running = garminPull.status === "running";
+  const syncProblem =
+    cloudConfigured &&
+    (cloudStatus === "error" || garminPull.status === "error");
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-baseline justify-between">
+    <div className="flex flex-col gap-2.5">
+      <div className="mb-1 flex items-baseline justify-between">
         <h1 className="page-title">More</h1>
-        <span className="text-sm text-[var(--text-tertiary)]">v{__APP_VERSION__}</span>
+        <span className="rounded-full bg-[var(--text-primary)] px-2.5 py-1 text-xs font-bold text-[var(--bg-base)]">
+          v{__APP_VERSION__}
+        </span>
       </div>
 
-      <Link to="/customize">
-        <Card className="flex items-center gap-4 border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--accent)]">
-            <CustomizeIcon width={22} height={22} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">Customize</p>
-            <p className="text-xs text-[var(--text-tertiary)]">Backgrounds, widget layout, colours, fonts and themes</p>
-          </div>
-          <span className="shrink-0 text-[var(--text-tertiary)]">→</span>
-        </Card>
-      </Link>
-
-      <Card>
-        <p className="mb-1 font-semibold">Cloud sync</p>
-        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          Your data from Garmin's cloud, synced every 15 minutes by a job you host yourself, even while the app is closed. Sync now refreshes it straight away. One-time
-          setup with your own free Cloudflare account; see <code>docs/cloud-sync.md</code> for the walkthrough and what it changes about privacy.
-        </p>
-
+      {/* Sync status leads: lime when the cloud copy is working, coral when it needs attention or isn't set up. */}
+      <Block metric={cloudConfigured && !syncProblem ? "sleep" : "stress"}>
+        <p className="blk-label text-sm opacity-80">Cloud sync</p>
         {cloudConfigured ? (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">
-                Status: {cloudStatus === 'syncing' ? 'Syncing…' : cloudStatus === 'error' ? 'Error' : 'Connected'}
-              </span>
-              <span className="text-[var(--text-tertiary)]">Last synced {formatRelativeTime(lastSynced)}</span>
-            </div>
-            {cloudError && <p className="text-sm text-[var(--tone-red)]">{cloudError}</p>}
-            {garminPull.status === 'running' && <p className="text-sm text-[var(--text-secondary)]">{garminPull.via === 'band' ? 'Syncing from your band…' : garminPull.afterBand ? 'Band synced · now updating the Garmin cloud backup (about 2 minutes)' : 'Downloading from Garmin… usually about 2 minutes.'}</p>}
-            {garminPull.status === 'idle' && garminPull.note && <p className="text-sm text-[var(--text-secondary)]">{garminPull.note}</p>}
-            {garminPull.status === 'error' && <p className="text-sm text-[var(--tone-red)]">{garminPull.message}</p>}
-            <div className="flex gap-2">
-              <Button loading={garminPull.status === 'running'} variant="secondary" onClick={() => pullFromGarmin()} disabled={cloudStatus === 'syncing' || garminPull.status === 'running'}>
-                {garminPull.status === 'running' ? 'Syncing…' : 'Sync now'}
-              </Button>
-              <Button variant="ghost" onClick={disconnectCloud}>
+          <>
+            <p className="mt-1.5 text-[1.75rem] font-extrabold leading-tight tracking-tight">
+              {running ? (
+                "Syncing now…"
+              ) : syncProblem ? (
+                "Sync needs a look."
+              ) : (
+                <>
+                  Synced <Hl>{formatRelativeTime(lastSynced)}</Hl>.
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-sm font-semibold opacity-80">
+              Every 15 minutes from Garmin's cloud, even while the app is
+              closed.
+            </p>
+            {cloudError && (
+              <p className="mt-2 text-sm font-bold">{cloudError}</p>
+            )}
+            {garminPull.status === "idle" && garminPull.note && (
+              <p className="mt-2 text-sm font-semibold">{garminPull.note}</p>
+            )}
+            {garminPull.status === "error" && (
+              <p className="mt-2 text-sm font-bold">{garminPull.message}</p>
+            )}
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => pullFromGarmin()}
+                disabled={cloudStatus === "syncing" || running}
+                className="rounded-full bg-[var(--block-ink)] px-5 py-2.5 text-sm font-bold text-[var(--block)] disabled:opacity-60"
+              >
+                {running ? "Syncing…" : "Sync now"}
+              </button>
+              <button
+                type="button"
+                onClick={disconnectCloud}
+                className="rounded-full bg-[var(--bg-panel)] px-5 py-2.5 text-sm font-bold"
+              >
                 Disconnect
-              </Button>
+              </button>
             </div>
-          </div>
+          </>
         ) : showConnectForm ? (
-          <div className="flex flex-col gap-3">
+          <div className="mt-3 flex flex-col gap-3">
             <CloudSetupWizard onDone={() => setShowConnectForm(false)} />
-            <p className="text-xs text-[var(--text-tertiary)]">Already have a Worker?</p>
+            <p className="text-xs font-semibold">Already have a Worker?</p>
             <CloudConnectForm onConnected={() => setShowConnectForm(false)} />
           </div>
         ) : (
-          <Button variant="secondary" onClick={() => setShowConnectForm(true)}>
-            Set up automatic sync
-          </Button>
+          <>
+            <p className="mt-1.5 text-[1.75rem] font-extrabold leading-tight tracking-tight">
+              Not set up yet.
+            </p>
+            <p className="mt-1 text-sm font-semibold opacity-80">
+              One-time setup with your own free Cloudflare account; see
+              docs/cloud-sync.md for what it changes about privacy.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowConnectForm(true)}
+              className="mt-4 rounded-full bg-[var(--block-ink)] px-5 py-2.5 text-sm font-bold text-[var(--block)]"
+            >
+              Set up automatic sync
+            </button>
+          </>
         )}
-      </Card>
+      </Block>
 
-      <Card>
-        <p className="mb-1 font-semibold">Sync source</p>
-        <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          What Sync now uses. The Garmin cloud copy is recommended; direct band sync needs Bluetooth (Bluefy) and is unreliable on iPhone.
-        </p>
-        <div className="flex gap-2">
-          {(['cloud', 'band'] as const).map((src) => (
-            <Button key={src} variant={syncSource === src ? 'primary' : 'secondary'} onClick={() => setSyncSource(src)} className="flex-1">
-              {src === 'cloud' ? 'Garmin cloud copy' : 'Band (Bluetooth)'}
-            </Button>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <p className="mb-3 font-semibold">Appearance</p>
-        <div className="flex gap-2">
-          {(['system', 'light', 'dark'] as const).map((t) => (
-            <Button key={t} variant={theme === t ? 'primary' : 'secondary'} onClick={() => setTheme(t)} className="flex-1 capitalize">
-              {t === 'light' && <SunIcon width={15} height={15} />}
-              {t === 'dark' && <MoonIcon width={15} height={15} />}
-              {t}
-            </Button>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <p className="mb-3 font-semibold">Units</p>
-        <div className="flex gap-2">
-          {(['metric', 'imperial'] as const).map((u) => (
-            <Button key={u} variant={units === u ? 'primary' : 'secondary'} onClick={() => setUnits(u)} className="flex-1 capitalize">
-              {u === 'metric' ? 'Metric (km, kg)' : 'Imperial (mi, lb)'}
-            </Button>
-          ))}
-        </div>
-      </Card>
-
-      {fullscreenSupported() && (
-        <Card>
-          <label className="flex items-center justify-between gap-4">
-            <span>
-              <span className="block font-semibold">Fullscreen</span>
-              <span className="block text-xs text-[var(--text-tertiary)]">
-                Hides the browser's toolbars. If they come back, tap anywhere to hide them again.
-              </span>
-            </span>
-            <input type="checkbox" checked={fullscreen} onChange={(e) => setFullscreenPref(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
-          </label>
-        </Card>
-      )}
-
-      {/* Direct Bluetooth use of the band is obsolete for now (unreliable on iPhone); kept, folded away. */}
-      <details className="glass-panel group rounded-card p-5">
-        <summary className="cursor-pointer list-none font-semibold">
-          Bluetooth band tools <span className="font-normal text-[var(--text-tertiary)]">· obsolete</span>
-        </summary>
-        <div className="mt-4">
-          <BandCard bare />
-        </div>
-      </details>
-
-      <Card>
-        <p className="mb-3 font-semibold">Clock</p>
-        <div className="flex gap-2">
-          {(['12h', '24h'] as const).map((c) => (
-            <Button key={c} variant={clock === c ? 'primary' : 'secondary'} onClick={() => setClockFormat(c)} className="flex-1">
-              {c === '12h' ? '12-hour (7:20 PM)' : '24-hour (19:20)'}
-            </Button>
-          ))}
-        </div>
-      </Card>
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link to="/customize" className="block">
+          <Block
+            metric="energy"
+            className="flex h-full min-h-36 flex-col justify-between"
+          >
+            <p className="blk-label text-sm opacity-80">Customize</p>
+            <p className="text-[1.75rem] font-extrabold leading-none tracking-tight">
+              Make it yours →
+            </p>
+          </Block>
+        </Link>
+        <Block className="flex min-h-36 flex-col justify-between">
+          <p className="blk-label text-sm opacity-80">Your data</p>
+          <p className="text-lg font-extrabold leading-tight">
+            {source === "demo"
+              ? "Demo data, nothing real loaded"
+              : source === "cloud"
+                ? `${loadedKinds.length} files from your cloud`
+                : `${loadedKinds.length} files on this device`}
+          </p>
+        </Block>
+      </div>
 
       {loadedKinds.length > 0 && (
-        <Card>
-          <p className="mb-3 font-semibold">Goals</p>
+        <Block>
+          <p className="blk-label mb-3 text-sm opacity-80">Goals</p>
           <GoalsCard />
-        </Card>
+        </Block>
       )}
 
-      <Card>
-        <p className="mb-2 font-semibold">Your data</p>
-        <p className="text-sm text-[var(--text-secondary)]">
-          {source === 'demo'
-            ? 'You are viewing demo data — nothing real is loaded.'
-            : source === 'cloud'
-              ? `Synced automatically — ${loadedKinds.length} database file${loadedKinds.length === 1 ? '' : 's'} from your cloud sync.`
-              : `Loaded ${loadedKinds.length} database file${loadedKinds.length === 1 ? '' : 's'} from your device.`}
-        </p>
-        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-          {source === 'cloud'
-            ? 'Cloud sync is on: your Garmin data passes through your own Cloudflare Worker, protected by your access token. See the Cloud sync section below.'
-            : 'Everything is processed locally in your browser and cached on this device only. Nothing is ever uploaded.'}
-        </p>
-        <div className="mt-4">
-          {confirming ? (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                className="border-[color-mix(in_srgb,var(--tone-red)_40%,transparent)] text-[var(--tone-red)]"
-                onClick={async () => {
-                  await forgetData()
-                  setConfirming(false)
-                }}
-              >
-                Yes, forget everything
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirming(false)}>
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <Button variant="secondary" onClick={() => setConfirming(true)}>
-              Forget my data
-            </Button>
+      <Block>
+        <p className="blk-label mb-4 text-sm opacity-80">Settings</p>
+        <div>
+          <Row title="Theme">
+            <Pills
+              value={theme}
+              options={[
+                ["system", "System"],
+                ["light", "Light"],
+                ["dark", "Dark"],
+              ]}
+              onChange={setTheme}
+            />
+          </Row>
+          <Row title="Units">
+            <Pills
+              value={units}
+              options={[
+                ["metric", "Metric · km, kg"],
+                ["imperial", "Imperial · mi, lb"],
+              ]}
+              onChange={setUnits}
+            />
+          </Row>
+          <Row title="Clock">
+            <Pills
+              value={clock}
+              options={[
+                ["12h", "12-hour · 7:20 PM"],
+                ["24h", "24-hour · 19:20"],
+              ]}
+              onChange={setClockFormat}
+            />
+          </Row>
+          <Row
+            title="Sync source"
+            note="The Garmin cloud copy is recommended; direct band sync needs Bluetooth and is unreliable on iPhone."
+          >
+            <Pills
+              value={syncSource}
+              options={[
+                ["cloud", "Garmin cloud copy"],
+                ["band", "Band (Bluetooth)"],
+              ]}
+              onChange={setSyncSource}
+            />
+          </Row>
+          {fullscreenSupported() && (
+            <Row
+              title="Fullscreen"
+              note="Hides the browser's toolbars. If they come back, tap anywhere to hide them again."
+            >
+              <Pills
+                value={fullscreen ? "on" : "off"}
+                options={[
+                  ["on", "On"],
+                  ["off", "Off"],
+                ]}
+                onChange={(v) => setFullscreenPref(v === "on")}
+              />
+            </Row>
           )}
         </div>
-      </Card>
+      </Block>
 
-      <Card>
-        <p className="mb-2 font-semibold">Export data</p>
-        <p className="mb-3 text-xs text-[var(--text-tertiary)]">Download your history as CSV files you can open in a spreadsheet.</p>
-        <QuickExport />
-      </Card>
+      <Block>
+        <p className="blk-label mb-4 text-sm opacity-80">Tools</p>
+        <div>
+          <Fold title="Export CSV" note="Your history as spreadsheet files">
+            <QuickExport />
+          </Fold>
+          <Fold
+            title="Backup and restore"
+            note="Everything on this phone, in one file"
+          >
+            <BackupCard bare />
+          </Fold>
+          <Fold title="Workout reminder" note="Only while the app is open">
+            <RemindersCard bare />
+          </Fold>
+          <Fold
+            title="SQL console"
+            note="Read-only queries on your GarminDB files"
+          >
+            <SqlConsole />
+          </Fold>
+          {/* Direct Bluetooth use of the band is obsolete for now (unreliable on iPhone); kept, folded away. */}
+          <Fold title="Bluetooth band tools" note="Obsolete for now">
+            <BandCard bare />
+          </Fold>
+          <Fold
+            title="Forget my data"
+            note="Removes everything this app stored on this phone"
+          >
+            <p className="mb-3 text-sm font-semibold opacity-80">
+              {source === "cloud"
+                ? "Your cloud copy stays in your own Cloudflare storage; this only clears this phone."
+                : "Everything is processed and cached on this device only."}
+            </p>
+            {confirming ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  className="border-[color-mix(in_srgb,var(--tone-red)_40%,transparent)] text-[var(--tone-red)]"
+                  onClick={async () => {
+                    await forgetData();
+                    setConfirming(false);
+                  }}
+                >
+                  Yes, forget everything
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirming(false)}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button variant="secondary" onClick={() => setConfirming(true)}>
+                Forget my data
+              </Button>
+            )}
+          </Fold>
+        </div>
+      </Block>
 
-      <BackupCard />
-      <RemindersCard />
-
-      <Card>
-        <p className="mb-1 font-semibold">SQL console</p>
-        <SqlConsole />
-      </Card>
-
-      <Card>
-        <p className="mb-2 font-semibold">About</p>
-        <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-          BetterGarmin is an independent, open-source project and is not affiliated with Garmin. It is not medical advice. It's built on top of the open-source{' '}
-          <a href="https://github.com/tcgoetz/GarminDB" target="_blank" rel="noreferrer" className="underline">
+      <Block colors={["#121212", "#f4f1ec"]}>
+        <p className="blk-label text-sm opacity-80">About</p>
+        <p className="mt-2 text-sm font-semibold leading-relaxed opacity-85">
+          BetterGarmin is an independent, open-source project and is not
+          affiliated with Garmin. It is not medical advice. It's built on top of
+          the open-source{" "}
+          <a
+            href="https://github.com/tcgoetz/GarminDB"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
             GarminDB
-          </a>{' '}
+          </a>{" "}
           project (GPL-2.0).
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin" target="_blank" rel="noreferrer">
-            Source on GitHub
-          </a>
-          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin#readme" target="_blank" rel="noreferrer">
-            Setup guide
-          </a>
-          <a className="rounded-control border border-[var(--border-panel)] px-4 py-2 text-sm font-semibold hover:bg-[var(--bg-panel)]" href="https://github.com/brother12334/BetterGarmin/issues" target="_blank" rel="noreferrer">
-            Report a problem
-          </a>
+          {[
+            [
+              "Source on GitHub",
+              "https://github.com/brother12334/BetterGarmin",
+            ],
+            [
+              "Setup guide",
+              "https://github.com/brother12334/BetterGarmin#readme",
+            ],
+            [
+              "Report a problem",
+              "https://github.com/brother12334/BetterGarmin/issues",
+            ],
+          ].map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-[var(--bg-panel)] px-4 py-2 text-sm font-bold"
+            >
+              {label}
+            </a>
+          ))}
         </div>
-      </Card>
-
-      <p className="text-center text-xs tabular-nums text-[var(--text-tertiary)]">
-        BetterGarmin v{__APP_VERSION__} · build {__APP_COMMIT__} · {new Date(__APP_BUILD_DATE__).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-      </p>
+        <p className="mt-4 text-xs font-semibold tabular-nums opacity-60">
+          v{__APP_VERSION__} · build {__APP_COMMIT__} ·{" "}
+          {new Date(__APP_BUILD_DATE__).toLocaleDateString(undefined, {
+            dateStyle: "medium",
+          })}
+        </p>
+      </Block>
     </div>
-  )
+  );
 }

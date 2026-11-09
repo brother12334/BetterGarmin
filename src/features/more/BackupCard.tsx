@@ -18,7 +18,9 @@ const toB64 = (b: Uint8Array) => {
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
 
 /** Workout CSV, a full backup file (notes, history, original band files) and restore, plus deletion. */
-export function BackupCard() {
+/** `bare` drops the card surface, for when it sits inside another panel (More's fold-out rows). */
+export function BackupCard({ bare = false }: { bare?: boolean } = {}) {
+  const Shell = bare ? 'div' : Card
   const [msg, setMsg] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -88,7 +90,7 @@ export function BackupCard() {
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Shell className="flex flex-col gap-3">
       <div>
         <p className="font-semibold">Backup, export and privacy</p>
         <p className="text-xs text-[var(--text-tertiary)]">
@@ -121,6 +123,6 @@ export function BackupCard() {
           <p className="text-xs text-[var(--text-tertiary)]">Garmin data (from the cloud or files) is removed with "Forget my data" above.</p>
         </div>
       </details>
-    </Card>
+    </Shell>
   )
 }

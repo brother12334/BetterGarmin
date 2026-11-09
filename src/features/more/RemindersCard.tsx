@@ -6,7 +6,9 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const field = 'rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-3 py-2 text-base'
 
 /** Optional workout reminder with quiet hours, and an honest note about what a web page can and can't do. */
-export function RemindersCard() {
+/** `bare` drops the card surface, for when it sits inside another panel (More's fold-out rows). */
+export function RemindersCard({ bare = false }: { bare?: boolean } = {}) {
+  const Shell = bare ? 'div' : Card
   const [s, setS] = useState<ReminderSettings>(loadReminders)
   const [perm, setPerm] = useState(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
   const update = (patch: Partial<ReminderSettings>) => {
@@ -20,7 +22,7 @@ export function RemindersCard() {
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Shell className="flex flex-col gap-3">
       <label className="flex items-start justify-between gap-4">
         <span>
           <span className="block font-semibold">Workout reminder</span>
@@ -68,6 +70,6 @@ export function RemindersCard() {
         Wake-up alarms that vibrate on the band aren't offered yet. They'd have to be stored on the band itself to work with Bluefy closed, and that hasn't
         been verified on a CIRQA. A browser timer isn't a dependable overnight alarm.
       </p>
-    </Card>
+    </Shell>
   )
 }
