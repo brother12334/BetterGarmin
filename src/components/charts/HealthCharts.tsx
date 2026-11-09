@@ -149,7 +149,8 @@ function inkSeries(s: Record<string, unknown>, i: number, ink: string): Record<s
   if (s.markArea) out.markArea = { ...(s.markArea as object), itemStyle: { color: inkAlpha(ink, 0.1) } }
   if (s.markLine) {
     const ml = s.markLine as { lineStyle?: object; label?: object }
-    out.markLine = { ...ml, lineStyle: { ...ml.lineStyle, color: inkAlpha(ink, 0.6) }, label: { ...ml.label, color: ink } }
+    // Line labels (a goal) sit inside the plot, above the line's right end, so they never clip at the block edge.
+    out.markLine = { ...ml, lineStyle: { ...ml.lineStyle, color: inkAlpha(ink, 0.6) }, label: { ...ml.label, color: ink, fontWeight: 700, position: 'insideEndTop' } }
   }
   return out
 }

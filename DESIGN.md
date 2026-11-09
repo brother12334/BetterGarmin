@@ -103,6 +103,7 @@ Flat colour. No shadows or borders on blocks or panels; the dark tab bar alone c
 ## Components
 
 - **MetricBlock / Dial / BigStat:** a metric's colour field with label, giant number, caption; mini trends drawn in the block's ink with start and end values labelled. Content inside a block inherits the block's ink (text, buttons, rules) via `.metric-block`.
+- **Charts (DetailChart, ClockRing, Energy Reserve, forecast, sleep stages):** each is its measure's colour block. A plain-language headline worked out from the chart's own data comes first (the day's peak and when, or the period's average and latest), with the key number on an ink pill. The chart below is drawn in the block's ink: chunky rounded bars or a heavy line, secondary series lighter, no grid, no y-axis, labels inset from the edges; range chips sit inside the block. Day charts quote the hourly figures they draw.
 - **Readiness block:** violet, 130px number, verdict top-right from the readiness bands (80/60/40), status and recommendation below.
 - **Sync chip:** ink pill beside the date; status messages appear under the hero only while relevant.
 - **Word tab bar:** dark bar docked to the bottom, large word tabs that scroll sideways, the current tab in a sliding violet bubble. Desktop sidebar mirrors it.
