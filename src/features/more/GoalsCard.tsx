@@ -45,9 +45,9 @@ export function GoalsCard() {
           </Button>
         </div>
       ) : (
-        <Button variant="secondary" onClick={() => setEditing(true)} className="self-start">
+        <button type="button" onClick={() => setEditing(true)} className="self-start rounded-full bg-[var(--block-ink)] px-5 py-2.5 text-sm font-bold text-[var(--block)]">
           Edit goals
-        </Button>
+        </button>
       )}
     </div>
   )
@@ -88,7 +88,7 @@ function GoalInput({
 function GoalBlock({ metric, label, value, sub }: { metric: MetricKey; label: string; value: number | null; sub?: string }) {
   const c = METRIC_COLORS[metric]
   return (
-    <div className="metric-block flex flex-col p-3" style={{ ['--block' as string]: metric === 'neutral' ? 'var(--bg-panel)' : c.block, ['--block-ink' as string]: metric === 'neutral' ? 'var(--text-primary)' : c.blockInk }}>
+    <div className="metric-block flex flex-col p-3" style={{ ['--block' as string]: metric === 'neutral' ? '#f4f1ec' : c.block, ['--block-ink' as string]: metric === 'neutral' ? '#121212' : c.blockInk }}>
       <span className="blk-label text-sm">{label}</span>
       <span className="blk-num mt-1 text-[2rem]">{value == null ? '—' : `${Math.round(value)}%`}</span>
       {sub && <span className="mt-1 text-xs font-semibold opacity-75">{sub}</span>}
