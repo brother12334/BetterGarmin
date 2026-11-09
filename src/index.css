@@ -17,89 +17,88 @@
   - Elevation: one card shadow (--shadow-panel) and one floating shadow (--shadow-float) for the tab bar and sheets.
 */
 @theme {
-  --font-sans: "Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  /* metric colors, drawn from the trail: brick, dusk indigo, ochre, forest, river teal, sky */
-  --color-metric-heart: #c2412d;
-  --color-metric-sleep: #4f4fae;
-  --color-metric-stress: #c98a14;
-  --color-metric-energy-from: #2f7d4a;
-  --color-metric-energy-to: #2c6e9b;
-  --color-metric-training: #1f7a78;
-  --color-metric-readiness: #2c6e9b;
-  --color-metric-neutral: #7d8279;
+  /* Metric block colours: every measure owns one field of colour everywhere it appears. */
+  --color-metric-heart: #ffb8e0;
+  --color-metric-sleep: #c7f05a;
+  --color-metric-stress: #ff7a59;
+  --color-metric-energy-from: #121212;
+  --color-metric-energy-to: #c7f05a;
+  --color-metric-training: #ffd23f;
+  --color-metric-readiness: #5b3df5;
+  --color-metric-neutral: #8b867f;
 }
 
 /*
-  Trail signage world. Night trail (dark) is the base; day trail (light, the default) overrides below.
-  Signboards are flat panels with hairline rules; the black band is the sign header.
+  Colour blocks world. Night is the base; day (the default) overrides below.
+  Panels are borderless blocks with big corners; metric blocks are filled with their colour.
 */
 :root {
-  --nav-surface: #0f110f;
-  --band: #0f110f;
-  --band-text: #f3f4ef;
-  --accent: #2f7d4a;
-  --radius-card: 2px;
-  --radius-control: 4px;
-  --bg-base: #161916;
-  --bg-elevated: #1f231f;
-  --bg-panel: #272c27;
-  --border-panel: rgba(232, 236, 226, 0.14);
-  --text-primary: #eef0ea;
-  --text-secondary: #b9beb3;
-  --text-tertiary: #8d9387;
+  --nav-surface: #000000;
+  --band: #000000;
+  --band-text: #f4f1ec;
+  --accent: #5b3df5;
+  --radius-card: 26px;
+  --radius-control: 999px;
+  --bg-base: #0e0e0e;
+  --bg-elevated: #1c1c1c;
+  --bg-panel: #262626;
+  --border-panel: rgba(244, 241, 236, 0.12);
+  --text-primary: #f4f1ec;
+  --text-secondary: #c9c4bc;
+  --text-tertiary: #9a948b;
   --shadow-panel: none;
-  --shadow-float: 0 6px 18px rgba(0, 0, 0, 0.35);
-  --ring-track: rgba(232, 236, 226, 0.12);
-  /* State and accent tones, readable on the night ground. */
-  --tone-red: #e07a62;
-  --tone-blue: #7fb2d8;
-  --tone-amber: #dba53f;
-  --tone-green: #6fbf86;
-  --tone-teal: #5fbfbc;
-  --tone-violet: #9a9ae0;
+  --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --ring-track: rgba(244, 241, 236, 0.14);
+  --tone-red: #ff8f73;
+  --tone-blue: #a99bff;
+  --tone-amber: #ffd23f;
+  --tone-green: #c7f05a;
+  --tone-teal: #7ee0c3;
+  --tone-violet: #a99bff;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg-base: #e8ebe4;
-    --bg-elevated: #f8f9f5;
-    --bg-panel: #eceee8;
-    --border-panel: rgba(21, 24, 20, 0.16);
-    --text-primary: #151814;
-    --text-secondary: #474c44;
-    --text-tertiary: #686e64;
+    --bg-base: #f4f1ec;
+    --bg-elevated: #ffffff;
+    --bg-panel: #ece8e1;
+    --border-panel: rgba(18, 18, 18, 0.1);
+    --text-primary: #121212;
+    --text-secondary: #4a4640;
+    --text-tertiary: #6c6760;
     --shadow-panel: none;
-    --shadow-float: 0 6px 18px rgba(21, 24, 20, 0.18);
-    --ring-track: rgba(21, 24, 20, 0.1);
-    --tone-red: #b3381f;
-    --tone-blue: #2c6e9b;
-    --tone-amber: #8f620b;
-    --tone-green: #2f7d4a;
-    --tone-teal: #1f7a78;
-    --tone-violet: #4f4fae;
+    --shadow-float: 0 10px 30px rgba(18, 18, 18, 0.18);
+    --ring-track: rgba(18, 18, 18, 0.08);
+    --tone-red: #c2361a;
+    --tone-blue: #4a2fe0;
+    --tone-amber: #8a5a00;
+    --tone-green: #3c7a12;
+    --tone-teal: #0f766e;
+    --tone-violet: #4a2fe0;
     color-scheme: light;
   }
 }
 
 :root[data-theme="light"] {
-  --bg-base: #e8ebe4;
-  --bg-elevated: #f8f9f5;
-  --bg-panel: #eceee8;
-  --border-panel: rgba(21, 24, 20, 0.16);
-  --text-primary: #151814;
-  --text-secondary: #474c44;
-  --text-tertiary: #686e64;
+  --bg-base: #f4f1ec;
+  --bg-elevated: #ffffff;
+  --bg-panel: #ece8e1;
+  --border-panel: rgba(18, 18, 18, 0.1);
+  --text-primary: #121212;
+  --text-secondary: #4a4640;
+  --text-tertiary: #6c6760;
   --shadow-panel: none;
-  --shadow-float: 0 6px 18px rgba(21, 24, 20, 0.18);
-  --ring-track: rgba(21, 24, 20, 0.1);
-  --tone-red: #b3381f;
-  --tone-blue: #2c6e9b;
-  --tone-amber: #8f620b;
-  --tone-green: #2f7d4a;
-  --tone-teal: #1f7a78;
-  --tone-violet: #4f4fae;
+  --shadow-float: 0 10px 30px rgba(18, 18, 18, 0.18);
+  --ring-track: rgba(18, 18, 18, 0.08);
+  --tone-red: #c2361a;
+  --tone-blue: #4a2fe0;
+  --tone-amber: #8a5a00;
+  --tone-green: #3c7a12;
+  --tone-teal: #0f766e;
+  --tone-violet: #4a2fe0;
   color-scheme: light;
 }
 
@@ -155,41 +154,43 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Card styles chosen in Customize. Trail (the default) is a flat signboard: solid panel, hairline rule, no blur. */
+/* Card styles chosen in Customize. Blocks (the default): borderless white blocks with big corners. */
+:root[data-card="blocks"] .glass-panel {
+  background: var(--bg-elevated);
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 :root[data-card="trail"] .glass-panel {
   background: var(--bg-elevated);
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
-/* The sign header: a black band with white bold caps, as on a trailhead sign. */
-.sign-band {
-  background: var(--band);
-  color: var(--band-text);
+/* A filled metric block: its colour is the whole surface. Set --block and --block-ink inline. */
+.metric-block {
+  background: var(--block);
+  color: var(--block-ink);
+  border-radius: var(--radius-card);
 }
 .page-title {
-  /* A sign plate: white caps routed into a black board, always sized to its word. */
-  display: inline-block;
-  width: fit-content;
-  align-self: flex-start;
-  background: var(--band);
-  color: var(--band-text);
-  padding: 0.25rem 0.75rem;
-  border-radius: 2px;
-  font-size: 1.375rem;
-  line-height: 1.875rem;
+  font-size: 2.125rem;
+  line-height: 2.375rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: -0.03em;
 }
-/* Card titles read as sign lettering in the trail style: heavy, not shouted (long titles stay in normal case). */
-:root[data-card="trail"] .glass-panel :where(p.font-semibold:first-child, div:first-child > p.font-semibold:first-child) {
-  font-weight: 800;
+:root[data-card="blocks"] .glass-panel :where(p.font-semibold:first-child, div:first-child > p.font-semibold:first-child) {
+  font-weight: 700;
+  font-size: 1rem;
 }
-.sign-caps {
+.blk-label {
+  font-weight: 700;
+}
+.blk-num {
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 :root[data-card="solid"] .glass-panel {

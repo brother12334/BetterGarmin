@@ -174,7 +174,7 @@ function Visual({ insight }: { insight: Insight }) {
 
 /** A soft orb whose glow follows the overall picture, with each component as a bar either side of "usual". */
 function EnergyOrb({ view }: { view: EnergyView }) {
-  const hue = view.overall === 'above' ? 'var(--accent)' : view.overall === 'below' ? '#c98a14' : '#7d8279'
+  const hue = view.overall === 'above' ? 'var(--accent)' : view.overall === 'below' ? '#f05a36' : '#8b867f'
   return (
     <div className="flex items-center gap-5">
       <div
@@ -304,7 +304,7 @@ function SleepClock({ view }: { view: CircadianView }) {
           )
         })}
         {view.nights.map((n, i) => (
-          <path key={n.day} d={arc(n.start, n.end, R - i * 3)} fill="none" stroke={n.free ? '#7676c7' : 'var(--accent)'} strokeWidth="2.5" strokeLinecap="round" opacity={0.35 + (0.65 * i) / view.nights.length} />
+          <path key={n.day} d={arc(n.start, n.end, R - i * 3)} fill="none" stroke={n.free ? '#8f7dff' : 'var(--accent)'} strokeWidth="2.5" strokeLinecap="round" opacity={0.35 + (0.65 * i) / view.nights.length} />
         ))}
       </svg>
       <div className="text-xs text-[var(--text-tertiary)]">

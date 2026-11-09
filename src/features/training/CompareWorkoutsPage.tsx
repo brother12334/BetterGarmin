@@ -24,7 +24,7 @@ interface Side {
   restingHr: number | null
 }
 
-const COLORS = ['#2c6e9b', '#c98a14']
+const COLORS = ['#5b3df5', '#f05a36']
 
 async function loadSide(id: string, kinds: Parameters<typeof loadWorkoutAnalysis>[1]): Promise<Side | null> {
   const workout = await getWorkoutWithSets(id)

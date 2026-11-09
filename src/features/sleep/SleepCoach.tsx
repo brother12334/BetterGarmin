@@ -81,7 +81,7 @@ export function SleepCoach({ nights, usualWake }: { nights: SleepRow[]; usualWak
           className="absolute left-0 top-6 h-5 border-l-2 border-[var(--text-primary)]"
           style={{
             width: pct(needMin),
-            backgroundImage: 'repeating-linear-gradient(-45deg, #3f7fbf 0 2px, transparent 2px 6px)',
+            backgroundImage: 'repeating-linear-gradient(-45deg, #8f7dff 0 2px, transparent 2px 6px)',
           }}
         />
         <Tick at={pct(needMin)} label={formatHoursMinutes(needMin)} bold />

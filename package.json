@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/public-sans": "^5.3.0",
     "@garmin/fitsdk": "21.217.0",
     "clsx": "^2.1.1",

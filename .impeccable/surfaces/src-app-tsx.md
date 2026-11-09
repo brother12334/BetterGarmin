@@ -7,20 +7,19 @@ related_targets: ["src/features/today/TodayPage.tsx"]
 
 # Surface: BetterGarmin app (all screens), Today first
 
-Mode: Operate. Owner glances on an iPhone Home Screen app in the morning to see how they are and how hard to train. All features and numbers stay. Disliked: generic stacked dark cards, busy, slow to read, dark/moody. Must not feel clinical or gamified.
+Mode: Operate. Owner glances on an iPhone Home Screen app in the morning to see how they are and how hard to train. All features and numbers stay. Rejected so far: dark liquid glass (generic, busy, moody) and trail signage (not modern enough). Must not feel clinical or gamified.
 
 ## Direction contract
 
-THESIS: Read your body like a trailhead sign: one grade tells you which trail you can take today. Refuses the category default of dark glass cards, rings and neon.
+THESIS: Your day as bold colour blocks, like a year-in-review recap: each measure owns a full field of colour and one giant number. Refuses rings, glass, thin grey cards and dashboard chrome.
 
-OWN-WORLD: National-park signage on a light stone-paper ground. Black header bands with white bold sans caps; panels as signboards with 1px hairline rules, no glass, no glow. Public Sans throughout, tabular figures, heavy weight for numbers. Palette: ink black, forest green, earth brown, sky blue, with metric colours drawn from the trail (brick, ochre, dusk indigo, river teal). Trail blazes (green circle, blue square, black diamond) are the only icons with fill.
+OWN-WORLD: Warm paper ground (#f4f1ec), ink #121212. Blocks with 26px corners in a fixed metric palette: readiness violet #5b3df5 (white text), sleep lime #c7f05a, stress coral #ff7a59, energy black with lime numerals, heart pink #ffb8e0, training sunflower #ffd23f, steps and neutral panels white. Bricolage Grotesque, 800 weight for numbers with tight negative tracking; 600–700 for labels in sentence case. No borders, no shadows except on the tab bar.
 
-STORY: The owner sees today's grade and readiness number first, then sleep, stress and energy as a three-row signpost, then the energy profile of the day; they decide how hard to train without scrolling.
+STORY: The owner opens the app, reads the violet readiness block (giant number plus a one-line verdict) and the three coloured blocks under it, and knows how hard to train before scrolling.
 
-FIRST VIEWPORT: Black band with TODAY and the date. Under it, the trail grade: large blaze shape left, grade name and the readiness number right, one-line recommendation below. Sync line. Then the signpost rows (Sleep, Stress, Energy) with values right-aligned. Bottom tab bar: solid black band, white icons, active tab on a white plate.
+FIRST VIEWPORT: Date line and a big greeting title. Full-width violet readiness block with a 130px number, status and verdict. Two-by-two grid: sleep (lime), stress (coral), energy (black/lime), steps (white). Sync control as a compact chip. Bottom: a dark docked bar of large word tabs (Today, Health, Training, Sleep, Insights, More), swipeable, the current tab in a violet bubble.
 
-FORM: Trail signage (Impeccable's pick, rank 1 of 7). seed:6d549b4c0b4ac04a
-Signature move: readiness as a trail grade, and the day's energy drawn as a hike's elevation profile.
-Raises: hairline seams not shadows (dark console); dot size ranks importance (star atlas); hierarchy by scale contrast alone (type specimen).
+FORM: Year-in-review colour blocks (Impeccable's pick, re-roll 1). seed:6d549b4c0b4ac04a
+Signature move: every metric is a full colour block with one giant number, the same colour everywhere it appears; navigation by big word tabs.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

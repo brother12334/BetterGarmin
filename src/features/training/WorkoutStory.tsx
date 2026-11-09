@@ -10,8 +10,8 @@ import { fmtRest, type Grade, type Letter, type WorkoutSummary } from './workout
  * and a short plan.
  */
 
-const GRADE_COLOR = (l: Letter) => (l.startsWith('A') ? '#2f7d4a' : l.startsWith('B') ? '#3f7fbf' : l.startsWith('C') ? '#dba53f' : '#c2412d')
-const BAND_COLORS = ['#7d8aa3', '#3f7fbf', '#2f7d4a', '#dba53f', '#c2412d']
+const GRADE_COLOR = (l: Letter) => (l.startsWith('A') ? '#5a8a00' : l.startsWith('B') ? '#8f7dff' : l.startsWith('C') ? '#ffd23f' : '#e0457b')
+const BAND_COLORS = ['#7d8aa3', '#8f7dff', '#5a8a00', '#ffd23f', '#e0457b']
 
 function GradeChip({ grade }: { grade: Grade | undefined }) {
   if (!grade) return null
@@ -112,7 +112,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="effort" tint="#b8612a" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
+    <Slide key="effort" tint="#f05a36" label="Effort" footer={<GradeChip grade={grade('effort')} />}>
       {s.calories != null ? (
         <>
           <Big>{s.calories}</Big>
@@ -129,10 +129,10 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       </div>
     </Slide>,
 
-    <Slide key="heart" tint="#c2412d" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
+    <Slide key="heart" tint="#e0457b" label="Heart" footer={<GradeChip grade={grade('heart')} />}>
       {s.hrAvg != null ? (
         <>
-          <Spark series={hrSeries} color="#c2412d" />
+          <Spark series={hrSeries} color="#e0457b" />
           <Big>
             {s.hrAvg}
             <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">avg bpm</span>
@@ -155,7 +155,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
       )}
     </Slide>,
 
-    <Slide key="strength" tint="#1f7a78" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
+    <Slide key="strength" tint="#d49a00" label="Strength" footer={<GradeChip grade={grade('strength')} />}>
       <Big>
         {s.volumeKg.toLocaleString()}
         <span className="ml-1 text-base font-semibold text-[var(--text-tertiary)]">kg moved</span>
@@ -180,7 +180,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
 
     <Slide
       key="rest"
-      tint="#2f7d4a"
+      tint="#5a8a00"
       label="Rest & recovery"
       footer={
         <div className="flex flex-wrap gap-2">
@@ -215,7 +215,7 @@ export function WorkoutStory({ summary: s, title, dateLabel, hrSeries, weight }:
         ]
       : []),
 
-    <Slide key="next" tint="#3f7fbf" label="Next up">
+    <Slide key="next" tint="#8f7dff" label="Next up">
       {s.recoveryHours != null && (
         <>
           <Big>

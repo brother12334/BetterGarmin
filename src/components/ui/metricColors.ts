@@ -6,14 +6,24 @@ interface MetricColor {
   /** Gradient stops used for rings and area-chart fills. */
   gradient: [string, string]
   label: string
+  /** The metric's colour block: fill and the ink that reads on it. */
+  block: string
+  blockInk: string
 }
 
 export const METRIC_COLORS: Record<MetricKey, MetricColor> = {
-  heart: { solid: '#c2412d', gradient: ['#c2412d', '#d9654f'], label: 'Heart' },
-  sleep: { solid: '#4f4fae', gradient: ['#4f4fae', '#7676c7'], label: 'Sleep' },
-  stress: { solid: '#c98a14', gradient: ['#c98a14', '#dba53f'], label: 'Stress' },
-  energy: { solid: '#2f7d4a', gradient: ['#2f7d4a', '#2c6e9b'], label: 'Energy Reserve' },
-  training: { solid: '#1f7a78', gradient: ['#1f7a78', '#2f9592'], label: 'Training' },
-  readiness: { solid: '#2c6e9b', gradient: ['#2c6e9b', '#4b8cb8'], label: 'Readiness' },
-  neutral: { solid: '#7d8279', gradient: ['#7d8279', '#a1a69c'], label: 'Neutral' },
+  // solid: chart and text colour (deep enough for lines on white); block: the full colour field.
+  heart: { solid: '#e0457b', gradient: ['#e0457b', '#ffb8e0'], label: 'Heart', block: '#ffb8e0', blockInk: '#121212' },
+  sleep: { solid: '#5a8a00', gradient: ['#5a8a00', '#c7f05a'], label: 'Sleep', block: '#c7f05a', blockInk: '#121212' },
+  stress: { solid: '#f05a36', gradient: ['#f05a36', '#ff7a59'], label: 'Stress', block: '#ff7a59', blockInk: '#121212' },
+  energy: { solid: '#121212', gradient: ['#121212', '#5a8a00'], label: 'Energy Reserve', block: '#121212', blockInk: '#c7f05a' },
+  training: { solid: '#d49a00', gradient: ['#d49a00', '#ffd23f'], label: 'Training', block: '#ffd23f', blockInk: '#121212' },
+  readiness: { solid: '#5b3df5', gradient: ['#5b3df5', '#7c66ff'], label: 'Readiness', block: '#5b3df5', blockInk: '#ffffff' },
+  neutral: { solid: '#8b867f', gradient: ['#8b867f', '#b8b2a9'], label: 'Neutral', block: '#ffffff', blockInk: '#121212' },
+}
+
+/** The block for a chart/text colour, so a component given only a colour can still fill with the metric's block. */
+export function blockFor(color: string): { block: string; ink: string } {
+  const m = Object.values(METRIC_COLORS).find((c) => c.solid.toLowerCase() === color.toLowerCase())
+  return m ? { block: m.block, ink: m.blockInk } : { block: 'var(--bg-elevated)', ink: 'var(--text-primary)' }
 }

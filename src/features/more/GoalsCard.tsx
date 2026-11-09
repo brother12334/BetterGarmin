@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Ring } from '../../components/ui/Ring'
+import { METRIC_COLORS, type MetricKey } from '../../components/ui/metricColors'
 import { Button } from '../../components/ui/Button'
 import { useGoals } from './useGoals'
 import { useGoalsProgress } from './useGoalsProgress'
@@ -17,31 +17,11 @@ export function GoalsCard() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Each goal as its metric's colour block: percent of goal large, the actual figure under it. */}
       <div className="grid grid-cols-3 gap-2">
-        <Ring
-          value={pct(progress.steps, goals.steps)}
-          metric="energy"
-          size={92}
-          strokeWidth={8}
-          label="Steps"
-          sublabel={progress.steps != null ? progress.steps.toLocaleString() : undefined}
-        />
-        <Ring
-          value={pct(progress.sleepMinutes, goals.sleepMinutes)}
-          metric="sleep"
-          size={92}
-          strokeWidth={8}
-          label="Sleep"
-          sublabel={progress.sleepMinutes != null ? formatHoursMinutes(progress.sleepMinutes) : undefined}
-        />
-        <Ring
-          value={pct(progress.activeDays, goals.activeDays)}
-          metric="training"
-          size={92}
-          strokeWidth={8}
-          label="Active"
-          sublabel={progress.activeDays != null ? `${progress.activeDays}/${goals.activeDays}` : undefined}
-        />
+        <GoalBlock metric="neutral" label="Steps" value={pct(progress.steps, goals.steps)} sub={progress.steps != null ? progress.steps.toLocaleString() : undefined} />
+        <GoalBlock metric="sleep" label="Sleep" value={pct(progress.sleepMinutes, goals.sleepMinutes)} sub={progress.sleepMinutes != null ? formatHoursMinutes(progress.sleepMinutes) : undefined} />
+        <GoalBlock metric="training" label="Active" value={pct(progress.activeDays, goals.activeDays)} sub={progress.activeDays != null ? `${progress.activeDays}/${goals.activeDays} days` : undefined} />
       </div>
 
       {editing ? (
@@ -102,5 +82,16 @@ function GoalInput({
         className="w-24 rounded-control border border-[var(--border-panel)] bg-[var(--bg-panel)] px-2 py-1 text-right text-[var(--text-primary)]"
       />
     </label>
+  )
+}
+
+function GoalBlock({ metric, label, value, sub }: { metric: MetricKey; label: string; value: number | null; sub?: string }) {
+  const c = METRIC_COLORS[metric]
+  return (
+    <div className="metric-block flex flex-col p-3" style={{ ['--block' as string]: metric === 'neutral' ? 'var(--bg-panel)' : c.block, ['--block-ink' as string]: metric === 'neutral' ? 'var(--text-primary)' : c.blockInk }}>
+      <span className="blk-label text-sm">{label}</span>
+      <span className="blk-num mt-1 text-[2rem]">{value == null ? '—' : `${Math.round(value)}%`}</span>
+      {sub && <span className="mt-1 text-xs font-semibold opacity-75">{sub}</span>}
+    </div>
   )
 }

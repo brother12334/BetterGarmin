@@ -1,3 +1,4 @@
+import '@fontsource-variable/bricolage-grotesque'
 import '@fontsource-variable/public-sans'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

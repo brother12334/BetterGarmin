@@ -18,10 +18,10 @@ const HISTORY_DAYS = 60
 const TARGET_MIN = 480 // 8h
 const SLEEP = METRIC_COLORS.sleep.solid
 const STAGES = [
-  { key: 'deep_sleep', label: 'Deep', color: '#2e2f7a' },
-  { key: 'light_sleep', label: 'Light', color: '#3f7fbf' },
-  { key: 'rem_sleep', label: 'REM', color: '#4f4fae' },
-  { key: 'awake', label: 'Awake', color: '#d9654f' },
+  { key: 'deep_sleep', label: 'Deep', color: '#2a1b8f' },
+  { key: 'light_sleep', label: 'Light', color: '#8f7dff' },
+  { key: 'rem_sleep', label: 'REM', color: '#5b3df5' },
+  { key: 'awake', label: 'Awake', color: '#ff7a59' },
 ] as const
 
 const dayMs = (day: string) => new Date(`${day.slice(0, 10)}T00:00:00`).getTime()
@@ -139,7 +139,7 @@ export function SleepPage() {
         <Dial
           label="Of your 8 hours"
           value={Math.round((totalMin / TARGET_MIN) * 100)}
-          color="#3f7fbf"
+          color="#8f7dff"
           caption={`${formatHoursMinutes(totalMin)} asleep`}
         />
       </div>
@@ -150,13 +150,13 @@ export function SleepPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <BigStat label="Total sleep" value={formatHoursMinutes(totalMin)} color={SLEEP} trend={totalH.slice(-14)} />
-        <BigStat label="Deep" value={Math.round(mins(lastNight.deep_sleep))} unit="min" color="#2e2f7a" trend={deep.slice(-14)} />
-        <BigStat label="REM" value={Math.round(mins(lastNight.rem_sleep))} unit="min" color="#4f4fae" trend={rem.slice(-14)} />
+        <BigStat label="Deep" value={Math.round(mins(lastNight.deep_sleep))} unit="min" color="#2a1b8f" trend={deep.slice(-14)} />
+        <BigStat label="REM" value={Math.round(mins(lastNight.rem_sleep))} unit="min" color="#5b3df5" trend={rem.slice(-14)} />
         <BigStat
           label="Usual bedtime"
           value={avgBed == null ? null : clockLabel(avgBed)}
           sub="average of the last week"
-          color="#d9654f"
+          color="#ff7a59"
           trend={bed.slice(-14)}
         />
       </div>
@@ -167,10 +167,10 @@ export function SleepPage() {
         height={220}
         option={{
           grid: { left: 8, right: 44, top: 30, bottom: 8, containLabel: true },
-          legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#7d8279', fontSize: 10 } },
+          legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8b867f', fontSize: 10 } },
           tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => `${v} min` },
-          xAxis: { type: 'value', axisLabel: { color: '#7d8279', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(140,150,170,0.15)', type: 'dashed' } } },
-          yAxis: { type: 'category', inverse: true, data: STAGES.map((st) => st.label), axisLabel: { color: '#7d8279' }, axisLine: { show: false }, axisTick: { show: false } },
+          xAxis: { type: 'value', axisLabel: { color: '#8b867f', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(140,150,170,0.15)', type: 'dashed' } } },
+          yAxis: { type: 'category', inverse: true, data: STAGES.map((st) => st.label), axisLabel: { color: '#8b867f' }, axisLine: { show: false }, axisTick: { show: false } },
           series: [
             {
               name: 'Your average',
@@ -182,7 +182,7 @@ export function SleepPage() {
               name: 'Last night',
               type: 'bar',
               data: STAGES.map((st) => ({ value: Math.round(mins(lastNight[st.key])), itemStyle: { color: st.color, borderRadius: 4 } })),
-              label: { show: true, position: 'right', color: '#7d8279', fontSize: 10, formatter: '{c}m' },
+              label: { show: true, position: 'right', color: '#8b867f', fontSize: 10, formatter: '{c}m' },
             },
           ],
         }}
@@ -194,10 +194,10 @@ export function SleepPage() {
           hint="shaded = your usual ±30 min"
           option={{
             grid: { ...detailGrid, top: 30 },
-            legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#7d8279', fontSize: 10 } },
+            legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#8b867f', fontSize: 10 } },
             dataZoom: zoom(startPct(nights.length, 21)),
             xAxis: timeAxis('day'),
-            yAxis: valueAxis({ inverse: true, min: 20, max: 34, interval: 2, axisLabel: { color: '#7d8279', fontSize: 10, formatter: (v: number) => clockLabel(v) } }),
+            yAxis: valueAxis({ inverse: true, min: 20, max: 34, interval: 2, axisLabel: { color: '#8b867f', fontSize: 10, formatter: (v: number) => clockLabel(v) } }),
             tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => (typeof v === 'number' ? clockLabel(v) : '') },
             series: [
               {
@@ -216,9 +216,9 @@ export function SleepPage() {
                 smooth: true,
                 symbolSize: 6,
                 data: wake,
-                lineStyle: { color: '#c98a14', width: 2.5 },
-                itemStyle: { color: '#c98a14' },
-                markArea: usualWake == null ? undefined : { silent: true, itemStyle: { color: rgba('#c98a14', 0.1) }, data: [[{ yAxis: usualWake - 0.5 }, { yAxis: usualWake + 0.5 }]] as never },
+                lineStyle: { color: '#f05a36', width: 2.5 },
+                itemStyle: { color: '#f05a36' },
+                markArea: usualWake == null ? undefined : { silent: true, itemStyle: { color: rgba('#f05a36', 0.1) }, data: [[{ yAxis: usualWake - 0.5 }, { yAxis: usualWake + 0.5 }]] as never },
               },
             ],
           }}
@@ -238,7 +238,7 @@ export function SleepPage() {
               {
                 type: 'scatter',
                 symbolSize: 12,
-                data: scores.map(([t, v]) => ({ value: [t, v], itemStyle: { color: v >= 80 ? '#2f7d4a' : v >= 60 ? SLEEP : '#c98a14' } })),
+                data: scores.map(([t, v]) => ({ value: [t, v], itemStyle: { color: v >= 80 ? '#5a8a00' : v >= 60 ? SLEEP : '#f05a36' } })),
               },
             ],
           }}
@@ -253,8 +253,8 @@ export function SleepPage() {
           grid: detailGrid,
           dataZoom: zoom(),
           xAxis: timeAxis('day'),
-          yAxis: valueAxis({ axisLabel: { color: '#7d8279', fontSize: 10, formatter: '{value}h' } }),
-          series: [{ type: 'line', data: debtSeries, smooth: true, showSymbol: false, lineStyle: { color: '#c98a14', width: 2 }, areaStyle: { color: fade('#c98a14', 0.2) } }],
+          yAxis: valueAxis({ axisLabel: { color: '#8b867f', fontSize: 10, formatter: '{value}h' } }),
+          series: [{ type: 'line', data: debtSeries, smooth: true, showSymbol: false, lineStyle: { color: '#f05a36', width: 2 }, areaStyle: { color: fade('#f05a36', 0.2) } }],
         }}
       />
 

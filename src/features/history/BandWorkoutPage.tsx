@@ -13,7 +13,7 @@ import { downloadBlob } from '../../lib/download'
 import { formatDuration, sportLabel } from './useWorkoutHistory'
 import { SaveStatus } from './SaveStatus'
 
-const HEART = '#c2412d'
+const HEART = '#e0457b'
 const humanize = (s: string) => s.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()).trim()
 
 /** One workout downloaded from the band: what was recorded, what wasn't, the user's name and notes, and the original file. */

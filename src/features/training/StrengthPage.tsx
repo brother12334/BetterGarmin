@@ -225,7 +225,7 @@ export function StrengthPage() {
                     smooth: true,
                     symbol: 'circle',
                     symbolSize: 6,
-                    lineStyle: { color: '#1f7a78', width: 2 },
+                    lineStyle: { color: '#d49a00', width: 2 },
                     areaStyle: { color: 'rgba(167, 139, 250, 0.1)' },
                   },
                 ],

@@ -20,7 +20,8 @@ export function InfoButton({ title, children, className }: InfoButtonProps) {
         aria-label={`About ${title}`}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--border-panel)] text-xs font-semibold text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
+        // Takes its colour from the text around it, so it reads on white panels and on colour blocks alike.
+        className="flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs font-semibold opacity-55 transition-opacity hover:opacity-100"
       >
         i
       </button>

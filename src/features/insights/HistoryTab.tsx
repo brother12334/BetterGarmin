@@ -25,10 +25,10 @@ interface Panel {
 }
 
 const PANELS: Panel[] = [
-  { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: '#c2412d', get: (d) => d.restingHr },
-  { key: 'hrv', label: 'HRV', unit: 'ms', color: '#2f7d4a', get: (d) => d.hrv },
-  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#4f4fae', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
-  { key: 'steps', label: 'Steps', unit: '', color: '#2c6e9b', get: (d) => d.steps },
+  { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: '#e0457b', get: (d) => d.restingHr },
+  { key: 'hrv', label: 'HRV', unit: 'ms', color: '#5a8a00', get: (d) => d.hrv },
+  { key: 'sleep', label: 'Sleep', unit: 'h', color: '#5b3df5', get: (d) => (d.sleepMinutes != null ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null) },
+  { key: 'steps', label: 'Steps', unit: '', color: '#5b3df5', get: (d) => d.steps },
 ]
 
 /** Trailing 28-day median ± 1.5 MAD, only where ≥14 earlier values exist. */
@@ -86,7 +86,7 @@ export function HistoryTab({ dataset }: { dataset: AnalyticsDataset }) {
       yAxisIndex: vi,
       barMaxWidth: 10,
       data: workoutsInRange.map((s) => ({ value: [x(s.day), Math.round(s.volumeKg / 100) / 10], workoutId: s.workoutId, timed: s.timed, title: s.title })),
-      itemStyle: { color: '#1f7a78', borderRadius: [4, 4, 0, 0] },
+      itemStyle: { color: '#d49a00', borderRadius: [4, 4, 0, 0] },
     })
 
     return {

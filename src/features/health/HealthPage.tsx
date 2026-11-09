@@ -28,7 +28,7 @@ const HEART = METRIC_COLORS.heart.solid
 const STRESS = METRIC_COLORS.stress.solid
 const ENERGY = METRIC_COLORS.energy.solid
 const HRV = METRIC_COLORS.readiness.solid
-const SPO2 = '#3f7fbf'
+const SPO2 = '#8f7dff'
 const WEIGHT = METRIC_COLORS.neutral.solid
 
 interface HealthData {
@@ -250,7 +250,7 @@ export function HealthPage() {
           hint={showStepAvg ? 'line = 7-day average' : 'more days fill in as you sync'}
           option={{
             grid: { ...detailGrid, top: 34, right: 34, bottom: stepSlots.length > 21 ? 26 : 8 },
-            legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#7d8279', fontSize: 10 }, data: showStepAvg ? ['Steps', '7-day average'] : ['Steps'] },
+            legend: { top: 0, left: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: '#8b867f', fontSize: 10 }, data: showStepAvg ? ['Steps', '7-day average'] : ['Steps'] },
             dataZoom:
               stepSlots.length > 21
                 ? [{ type: 'inside', start: startPct(stepSlots.length, 21), end: 100, throttle: 0 }, { ...GLASS_SLIDER, start: startPct(stepSlots.length, 21), end: 100, bottom: 2, right: 46 }]
@@ -260,7 +260,7 @@ export function HealthPage() {
               data: stepSlots.map(({ t }) => (stepSlots.length <= 7 ? new Date(t).toLocaleDateString(undefined, { weekday: 'short' }) : new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))),
               axisLine: { lineStyle: { color: 'rgba(140,150,170,0.25)' } },
               axisTick: { show: false },
-              axisLabel: { color: '#7d8279', fontSize: 10, hideOverlap: true },
+              axisLabel: { color: '#8b867f', fontSize: 10, hideOverlap: true },
             },
             yAxis: valueAxis(),
             series: [
@@ -272,7 +272,7 @@ export function HealthPage() {
                 barMaxWidth: 34,
                 showBackground: true,
                 backgroundStyle: { color: 'rgba(140,150,170,0.08)', borderRadius: [6, 6, 0, 0] },
-                label: { show: stepSlots.length <= 21, position: 'top', color: '#7d8279', fontSize: 9, formatter: (p: unknown) => `${((p as { value: number }).value / 1000).toFixed(1)}k` },
+                label: { show: stepSlots.length <= 21, position: 'top', color: '#8b867f', fontSize: 9, formatter: (p: unknown) => `${((p as { value: number }).value / 1000).toFixed(1)}k` },
                 data: stepSlots.map(({ v }) => (v == null ? null : { value: v, itemStyle: { borderRadius: [6, 6, 0, 0], color: stepGoal && v >= stepGoal ? ENERGY : rgba(ENERGY, 0.55) } })),
                 markLine: stepGoal
                   ? { silent: true, symbol: 'none', lineStyle: { color: ENERGY, type: 'dashed' }, label: { formatter: 'goal', position: 'end', color: ENERGY, fontSize: 10 }, data: [{ yAxis: stepGoal }] }
@@ -309,7 +309,7 @@ export function HealthPage() {
             xAxis: timeAxis('day'),
             yAxis: valueAxis({ scale: true }),
             visualMap: base
-              ? { show: false, dimension: 1, min: Math.round(base.mean - 2 * base.stdDev), max: Math.round(base.mean + 2 * base.stdDev), inRange: { color: ['#2c6e9b', '#2f7d4a', '#c98a14', HEART] } }
+              ? { show: false, dimension: 1, min: Math.round(base.mean - 2 * base.stdDev), max: Math.round(base.mean + 2 * base.stdDev), inRange: { color: ['#5b3df5', '#5a8a00', '#f05a36', HEART] } }
               : undefined,
             series: [{ type: 'line', data: data.rhr, smooth: true, showSymbol: false, lineStyle: { width: 3, color: base ? undefined : HEART }, areaStyle: { opacity: 0.2 } }],
           }}

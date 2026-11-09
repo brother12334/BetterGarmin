@@ -92,7 +92,7 @@ export function TimelineCard({
       value: [(s.startMs + s.endMs) / 2, s.set.weight ?? 0],
       setIndex: i,
       label: { show: true, position: 'top', formatter: `${s.set.reps}`, fontSize: 9, color: 'var(--text-tertiary)' },
-      itemStyle: { color: i === selectedIndex ? '#c2412d' : s.set.isWarmup ? 'rgba(245,166,35,0.6)' : 'rgba(167,139,250,0.75)' },
+      itemStyle: { color: i === selectedIndex ? '#e0457b' : s.set.isWarmup ? 'rgba(245,166,35,0.6)' : 'rgba(167,139,250,0.75)' },
     }))
     // One bracket per superset group on the load panel.
     const groups = new Map<number, { start: number; end: number }>()
@@ -102,7 +102,7 @@ export function TimelineCard({
       groups.set(st.supersetGroup, { start: Math.min(g?.start ?? Infinity, st.startMs), end: Math.max(g?.end ?? -Infinity, st.endMs) })
     }
     const supersetAreas = [...groups.values()].map((g) => [
-      { xAxis: g.start, itemStyle: { color: 'rgba(45,212,191,0.12)', borderColor: 'rgba(45,212,191,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#7676c7' } },
+      { xAxis: g.start, itemStyle: { color: 'rgba(45,212,191,0.12)', borderColor: 'rgba(45,212,191,0.6)', borderWidth: 1 }, label: { show: true, position: 'insideTop', formatter: 'Superset', fontSize: 9, color: '#8f7dff' } },
       { xAxis: g.end },
     ])
     const hasDrop = timeline.sets.some((st) => st.set.setType === 'drop')
@@ -200,7 +200,7 @@ export function TimelineCard({
           connectNulls: false,
           showSymbol: false,
           sampling: 'lttb',
-          lineStyle: { color: '#c2412d', width: 1.5 },
+          lineStyle: { color: '#e0457b', width: 1.5 },
           markArea: { silent: false, label: { show: false }, data: base.areas },
           markLine: replay
             ? { symbol: 'none', silent: true, animation: false, label: { show: false }, lineStyle: { color: 'var(--text-primary)', width: 1.5, type: 'solid' }, data: [{ xAxis: cursor }] }

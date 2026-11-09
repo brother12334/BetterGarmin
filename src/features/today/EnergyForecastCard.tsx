@@ -76,7 +76,7 @@ export function EnergyForecastCard({ day }: { day: string }) {
   return (
     <Card>
       <div className="mb-1 flex items-center gap-2">
-        <p className="sign-caps text-sm">Energy forecast</p>
+        <p className="blk-label text-sm">Energy forecast</p>
         <InfoButton title="Energy forecast">
           {`Where your energy (the band's Body Battery) is likely to be for the rest of today. For every past day with a reading at this hour, BetterGarmin looks at how much your energy went up or down from this hour to each later hour, and adds that to where you are now. The line is the typical (median) day; the shaded band covers the middle half of your days. It can't know what you'll do today, so a hard workout or a nap will move it. An hour is only shown once at least ${MIN_DAYS} past days have readings for it.`}
         </InfoButton>

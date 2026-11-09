@@ -20,8 +20,8 @@ export const fade = (color: string, a = 0.3) => ({
   ],
 })
 
-export const AXIS_TEXT = '#7d8279'
-export const GRID_LINE = 'rgba(125,130,121,0.22)'
+export const AXIS_TEXT = '#8b867f'
+export const GRID_LINE = 'rgba(139,134,127,0.2)'
 
 /** Frosted-glass zoom pill that floats inside the bottom of the plot. Shared so every chart's zoom feels the same. */
 export const GLASS_SLIDER = {

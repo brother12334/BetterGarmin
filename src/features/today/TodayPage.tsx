@@ -4,13 +4,11 @@ import { cn } from '../../lib/cn'
 import { useAppearance, usesFullBackdrop, type WidgetId } from '../../app/appearance'
 import { motion } from 'framer-motion'
 import { Card } from '../../components/ui/Card'
-import { RangeBar } from '../../components/ui/RangeBar'
 import { MountainBackdrop } from '../../components/ui/MountainBackdrop'
-import { TrailBlaze, TRAIL_GRADES, gradeForReadiness } from '../../components/ui/TrailBlaze'
+import { MetricBlock } from '../../components/ui/MetricBlock'
+import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { InfoButton } from '../../components/ui/InfoButton'
-import { METRIC_COLORS } from '../../components/ui/metricColors'
 import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, getBandWakeEnergy, getBandEnergyNow } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
@@ -26,7 +24,7 @@ import { useEnergyReserve } from './useEnergyReserve'
 import { TrainingWidget } from './TrainingWidget'
 import { EnergyReserveCard } from './EnergyReserveCard'
 import { EnergyForecastCard } from './EnergyForecastCard'
-import { statusForInverseScore, statusForScore } from '../../lib/statusWords'
+import { STATUS_LABELS, statusForInverseScore, statusForScore } from '../../lib/statusWords'
 
 interface TodayData {
   day: string
@@ -123,42 +121,44 @@ export function TodayPage() {
     training: <TrainingWidget />,
     heartRate: <LiveHeartRateCard />,
     bars: (
-      <Card className="divide-y divide-[var(--border-panel)] py-1">
-        <RangeBar
+      <div className="grid grid-cols-2 gap-2.5">
+        <MetricBlock
+          metric="sleep"
           label="Sleep"
-          value={sleep?.score ?? null}
-          status={statusForScore(sleep?.score, [50, 70, 85])}
-          color={METRIC_COLORS.sleep.solid}
-          infoTitle="Sleep score"
-          infoDescription="Garmin's 0-100 score for last night, based on duration, sleep stages, and overnight resting heart rate. 80+ is great, 60-79 is good, below 60 means your body may need more recovery."
+          value={sleep?.score != null ? String(sleep.score) : '—'}
+          sub={formatHoursMinutes(hmsToMinutes(sleep?.total_sleep))}
+          info={{ title: 'Sleep score', text: "Garmin's 0-100 score for last night, based on duration, sleep stages, and overnight resting heart rate. 80+ is great, 60-79 is good, below 60 means your body may need more recovery." }}
         />
-        <RangeBar
+        <MetricBlock
+          metric="stress"
           label="Stress"
-          value={summary?.stress_avg ?? null}
-          status={statusForInverseScore(summary?.stress_avg)}
-          color={METRIC_COLORS.stress.solid}
-          infoTitle="Stress"
-          infoDescription="A 0-100 estimate of today's stress, from heart-rate variability relative to your resting heart rate. Below 25 is calm, 25-50 is typical daily stress, above 50 means your body is working harder than usual."
+          value={summary?.stress_avg != null ? String(Math.round(summary.stress_avg)) : '—'}
+          sub={statusWord(statusForInverseScore(summary?.stress_avg), 'average today')}
+          info={{ title: 'Stress', text: "A 0-100 estimate of today's stress, from heart-rate variability relative to your resting heart rate. Below 25 is calm, 25-50 is typical daily stress, above 50 means your body is working harder than usual." }}
         />
-        <RangeBar
+        <MetricBlock
           // A missing or zero cloud figure (the cloud copy stops updating while Garmin Connect is off) yields to the band.
+          metric="energy"
           label={energyTile.label}
-          value={energyTile.value}
-          status={statusForScore(energyTile.value, [30, 50, 75])}
-          color={METRIC_COLORS.energy.solid}
-          infoTitle="Energy Reserve (Garmin Body Battery)"
-          infoDescription="Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. “Energy now” is the latest level your band recorded; “Energy at wake” is the level it recorded when you woke up, read from its morning report. See the curve below for BetterGarmin's own estimated intraday trace."
+          value={energyTile.value != null ? String(Math.round(energyTile.value)) : '—'}
+          sub={statusWord(statusForScore(energyTile.value, [30, 50, 75]), 'Body Battery')}
+          info={{ title: 'Energy Reserve (Garmin Body Battery)', text: "Garmin's own measure of your body's energy reserves, charged by rest and sleep and drained by stress and activity. “Energy now” is the latest level your band recorded; “Energy at wake” is the level it recorded when you woke up, read from its morning report." }}
         />
-      </Card>
+        <MetricBlock
+          metric="neutral"
+          label="Steps"
+          value={compactCount(summary?.steps ?? 0)}
+          sub={summary?.step_goal ? ((summary.steps ?? 0) >= summary.step_goal ? 'goal hit' : `of ${summary.step_goal.toLocaleString()}`) : undefined}
+        />
+      </div>
     ),
     forecast: <EnergyForecastCard day={data.day} />,
     energy: <EnergyReserveCard curve={energy.curve} biggestDrain={energy.biggestDrain} bestRecharge={energy.bestRecharge} />,
     stats: (
-      // One signboard split by hairlines, not four separate cards.
-      <Card className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--border-panel)] p-0 sm:grid-cols-4">
-        <StatCard label="Steps" value={summary?.steps ?? 0} goal={summary?.step_goal} />
+      // Steps lead in the colour blocks; the rest share one panel split by hairlines.
+      <Card className="grid grid-cols-3 gap-px overflow-hidden bg-[var(--border-panel)] p-0">
         <StatCard label="Floors" value={summary?.floors_up ?? 0} />
-        <StatCard label="Active calories" value={summary?.calories_active ?? 0} />
+        <StatCard label="Calories" value={summary?.calories_active ?? 0} />
         <StatCard
           label="Distance"
           value={convertDistance(summary?.distance ?? 0, units)}
@@ -172,7 +172,7 @@ export function TodayPage() {
       <>
       {insights.length > 0 && (
         <Card>
-          <p className="mb-3 sign-caps text-sm">Today's insights</p>
+          <p className="mb-3 blk-label text-sm">Today's insights</p>
           <ul className="flex flex-col gap-3">
             {insights.map((insight, i) => (
               <motion.li
@@ -217,43 +217,60 @@ function ReadinessHero({
   score: number | null
   recommendation: string | null
 }) {
-  const grade = gradeForReadiness(score)
   const a = useAppearance()
-  // A chosen backdrop photo shows as a strip above the sign, unless it already fills the whole page.
+  // A chosen backdrop photo shows as a band above the title, unless it already fills the whole page.
   const photoStrip = a.backgroundMode !== 'none' && !usesFullBackdrop(a)
+  const status = statusForScore(score)
 
   return (
-    <section className={cn('-mx-4 md:mx-0', atTop && '-mt-[calc(1.5rem+env(safe-area-inset-top))]')}>
+    <section className="flex flex-col gap-3">
       {photoStrip && (
-        <div className="h-28 overflow-hidden" aria-hidden>
+        <div className={cn('-mx-4 h-28 overflow-hidden md:mx-0 md:rounded-card', atTop && '-mt-[calc(1.5rem+env(safe-area-inset-top))]')} aria-hidden>
           <MountainBackdrop height={112} />
         </div>
       )}
-      <div className={cn('sign-band flex items-baseline justify-between gap-3 px-4 pb-3 md:rounded-t-card', atTop && !photoStrip ? 'pt-[calc(env(safe-area-inset-top)+1rem)]' : 'pt-3')}>
-        <h1 className="sign-caps text-lg">Today</h1>
-        <p className="text-sm font-semibold opacity-80">{formattedDay}</p>
+      <div>
+        <p className="text-sm font-semibold text-[var(--text-secondary)]">{formattedDay}</p>
+        <h1 className="page-title">{greeting()}, here's today</h1>
       </div>
-      <div className="glass-panel flex flex-col gap-3 border-t-0 px-4 pb-5 pt-5 md:rounded-b-card">
-        <div className="flex items-center gap-4">
-          <TrailBlaze grade={grade} size={64} />
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-extrabold leading-tight">{grade ? TRAIL_GRADES[grade].name : 'No grade yet'}</p>
-            <p className="text-sm font-semibold text-[var(--text-secondary)]">{grade ? TRAIL_GRADES[grade].effort : 'Readiness needs more history'}</p>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-5xl font-extrabold leading-none">{score ?? '–'}</span>
-            <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)]">
-              Readiness
-              <InfoButton title="Readiness (BetterGarmin estimate)">
-                {`${recommendation ? recommendation + ' ' : ''}Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline. The trail grade follows the same bands: 80+ black diamond, 60–79 blue square, 40–59 green circle, under 40 trail closed.`}
-              </InfoButton>
-            </span>
-          </div>
-        </div>
-        {recommendation && <p className="border-t border-[var(--border-panel)] pt-3 text-sm text-[var(--text-secondary)]">{recommendation}</p>}
-      </div>
+      <MetricBlock
+        metric="readiness"
+        label="Readiness"
+        size="xl"
+        value={score != null ? String(score) : '—'}
+        sub={status ? `${STATUS_LABELS[status]}${recommendation ? ` · ${recommendation}` : ''}` : 'Needs a few days of history'}
+        info={{
+          title: 'Readiness (BetterGarmin estimate)',
+          text: "Combines last night's sleep, resting heart rate vs. your baseline, recent training strain, and today's stress vs. your baseline.",
+        }}
+        className="min-h-56 p-5"
+      >
+        {score != null && <p className="absolute right-5 top-5 w-40 text-right text-[1.375rem] font-extrabold leading-tight tracking-tight">{verdict(score)}</p>}
+      </MetricBlock>
     </section>
   )
+}
+
+/** The readiness score's own recommendation bands (src/scores/readiness.ts: 80 / 60 / 40), said in a few words. */
+function verdict(score: number): string {
+  if (score >= 80) return 'Go hard today.'
+  if (score >= 60) return 'Normal training day.'
+  if (score >= 40) return 'Easy session, not a PR day.'
+  return 'Rest and recover.'
+}
+
+function greeting(): string {
+  const h = new Date().getHours()
+  return h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'
+}
+
+function statusWord(status: ReturnType<typeof statusForScore>, fallback: string): string {
+  return status ? STATUS_LABELS[status] : fallback
+}
+
+/** 13170 -> "13.2k": the step count has to fit a half-width block at display size. */
+function compactCount(n: number): string {
+  return n >= 10_000 ? `${(n / 1000).toFixed(1)}k` : n.toLocaleString()
 }
 
 function StatCard({
@@ -271,8 +288,8 @@ function StatCard({
 }) {
   return (
     <div className="bg-[var(--bg-elevated)] p-4">
-      <p className="sign-caps text-xs text-[var(--text-secondary)]">{label}</p>
-      <p className="mt-1 text-3xl font-extrabold">
+      <p className="blk-label text-xs text-[var(--text-secondary)]">{label}</p>
+      <p className="mt-1 whitespace-nowrap text-2xl font-extrabold">
         <StatNumber value={value} decimals={decimals} suffix={suffix} />
       </p>
       {goal != null && <p className="text-xs text-[var(--text-tertiary)]">of {goal.toLocaleString()} goal</p>}

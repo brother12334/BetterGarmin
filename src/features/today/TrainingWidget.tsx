@@ -14,7 +14,7 @@ export function TrainingWidget() {
   return (
     <Card className="flex flex-col gap-2 py-4">
       <div className="flex items-baseline justify-between">
-        <p className="sign-caps text-sm">Training</p>
+        <p className="blk-label text-sm">Training</p>
         {/* Direct band sync is opt-in now; only mention it once it has actually been used. */}
         {lastSync && <span className="text-xs text-[var(--text-tertiary)]">Band synced {formatRelativeTime(new Date(lastSync))}</span>}
       </div>

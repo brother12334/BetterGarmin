@@ -633,7 +633,7 @@ function EffortBands({ bandsMs }: { bandsMs: number[] }) {
   const total = bandsMs.reduce((s, v) => s + v, 0)
   if (total === 0) return null
   const labels = ['0–20%', '20–40%', '40–60%', '60–80%', '80–100%']
-  const colors = ['#2c6e9b', '#2f7d4a', '#c98a14', '#b8612a', '#c2412d']
+  const colors = ['#5b3df5', '#5a8a00', '#f05a36', '#f05a36', '#e0457b']
   return (
     <Card>
       <div className="mb-2 flex items-center gap-2">

@@ -134,7 +134,15 @@ function PresetTile({ name, patch, active }: { name: string; patch: Partial<Appe
       )}
       style={{ background: patch.backgroundMode === 'none' ? '#e8ebe4' : bg }}
     >
-      {patch.backgroundMode === 'none' ? (
+      {patch.cardStyle === 'blocks' ? (
+        // The blocks look has no photo: show its colour blocks instead.
+        <div className="absolute inset-0 grid grid-cols-3 gap-1 bg-[#f4f1ec] p-1.5" aria-hidden>
+          <span className="col-span-2 rounded-lg bg-[#5b3df5]" />
+          <span className="rounded-lg bg-[#c7f05a]" />
+          <span className="rounded-lg bg-[#ff7a59]" />
+          <span className="col-span-2 rounded-lg bg-[#121212]" />
+        </div>
+      ) : patch.backgroundMode === 'none' ? (
         // The trail look has no photo: show its sign instead, a black band over stone with a blaze.
         <div className="absolute inset-0" aria-hidden>
           <div className="h-5 bg-[#0f110f]" />
@@ -380,6 +388,7 @@ function StyleSection() {
             <Segmented
               value={a.cardStyle}
               options={[
+                ['blocks', 'Blocks'],
                 ['trail', 'Trail'],
                 ['glass', 'Glass'],
                 ['liquid', 'Liquid'],
@@ -405,6 +414,7 @@ function StyleSection() {
             <Segmented
               value={a.radius}
               options={[
+                ['blocks', 'Big'],
                 ['sharp', 'Sharp'],
                 ['rounded', 'Rounded'],
                 ['round', 'Round'],
@@ -416,6 +426,7 @@ function StyleSection() {
             <Segmented
               value={a.font}
               options={[
+                ['bricolage', 'Bricolage'],
                 ['public', 'Public Sans'],
                 ['manrope', 'Manrope'],
                 ['system', 'System'],

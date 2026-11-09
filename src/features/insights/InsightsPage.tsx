@@ -124,14 +124,14 @@ function WeeklyRecap({ data }: { data: DailyMetrics[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
-        <Dial label="Avg sleep score" value={r(avg('sleepScore'))} color="#4f4fae" caption="this week" />
-        <Dial label="Avg stress" value={r(avg('stressAvg'))} color="#c98a14" caption="this week" />
+        <Dial label="Avg sleep score" value={r(avg('sleepScore'))} color="#5b3df5" caption="this week" />
+        <Dial label="Avg stress" value={r(avg('stressAvg'))} color="#f05a36" caption="this week" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <BigStat label="Steps" value={totalSteps.toLocaleString()} sub="this week" color="#2f7d4a" trend={trend('steps')} />
-        <BigStat label="Resting HR" value={r(avg('restingHr'))} unit="bpm" sub="weekly average" color="#c2412d" trend={trend('restingHr')} />
-        <BigStat label="Sleep" value={sleepH == null ? null : `${Math.floor(sleepH / 60)}h ${Math.round(sleepH % 60)}m`} sub="nightly average" color="#4f4fae" trend={trend('sleepMinutes')} />
-        <BigStat label="Calories" value={r(avg('calories'))?.toLocaleString() ?? null} sub="daily average" color="#2c6e9b" trend={trend('calories')} />
+        <BigStat label="Steps" value={totalSteps.toLocaleString()} sub="this week" color="#5a8a00" trend={trend('steps')} />
+        <BigStat label="Resting HR" value={r(avg('restingHr'))} unit="bpm" sub="weekly average" color="#e0457b" trend={trend('restingHr')} />
+        <BigStat label="Sleep" value={sleepH == null ? null : `${Math.floor(sleepH / 60)}h ${Math.round(sleepH % 60)}m`} sub="nightly average" color="#5b3df5" trend={trend('sleepMinutes')} />
+        <BigStat label="Calories" value={r(avg('calories'))?.toLocaleString() ?? null} sub="daily average" color="#5b3df5" trend={trend('calories')} />
       </div>
     </>
   )
@@ -171,8 +171,8 @@ function TrendExplorer({ data }: { data: DailyMetrics[] }) {
           legend: { data: ['Daily', '7-day avg', '30-day avg'], textStyle: { color: 'var(--text-tertiary)' }, top: 0 },
           series: [
             { name: 'Daily', type: 'line', data: days.map((d, i) => [d, raw[i]]), symbol: 'none', lineStyle: { color: 'rgba(56,189,248,0.25)', width: 1 } },
-            { name: '7-day avg', type: 'line', data: days.map((d, i) => [d, ma7[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#2c6e9b', width: 2 } },
-            { name: '30-day avg', type: 'line', data: days.map((d, i) => [d, ma30[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#4f4fae', width: 2 } },
+            { name: '7-day avg', type: 'line', data: days.map((d, i) => [d, ma7[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#5b3df5', width: 2 } },
+            { name: '30-day avg', type: 'line', data: days.map((d, i) => [d, ma30[i]]), symbol: 'none', smooth: true, lineStyle: { color: '#5b3df5', width: 2 } },
           ],
         }}
       />

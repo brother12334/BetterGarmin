@@ -42,7 +42,7 @@ export function AppShell() {
         <div className="sticky top-0 flex flex-col gap-1 p-4">
         <div className="mb-6 flex items-center gap-2 px-2">
           <Logo size={28} className="rounded-control" />
-          <span className="sign-caps text-base">BetterGarmin</span>
+          <span className="text-lg font-extrabold tracking-tight">BetterGarmin</span>
         </div>
         {TABS.map((tab) => (
           <NavLink
@@ -51,9 +51,9 @@ export function AppShell() {
             end={tab.to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-control px-3 py-3 text-sm font-medium transition-colors',
-                // The sign band language: the current section sits on a white plate.
-                isActive ? 'bg-[var(--band-text)] font-bold text-[var(--band)]' : 'text-white/75 hover:text-white',
+                'flex items-center gap-3 rounded-full px-4 py-3 text-base font-semibold transition-colors',
+                // Same as the phone bar: the current section sits in a violet bubble.
+                isActive ? 'bg-[var(--accent)] font-bold text-white' : 'text-white/60 hover:text-white',
               )
             }
           >
@@ -85,7 +85,7 @@ function PhoneNav() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden">
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 md:hidden">
       <NavBar active={activeIndex(pathname)} onSelect={(i) => navigate(TABS[i].to)} layoutKey="main" />
     </nav>
   )

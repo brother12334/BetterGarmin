@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { EChartsOption } from 'echarts'
+import { blockFor } from '../ui/metricColors'
 import { Card } from '../ui/Card'
 import { Chart } from '../ui/Chart'
 import { InfoButton } from '../ui/InfoButton'
@@ -78,7 +79,7 @@ function pointsOf(series: Record<string, unknown>): Raw[] {
 function seriesColor(series: Record<string, unknown>, pts: Raw[]): string {
   const ls = series.lineStyle as { color?: string } | undefined
   const is = series.itemStyle as { color?: string } | undefined
-  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#2c6e9b'
+  return ls?.color ?? (typeof is?.color === 'string' ? is.color : undefined) ?? pts.find((p) => p.color && !p.color.startsWith('rgba'))?.color ?? '#5b3df5'
 }
 
 /** Averages samples into fixed time buckets (centred), so a day reads as a calm shape instead of hundreds of spikes. */
@@ -201,21 +202,15 @@ export function DetailChart({
   )
 }
 
-/** A 0–max value as a signpost: the label in sign caps, the number large, and a straight trail-marker track. */
-export function Dial({ label, value, max = 100, color, caption }: { label: string; value: number | null; max?: number; color: string; caption?: string }) {
-  const pct = value == null ? 0 : Math.max(0, Math.min(100, (value / max) * 100))
+/** A 0–max value as its metric's colour block: label, one big number and a caption. */
+export function Dial({ label, value, color, caption }: { label: string; value: number | null; max?: number; color: string; caption?: string }) {
+  const { block, ink } = blockFor(color)
   return (
-    <Card className="flex flex-col gap-2 p-4">
-      <span className="sign-caps text-xs text-[var(--text-secondary)]">{label}</span>
-      <span className="text-4xl font-extrabold leading-none">{value == null ? '—' : Math.round(value)}</span>
-      <div className="relative h-2 w-full bg-[var(--ring-track)]" aria-hidden>
-        <div className="h-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-        {[25, 50, 75].map((t) => (
-          <span key={t} className="absolute top-0 h-full w-px bg-[var(--bg-elevated)]" style={{ left: `${t}%` }} />
-        ))}
-      </div>
-      {caption && <span className="text-xs text-[var(--text-tertiary)]">{caption}</span>}
-    </Card>
+    <div className="metric-block flex flex-col p-4" style={{ ['--block' as string]: block, ['--block-ink' as string]: ink }}>
+      <span className="blk-label text-sm">{label}</span>
+      <span className="blk-num mt-2 text-[3.5rem]">{value == null ? '—' : Math.round(value)}</span>
+      {caption && <span className="mt-1 text-[0.8125rem] font-semibold opacity-80">{caption}</span>}
+    </div>
   )
 }
 

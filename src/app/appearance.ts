@@ -22,9 +22,9 @@ export interface WidgetSlot {
 }
 
 export type BackgroundMode = 'none' | 'daily' | 'photo' | 'custom' | 'gradient'
-export type CardStyle = 'trail' | 'glass' | 'liquid' | 'solid' | 'outline'
-export type Radius = 'sharp' | 'rounded' | 'round'
-export type FontChoice = 'public' | 'manrope' | 'system' | 'serif' | 'mono'
+export type CardStyle = 'blocks' | 'trail' | 'glass' | 'liquid' | 'solid' | 'outline'
+export type Radius = 'blocks' | 'sharp' | 'rounded' | 'round'
+export type FontChoice = 'bricolage' | 'public' | 'manrope' | 'system' | 'serif' | 'mono'
 export type GlassTint = 'clear' | 'dark'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 
@@ -77,7 +77,7 @@ export const GRADIENTS: Record<string, { label: string; css: string }> = {
   graphite: { label: 'Graphite', css: 'linear-gradient(180deg, #27272a 0%, #09090b 100%)' },
 }
 
-export const ACCENTS = ['#2f7d4a', '#2c6e9b', '#6b4a2b', '#c2412d', '#38bdf8', '#60a5fa', '#2dd4bf', '#34d399', '#facc15', '#fb923c', '#f43f5e', '#e5e7eb']
+export const ACCENTS = ['#5b3df5', '#c7f05a', '#ff7a59', '#2f7d4a', '#2c6e9b', '#6b4a2b', '#c2412d', '#38bdf8', '#60a5fa', '#2dd4bf', '#34d399', '#facc15', '#fb923c', '#f43f5e', '#e5e7eb']
 
 export const DEFAULT_APPEARANCE: Appearance = {
   backgroundMode: 'none',
@@ -86,17 +86,18 @@ export const DEFAULT_APPEARANCE: Appearance = {
   dim: 25,
   blur: 0,
   fullPage: false,
-  accent: '#2f7d4a',
-  cardStyle: 'trail',
+  accent: '#5b3df5',
+  cardStyle: 'blocks',
   glassTint: 'clear',
-  radius: 'sharp',
-  font: 'public',
+  radius: 'blocks',
+  font: 'bricolage',
   density: 'comfortable',
   todayLayout: TODAY_WIDGETS.map((w) => ({ id: w.id, visible: true })),
 }
 
 /** Complete looks: one tap sets the background, cards, accent and font together. */
 export const PRESETS: { name: string; patch: Partial<Appearance> }[] = [
+  { name: 'Blocks', patch: { accent: '#5b3df5', cardStyle: 'blocks', radius: 'blocks', font: 'bricolage', backgroundMode: 'none', dim: 0, blur: 0, fullPage: false } },
   { name: 'Trail', patch: { accent: '#2f7d4a', cardStyle: 'trail', radius: 'sharp', font: 'public', backgroundMode: 'none', dim: 0, blur: 0, fullPage: false } },
   { name: 'Glacier', patch: { accent: '#38bdf8', cardStyle: 'glass', radius: 'round', font: 'manrope', backgroundMode: 'daily', dim: 25, blur: 0, fullPage: false } },
   { name: 'Liquid Glass', patch: { accent: '#60a5fa', cardStyle: 'liquid', glassTint: 'clear', radius: 'round', font: 'system', backgroundMode: 'gradient', gradient: 'liquid', dim: 0, blur: 0 } },
@@ -131,14 +132,14 @@ function normalizeLayout(layout: WidgetSlot[] | undefined): WidgetSlot[] {
 }
 
 /** Bumped when the default look is replaced, so a saved look from the old design is switched over once. */
-const DESIGN_VERSION = 'trail-1'
+const DESIGN_VERSION = 'blocks-1'
 const DESIGN_KEY = 'bettergarmin:design'
 
 function load(): Appearance {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (localStorage.getItem(DESIGN_KEY) !== DESIGN_VERSION) {
-      // The November 2026 redesign: move a saved look onto the trail defaults, keeping the widget layout, and light theme.
+      // A redesign (November 2026: colour blocks): move a saved look onto the trail defaults, keeping the widget layout, and light theme.
       localStorage.setItem(DESIGN_KEY, DESIGN_VERSION)
       localStorage.setItem('bettergarmin:theme', 'light')
       const kept = raw ? (JSON.parse(raw) as Partial<Appearance>) : {}
@@ -231,6 +232,7 @@ export function useCustomPhoto(): string | null {
 }
 
 const FONT_STACKS: Record<FontChoice, string> = {
+  bricolage: '"Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, sans-serif',
   public: '"Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, -apple-system, sans-serif',
   manrope: '"Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif',
   system: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -238,6 +240,7 @@ const FONT_STACKS: Record<FontChoice, string> = {
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
 }
 const RADII: Record<Radius, { card: string; control: string }> = {
+  blocks: { card: '26px', control: '999px' },
   sharp: { card: '2px', control: '4px' },
   rounded: { card: '14px', control: '10px' },
   round: { card: '24px', control: '16px' },

@@ -7,7 +7,7 @@ import type { ActivityRow } from '../../db/types'
 import { hmsToMinutes } from '../../lib/duration'
 
 const TRAIN = METRIC_COLORS.training.solid
-const SPORT_COLORS = ['#1f7a78', '#c2412d', '#2f7d4a', '#2c6e9b', '#c98a14', '#7d8279']
+const SPORT_COLORS = ['#d49a00', '#e0457b', '#5a8a00', '#5b3df5', '#f05a36', '#8b867f']
 const DAY = 86_400_000
 
 const dayStart = (ts: string) => {
@@ -70,14 +70,14 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
           color={TRAIN}
           caption={usualWeekMin > 0 ? '% of your usual week' : 'needs a few weeks of history'}
         />
-        <Dial label="Load this week" value={Math.round(load(week))} max={Math.max(100, Math.round(load(prevWeeks) / 4) * 2)} color="#c2412d" caption="Garmin training load" />
+        <Dial label="Load this week" value={Math.round(load(week))} max={Math.max(100, Math.round(load(prevWeeks) / 4) * 2)} color="#e0457b" caption="Garmin training load" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <BigStat label="Workouts" value={week.length} sub="last 7 days" color={TRAIN} trend={loadPts.slice(-14)} />
-        <BigStat label="Active time" value={`${Math.floor(weekMin / 60)}h ${weekMin % 60}m`} sub="last 7 days" color="#2c6e9b" trend={minPts.slice(-14)} />
-        <BigStat label="Distance" value={weekDist.toFixed(1)} unit={distanceUnitLabel(units)} sub="last 7 days" color="#2f7d4a" />
-        <BigStat label="Avg heart rate" value={hrs.length ? Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) : null} unit="bpm" sub="during workouts" color="#c2412d" />
+        <BigStat label="Active time" value={`${Math.floor(weekMin / 60)}h ${weekMin % 60}m`} sub="last 7 days" color="#5b3df5" trend={minPts.slice(-14)} />
+        <BigStat label="Distance" value={weekDist.toFixed(1)} unit={distanceUnitLabel(units)} sub="last 7 days" color="#5a8a00" />
+        <BigStat label="Avg heart rate" value={hrs.length ? Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) : null} unit="bpm" sub="during workouts" color="#e0457b" />
       </div>
 
       {loadPts.length > 0 && (
@@ -105,7 +105,7 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
             dataZoom: zoom(startPct),
             xAxis: timeAxis('day'),
             yAxis: valueAxis(),
-            series: [{ type: 'bar', barWidth: '55%', data: minPts, itemStyle: { color: '#2c6e9b', borderRadius: [4, 4, 0, 0] } }],
+            series: [{ type: 'bar', barWidth: '55%', data: minPts, itemStyle: { color: '#5b3df5', borderRadius: [4, 4, 0, 0] } }],
           }}
         />
       )}
@@ -117,7 +117,7 @@ export function TrainingOverview({ activities, latestDay }: { activities: Activi
           height={230}
           option={{
             tooltip: { trigger: 'item', formatter: '{b}: {c} min ({d}%)' },
-            series: [{ type: 'pie', radius: ['48%', '76%'], padAngle: 2, itemStyle: { borderRadius: 6 }, label: { color: '#7d8279', fontSize: 10 }, data: mix }],
+            series: [{ type: 'pie', radius: ['48%', '76%'], padAngle: 2, itemStyle: { borderRadius: 6 }, label: { color: '#8b867f', fontSize: 10 }, data: mix }],
           }}
         />
       )}

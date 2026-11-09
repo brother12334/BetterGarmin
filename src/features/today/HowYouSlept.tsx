@@ -16,10 +16,10 @@ import { formatTime } from '../../lib/clock'
 type Stage = 'awake' | 'rem' | 'light' | 'deep'
 
 const STAGES: { key: Stage; label: string; color: string; column: keyof SleepRow; typical: string }[] = [
-  { key: 'awake', label: 'Awake', color: '#d9654f', column: 'awake', typical: 'brief wakings are normal' },
-  { key: 'rem', label: 'REM', color: '#4f4fae', column: 'rem_sleep', typical: 'typically 20–25%' },
-  { key: 'light', label: 'Light', color: '#3f7fbf', column: 'light_sleep', typical: 'typically about half' },
-  { key: 'deep', label: 'Deep', color: '#2e2f7a', column: 'deep_sleep', typical: 'typically 13–23%' },
+  { key: 'awake', label: 'Awake', color: '#ff7a59', column: 'awake', typical: 'brief wakings are normal' },
+  { key: 'rem', label: 'REM', color: '#5b3df5', column: 'rem_sleep', typical: 'typically 20–25%' },
+  { key: 'light', label: 'Light', color: '#8f7dff', column: 'light_sleep', typical: 'typically about half' },
+  { key: 'deep', label: 'Deep', color: '#2a1b8f', column: 'deep_sleep', typical: 'typically 13–23%' },
 ]
 
 const LOOKBACK_DAYS = 3
@@ -70,7 +70,7 @@ export function HowYouSlept({ day }: { day: string }) {
   if (night === null) {
     return (
       <Card>
-        <p className="sign-caps text-sm">How you slept</p>
+        <p className="blk-label text-sm">How you slept</p>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
           No sleep recorded in the last few nights yet. Wear your watch to bed; the breakdown appears after it syncs
           the next morning.
@@ -94,7 +94,7 @@ function NightCard({ sleep, events, isLastNight }: { sleep: SleepRow; events: Sl
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <p className="sign-caps text-sm">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
+            <p className="blk-label text-sm">{isLastNight ? 'How you slept' : `How you slept · ${nightLabel(sleep.day)}`}</p>
             <InfoButton title="Sleep stages">
               Stages are Garmin's estimates from heart rate, heart-rate variability and movement. The typical ranges are
               general adult guidance, not targets. Stage mix varies from night to night and between people.
