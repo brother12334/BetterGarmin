@@ -20,6 +20,16 @@ import type {
  * The newest day worth showing: not after today on this device, and with something recorded. The cloud sync runs
  * in UTC, so in the evening it can already hold an empty row for "tomorrow".
  */
+/** The newest all-day heart-rate reading in the synced data (local time, "YYYY-MM-DD HH:MM:SS"), or null. */
+export async function getNewestReading(): Promise<string | null> {
+  try {
+    const rows = await sqliteClient.query<{ t: string | null }>('monitoring', 'SELECT MAX(timestamp) AS t FROM monitoring_hr')
+    return rows[0]?.t ?? null
+  } catch {
+    return null // no monitoring data loaded
+  }
+}
+
 export async function getLatestDay(): Promise<string | null> {
   const d = new Date()
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`

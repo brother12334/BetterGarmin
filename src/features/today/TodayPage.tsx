@@ -8,7 +8,7 @@ import { MetricBlock } from '../../components/ui/MetricBlock'
 import { formatHoursMinutes, hmsToMinutes } from '../../lib/duration'
 import { StatNumber } from '../../components/ui/StatNumber'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, getBandWakeEnergy, getBandEnergyNow } from '../../db/queries'
+import { getDailySummary, getHrv, getLatestDay, getLatestSleepDay, getSleep, getBandWakeEnergy, getBandEnergyNow, getNewestReading } from '../../db/queries'
 import type { DailySummaryRow, HrvRow, SleepRow } from '../../db/types'
 import { buildTodayInsights } from './insights'
 import { useData } from '../../app/DataProvider'
@@ -224,6 +224,7 @@ function ReadinessHero({
           <p className="text-sm font-semibold text-[var(--text-secondary)]">{formattedDay}</p>
           <SyncChip />
         </div>
+        <DataFreshness />
         <h1 className="page-title">{greeting()}, here's today</h1>
       </div>
       <MetricBlock
@@ -321,6 +322,26 @@ function SyncBar() {
         : garminPull.note ?? null
   if (!message) return null
   return <p className={cn('-mt-1 text-sm font-semibold', garminPull.status === 'error' ? 'text-[var(--tone-red)]' : 'text-[var(--text-secondary)]')}>{message}</p>
+}
+
+/**
+ * Says when the newest synced reading is from, when that's more than two hours ago. The cloud copy only has what
+ * Garmin Connect has uploaded from the band, so a successful sync can still bring nothing new.
+ */
+function DataFreshness() {
+  const { lastSynced } = useData()
+  const [newest, setNewest] = useState<string | null>(null)
+  useEffect(() => {
+    getNewestReading().then(setNewest)
+  }, [lastSynced])
+  if (!newest) return null
+  const t = new Date(newest.replace(' ', 'T'))
+  if (Date.now() - t.getTime() < 2 * 3600_000) return null
+  return (
+    <p className="text-sm font-semibold text-[var(--tone-red)]">
+      Newest data from Garmin: {formatRelativeTime(t)}. Open Garmin Connect so it uploads your band, then sync.
+    </p>
+  )
 }
 
 function SyncChip() {
