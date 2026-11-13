@@ -232,11 +232,13 @@ jobs:
           sqlite3 "$DB_DIR/garmin.db" "SELECT substr(day,1,10), total_sleep IS NOT NULL, deep_sleep IS NOT NULL, rem_sleep IS NOT NULL, light_sleep IS NOT NULL, awake IS NOT NULL, typeof(total_sleep), length(total_sleep) FROM sleep ORDER BY day" 2>/dev/null || true
           echo "Daily summary files, newest 3 (fields present / null, no values):"
           for f in $(find ~/HealthData -name 'daily_summary_*.json' | sort | tail -3); do
-            python -I -c 'import json,sys; d=json.load(open(sys.argv[1])); keys=["totalSteps","bodyBatteryMostRecentValue","bodyBatteryHighestValue","averageStressLevel","restingHeartRate"]; print(sys.argv[1].rsplit("/",1)[-1], {k: ("null" if d.get(k) is None else "set") for k in keys}, "keys:", len(d))' "$f" || true
+            python -I -c 'import json,sys; d=json.load(open(sys.argv[1])); keys=["totalSteps","bodyBatteryMostRecentValue","bodyBatteryHighestValue","averageStressLevel","restingHeartRate","moderateIntensityMinutes","vigorousIntensityMinutes"]; print(sys.argv[1].rsplit("/",1)[-1], {k: ("null" if d.get(k) is None else "set") for k in keys}, "keys:", len(d))' "$f" || true
           done
           echo "Sleep events: $(sqlite3 "$DB_DIR/garmin.db" "SELECT COUNT(*) FROM sleep_events" 2>/dev/null || echo missing)"
           echo "Daily summary sample (steps, rhr per day):"
           sqlite3 "$DB_DIR/garmin.db" "SELECT day, steps IS NOT NULL, rhr IS NOT NULL, hr_max IS NOT NULL FROM daily_summary" 2>/dev/null || true
+          echo "Intensity minutes, last 8 days (day, moderate set, vigorous set, any above zero — no values):"
+          sqlite3 "$DB_DIR/garmin.db" "SELECT substr(day,1,10), moderate_activity_time IS NOT NULL, vigorous_activity_time IS NOT NULL, (moderate_activity_time > '00:00:00' OR vigorous_activity_time > '00:00:00') FROM daily_summary ORDER BY day DESC LIMIT 8" 2>/dev/null || true
           for t in garmin.db:daily_summary garmin.db:sleep garmin.db:resting_hr garmin_monitoring.db:monitoring_hr garmin_monitoring.db:monitoring garmin_activities.db:activities; do
             db=${t%%:*}; table=${t##*:}
             n=$(sqlite3 "$DB_DIR/$db" "SELECT COUNT(*) FROM $table" 2>/dev/null || echo "missing")
