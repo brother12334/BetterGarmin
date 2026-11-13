@@ -9,6 +9,11 @@ import { ThemeProvider } from './app/theme.tsx'
 import { UnitsProvider } from './app/units.tsx'
 import { DataProvider } from './app/DataProvider.tsx'
 
+// iOS Safari ignores user-scalable=no, so block its pinch gestures directly.
+for (const type of ['gesturestart', 'gesturechange'] as const) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>

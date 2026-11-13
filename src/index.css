@@ -126,6 +126,37 @@ body,
   height: 100%;
 }
 
+/* No pinch or double-tap zoom; charts still get their own touch events. */
+html {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Portrait only. iOS ignores the manifest's orientation lock, so a phone
+   turned sideways gets a notice instead of the app. */
+#rotate-notice {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #root {
+    display: none;
+  }
+
+  #rotate-notice {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font: 600 18px/1.4 var(--font-app, var(--font-sans));
+    background: var(--bg-base);
+    color: var(--text-primary);
+  }
+}
+
 body {
   background: var(--bg-base);
   color: var(--text-primary);
